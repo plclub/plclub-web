@@ -16,7 +16,7 @@ The compiler _should_ be able to build with just
 
 	stack build
 
-This will install all necessary Haskell libraries under `.stack-work/`, typically compiling them from scratch. It will also install a GHC binary. This process should only need to happen once. Be prepared to wait.
+This will install all necessary Haskell libraries typically compiling them from scratch. It will also install a GHC binary. This process should only need to happen once. Be prepared to wait.
 
 When the site is built we can run
 
