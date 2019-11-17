@@ -42,13 +42,14 @@ main = hakyll $ do
     create ["people.html"] $ do
         route idRoute
         compile $ do
-            people <- loadAll "people/*"
-            let peopleCtx =
-                    listField "people" defaultContext (return people) `mappend`
+            people <- loadAll "people/*" :: Compiler [Item String]
+            people4 <- (\is -> Item "" <$> unbindList 4 is) <$> loadAll "people/*" :: Compiler [Item [Item String]]
+            let peopleGroupCtx =
+                    listField "peopleGroup" peopleCtx (return people4) `mappend`
                     constField "title" "People"            `mappend`
                     defaultContext
             makeItem ""
-                >>= loadAndApplyTemplate "templates/people.html" peopleCtx
+                >>= loadAndApplyTemplate "templates/people.html" peopleGroupCtx
                 >>= loadAndApplyTemplate "templates/default.html" defaultContext 
                 >>= relativizeUrls
 
@@ -183,3 +184,22 @@ papersContext = listField "papers" defaultContext getPapersItems
 	
 recentPapersContext :: Context a
 recentPapersContext = listField "recentpapers" defaultContext getRecentPapers
+
+{-
+peopleListCtx :: Context [Item String]
+peopleListCtx =
+	listField "persongroup"
+
+peopleListList :: Context [Item [Item String]]
+peopleListList =
+	listField "persongroup"
+	-}
+
+unbindList :: Int -> [a] -> [[a]]
+unbindList _ [] = []
+unbindList n as =
+	(take n as):(unbindList n $ drop n as)
+
+
+peopleCtx :: Context [Item String]
+peopleCtx = listFieldWith "people" defaultContext (\(Item _ v) -> return v)

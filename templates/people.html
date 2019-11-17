@@ -11,19 +11,23 @@
         <p class="lead"> 
         Penn PL People
         </p>
-            $for(people)$
-	            <ul>
-		        <li>Name: $name$
-				<li>URL: <a href="$url$">$url$</a> </li>
-		        <li>Research: $body$
-			$if(headshot)$
-		</ul>
-				<img class="img-fluid mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/>
-			$else$
-				<img class="img-fluid mb-4" src="/img/people/default" alt="$name$" width="150px" height="150px"/>
-			$endif$
+		<ul>
+            $for(peopleGroup)$
+	    <li> New person group </li>
+		    $for(people)$
+				<li>Name: $name$
+					<li>URL: <a href="$url$">$url$</a> </li>
+				<li>Research: $body$
+			<br />
+				$if(headshot)$
+					<img class="img-fluid mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/>
+				$else$
+					<img class="img-fluid mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
+				$endif$
 
-            $endfor$
+		    $endfor$
+	    $endfor$
+	    </ul>
             </section>
         </article>
        </div>
