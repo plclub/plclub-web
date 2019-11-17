@@ -1,0 +1,31 @@
+
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-1">
+      </div>
+      <div class="col-lg-9 text-left">
+        <br><br><br>
+        <article>
+            <section class="">
+        <p class="lead"> 
+        Penn PL People
+        </p>
+            $for(people)$
+	            <ul>
+		        <li>Name: $name$
+				<li>URL: <a href="$url$">$url$</a> </li>
+		        <li>Research: $body$
+			$if(headshot)$
+		</ul>
+				<img class="img-fluid mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/>
+			$else$
+				<img class="img-fluid mb-4" src="/img/people/default" alt="$name$" width="150px" height="150px"/>
+			$endif$
+
+            $endfor$
+            </section>
+        </article>
+       </div>
+     </div>
+ </div>
