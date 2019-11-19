@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-
 {-|
  - Module: PLClub
  - Description: Top-level module for PLClub website
@@ -10,18 +9,7 @@ module PLClub where
 --------------------------------------------------------------------------------
 import           Data.Monoid (mappend)
 import           Hakyll
-import       System.IO.Temp (withSystemTempDirectory)
-import       System.Directory (copyFile)
-import       System.FilePath.Posix ((</>))
-import       System.Process (callProcess)
-import       Text.Pandoc.Definition
-import       Text.Pandoc (writeHtml5String, readHtml)
-import       Text.Pandoc.Class (runPure)
-import       Data.Text (unpack, pack)
-
-
-
-import PLClub.Publications 
+import           PLClub.Publications 
 
 --------------------------------------------------------------------------------
 application :: IO ()
@@ -44,7 +32,6 @@ application = hakyll $ do
     match "meetings/*" $ do
         route $ setExtension "html"
         compile $ do
-            saveSnapshot "content" =<< getResourceBody
             pandocCompiler
                 >>= loadAndApplyTemplate "templates/meeting.html" defaultContextDate 
                 >>= loadAndApplyTemplate "templates/default.html"  defaultContext
@@ -53,10 +40,10 @@ application = hakyll $ do
     create ["people.html"] $ do
         route idRoute
         compile $ do
-            people <- loadAll "people/*" :: Compiler [Item String]
-            people4 <- (\is -> Item "" <$> unbindList 4 is) <$> loadAll "people/*" :: Compiler [Item [Item String]]
+            let people4 = (unbindList 4) <$> loadAll "people/*" :: Compiler [[Item String]]
             let peopleGroupCtx = 
-                    listField "peopleGroup" peopleCtx (return people4) `mappend`
+                    --listField "peopleGroup" peopleCtx (return people4) `mappend`
+                    magic people4 "peopleGroup" "people" defaultContext `mappend`
                     constField "title" "People"            `mappend`
                     defaultContext
             makeItem ""
@@ -117,10 +104,6 @@ unbindList _ [] = []
 unbindList n as =
     (take n as):(unbindList n $ drop n as)
 
-
-peopleCtx :: Context [Item String]
-peopleCtx = listFieldWith "people" defaultContext (\(Item _ v) -> return v)
-
 --- Suppose
 -- C is a compiler that returns a LIST (x) of LISTS (y)
 -- I want a context D that will execute against the first list (x)
@@ -132,12 +115,12 @@ peopleCtx = listFieldWith "people" defaultContext (\(Item _ v) -> return v)
 -- No, it must generated the set.
 -- And it will run C to get [[a]]. For each
 
-magic :: Compiler [[a]]
+magic :: Compiler [[Item a]]
       -> String -- outer key
       -> String -- inner key
-      -> Context a -- Context to run on each "Item a" (though Item is vacuous)
+      -> Context a
       -> Context b
 magic comp ko ki ctx =
     listField ko innerctx ((Item "" <$>) <$> comp)
   where
-    innerctx = listFieldWith ki ctx (\(Item _ as) -> return $ Item "" <$> as)
+    innerctx = listFieldWith ki ctx (\(Item _ as) -> return as)
