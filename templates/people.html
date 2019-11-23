@@ -9,11 +9,40 @@
         <article>
             <section class="">
         <p class="lead"> 
-        Penn PL People
+        Penn PL Faculty
         </p>
-            $for(peopleGroup)$
+            $for(facultyGroup)$
 	   <div class="row">
-		    $for(people)$
+		    $for(faculty)$
+		      <div class="col-lg-3 col-md-12">
+				$if(headshot)$
+					<img class="DISABLE-img-fluid DISABLE-mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/>
+				$else$
+					<img class="DISABLE-img-fluid DISABLE-mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
+				$endif$
+				<ul>
+				$if(url)$
+					<li><a href="$url$">$name$</a> </li>
+				$else$
+					<li>Name: $name$</li>
+				$endif$
+				<li>Research: $body$</li>
+				</ul>
+			<br />
+
+
+		      </div>
+		    $endfor$
+	   </div>
+	    $endfor$
+            </section>
+            <section class="">
+        <p class="lead"> 
+        Penn PL Students
+        </p>
+            $for(studentGroup)$
+	   <div class="row">
+		    $for(students)$
 		      <div class="col-lg-3 col-md-12">
 				$if(headshot)$
 					<img class="DISABLE-img-fluid DISABLE-mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/>
