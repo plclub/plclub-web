@@ -37,13 +37,18 @@ application = hakyll $ do
                 >>= loadAndApplyTemplate "templates/default.html"  defaultContext
                 >>= relativizeUrls
 
-    create ["people.html"] $ do
+    --people tags
+    ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
+    
+        
+    create ["people.html"] $ rulesExtraDependencies [tagsDependency ptags] $ do
         route idRoute
         compile $ do
-            let people4 = (unbindList 4) <$> loadAll "people/*" :: Compiler [[Item String]]
+            let faculty = (unbindList 4) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
+            let students = (unbindList 4) <$> loadTag ptags "student" :: Compiler [[Item String]]
             let peopleGroupCtx = 
-                    --listField "peopleGroup" peopleCtx (return people4) `mappend`
-                    magic people4 "peopleGroup" "people" defaultContext `mappend`
+                    magic faculty "facultyGroup" "faculty" defaultContext `mappend`
+                    magic students "studentGroup" "students" defaultContext `mappend`
                     constField "title" "People"            `mappend`
                     defaultContext
             makeItem ""
@@ -124,3 +129,9 @@ magic comp ko ki ctx =
     listField ko innerctx ((Item "" <$>) <$> comp)
   where
     innerctx = listFieldWith ki ctx (\(Item _ as) -> return as)
+
+loadTag :: Tags -> String -> Compiler [Item String]
+loadTag tags tag = do
+    loadAll (fromList identifiers)
+  where
+    identifiers = maybe [] id $ lookup tag (tagsMap tags)
