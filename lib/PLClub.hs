@@ -73,6 +73,11 @@ application = hakyll $ do
                 >>= loadAndApplyTemplate "templates/default.html" siteContext 
                 >>= relativizeUrls
 
+    create ["plclub_bib.html"] $ do
+        route   $ idRoute
+        compile $ do
+            makeItem =<< unsafeCompiler makeBibHtml
+
     match "club.html" $ do
         route   $ idRoute <!> canonizeRoute
         compile $ do

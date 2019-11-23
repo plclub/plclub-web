@@ -40,6 +40,24 @@ makePapersHtml = withSystemTempDirectory "plclub_bib" $ \f -> do
     callProcess "make" ["-C", f]
     readFile (f </> "plclub.html")
 
+-- Assemble "plclub.html" as a String
+-- This part purely runs the Makefile and returns "plclub.html"
+-- No Hakyll stuff happening yet
+makeBibHtml :: IO String
+makeBibHtml = withSystemTempDirectory "plclub_bib" $ \f -> do
+    copyFile "papers/Makefile" (f </> "Makefile")
+    copyFile "papers/bold-title.bst" (f </> "bold-title.bst")
+    callProcess "make" ["-C", f]
+    readFile (f </> "plclub_bib.html")
+
+-- Assemble "merged.bib" as a String
+makeMergedBib :: IO String
+makeMergedBib = withSystemTempDirectory "plclub_bib" $ \f -> do
+    copyFile "papers/Makefile" (f </> "Makefile")
+    copyFile "papers/bold-title.bst" (f </> "bold-title.bst")
+    callProcess "make" ["-C", f, "merged.bib"]
+    readFile (f </> "merged.bib")
+
 -- This uses pandoc to parse the papers
 parsePapers :: String -> [String]
 parsePapers src = 
