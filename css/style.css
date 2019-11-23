@@ -40,3 +40,12 @@ td:nth-child(2n) {
     text-align:right;
     padding-right:30px
 }
+
+a {
+    font-weight: 200;
+    color:#011F5B
+}
+h1, h2, h3, h4 {
+    color:#9A0000;
+    font-weight:400
+}
