@@ -15,3 +15,11 @@
 .list-unstyled-item {
       padding: 5px 0px;
   }
+
+/* Table */
+table { border-collapse: collapse}
+tr { border: none; }
+th, td {
+padding: 2px;
+text-align: left;
+}
