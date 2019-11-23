@@ -20,6 +20,16 @@
 table { border-collapse: collapse}
 tr { border: none; }
 th, td {
-padding: 2px;
-text-align: left;
+    padding: 2px;
+    text-align: left;
+}
+
+/* Footer */
+Footer p {
+    font-size: 12px;
+    width: 80%;
+    display: table;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
 }
