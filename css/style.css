@@ -42,10 +42,10 @@ td:nth-child(2n) {
 }
 
 a {
-    font-weight: 200;
+    font-weight: 300;
     color:#011F5B
 }
 h1, h2, h3, h4 {
     color:#9A0000;
-    font-weight:400
+    font-weight:400 
 }
