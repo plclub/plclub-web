@@ -1,7 +1,7 @@
 ---
 name: "Steve Zdancewic"
-url:  "test"
-email: "test@upenn.edu"
+email:  "stevez@cis.upenn.edu"
+website: "https://www.cis.upenn.edu/~stevez/"
 tags: ["faculty"]
+headshot: "steve.jpg"
 ---
-Type theory

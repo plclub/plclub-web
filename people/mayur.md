@@ -1,7 +1,7 @@
 ---
-name: "Mayur"
-url:  "test"
-email: "test@upenn.edu"
-tags:  ["faculty"]
+name: "Mayur Naik"
+email:  "mhnaik@cis.upenn.edu"
+website: "https://www.cis.upenn.edu/~mhnaik/"
+tags: ["faculty"]
+headshot: "mayur.jpg"
 ---
-Type theory

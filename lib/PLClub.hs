@@ -47,20 +47,21 @@ application = hakyll $ do
     ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
     
         
-    create ["people.html"] $ rulesExtraDependencies [tagsDependency ptags] $ do
-        route   $ idRoute <!> canonizeRoute
-        compile $ do
-            let faculty = (unbindList 4) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
-            let students = (unbindList 4) <$> loadTag ptags "student" :: Compiler [[Item String]]
-            let peopleGroupCtx = 
-                    nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
-                    nestedListField "studentGroup" "students" siteContext students`mappend`
-                    constField "title" "People"            `mappend`
-                    siteContext
-            makeItem ""
-                >>= loadAndApplyTemplate "templates/people.html" peopleGroupCtx
-                >>= loadAndApplyTemplate "templates/default.html" siteContext 
-                >>= relativizeUrls
+    create ["people.html"] $ 
+        rulesExtraDependencies [tagsDependency ptags] $ do
+            route   $ idRoute <!> canonizeRoute
+            compile $ do
+                let faculty = (unbindList 4) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
+                let students = (unbindList 4) <$> loadTag ptags "student" :: Compiler [[Item String]]
+                let peopleGroupCtx = 
+                        nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
+                        nestedListField "studentGroup" "student" siteContext students`mappend`
+                        constField "title" "People"            `mappend`
+                        siteContext
+                makeItem ""
+                    >>= loadAndApplyTemplate "templates/people.html" peopleGroupCtx
+                    >>= loadAndApplyTemplate "templates/default.html" siteContext 
+                    >>= relativizeUrls
 
     create ["papers.html"] $ do
         route   $ idRoute <!> canonizeRoute
@@ -92,18 +93,23 @@ application = hakyll $ do
                 >>= relativizeUrls
 
     match "index.html" $ do
-        route idRoute
-        compile $ do
-            meetings <- recentFirst =<< loadAll "meetings/*"
-            let indexCtx =
-                    listField "meetings" siteContext (return meetings) `mappend`
-                    recentPapersContext `mappend`
-                    constField "title" "Home"                `mappend`
-                    siteContext
-            getResourceBody
-                >>= applyAsTemplate indexCtx
-                >>= loadAndApplyTemplate "templates/default.html" indexCtx
-                >>= relativizeUrls
+        rulesExtraDependencies [tagsDependency ptags] $ do
+            route idRoute
+            compile $ do
+                meetings <- recentFirst =<< loadAll "meetings/*"
+                let faculty = (unbindList 3) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
+                let students = (unbindList 3) <$> loadTag ptags "student" :: Compiler [[Item String]]
+                let indexCtx =
+                        nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
+                        nestedListField "studentGroup" "student" siteContext students`mappend`
+                        listField "meetings" siteContext (return meetings) `mappend`
+                        recentPapersContext `mappend`
+                        constField "title" "Home"                `mappend`
+                        siteContext
+                getResourceBody
+                    >>= applyAsTemplate indexCtx
+                    >>= loadAndApplyTemplate "templates/default.html" indexCtx
+                    >>= relativizeUrls
 
     match "templates/*" $ compile templateBodyCompiler
 

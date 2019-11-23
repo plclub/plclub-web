@@ -1,7 +1,7 @@
 ---
 name: "Calvin Beck"
 email: "calvin@seas.upenn.edu"
-url: "calvin"
+website: "calvin.com"
 headshot: 
 tags: ["student"]
 ---
