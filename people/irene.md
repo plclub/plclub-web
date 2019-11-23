@@ -1,7 +1,7 @@
 ---
 name: "Irene Yoon"
 url: "euisuny.github.io"
-email: "irene@seas.upenn.edu"
+email: "euisuny@seas.upenn.edu"
 headshot: "irene.png"
 tags: ["student"]
 ---
