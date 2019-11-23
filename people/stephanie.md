@@ -1,7 +1,7 @@
 ---
 name: "Stephanie Weirich"
-url:  "test"
-email: "test@upenn.edu"
+email:  "sweirich@cis.upenn.edu"
+website: "https://www.cis.upenn.edu/~sweirich/"
 tags: ["faculty"]
+headshot: "stephanie.png"
 ---
-Type theory

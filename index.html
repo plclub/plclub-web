@@ -45,129 +45,67 @@
       <a href="/club.html#meetings">More</a>
    </div>
 
-   <hr>
+
+
+
+
+
+
+
+
+
+
+
+
    <h4 class="mt-5">Faculty</h4>
    <!--Grid row-->
+   $for(facultyGroup)$
    <div class="row">
+       $for(faculty)$
       <div class="col-lg-2 col-md-12">
-         <img src="/img/people/benjamin.png" class="img-fluid mb-4" alt="" height="150px" width="150px">
+				$if(headshot)$
+					<img class="img-fluid mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/>
+				$else$
+					<img class="img-fluid mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
+				$endif$
       </div>
       <div class="col-lg-2 col-md-12">
-         <strong>Benjamin</strong> 
+         <strong>$name$</strong>
          <br>
-         <strong>Pierce</strong>
+         [<a href="mailto:$email$">email</a>]
          <br>
-         [<a href="mailto:bcpierce@cis.upenn.edu">email</a>]
-         <br>
-         [<a href="https://www.cis.upenn.edu/~bcpierce/">website</a>]
+         [<a href="$website$">website</a>]
       </div>
-      <div class="col-lg-2 col-md-12">
-         <img src="/img/people/stephanie.png" class="img-fluid mb-4" alt="" height="150px" width="150px">
-      </div>
-      <div class="col-lg-2 col-md-12">
-         <strong>Stephanie</strong>
-         <br>
-         <strong>Weirich</strong>
-         <br>
-         [<a href="mailto:sweirich@cis.upenn.edu">email</a>]
-         [<a href="https://www.cis.upenn.edu/~sweirich/">website</a>]
-      </div>
-      <div class="col-lg-2 col-md-12">
-         <img src="/img/people/steve.jpg" class="img-fluid mb-4" alt="" height="150px" width="150px">
-      </div>
-      <div class="col-lg-2 col-md-12">
-         <strong>Steve</strong> 
-         <br>
-         <strong>Zdancewic</strong>
-         <br>
-         [<a href="mailto:stevez@cis.upenn.edu">email</a>]
-         <br>
-         [<a href="https://www.cis.upenn.edu/~stevez/">website</a>]
-      </div>
-      
+      $endfor$
    </div>
+    $endfor$
+   <hr>
+  
+    
+    <h4 class="mt-5">Ph.D. Students</h4>
+   <!--Grid row-->
+   $for(studentGroup)$
    <div class="row">
+       $for(student)$
       <div class="col-lg-2 col-md-12">
-            <img src="/img/people/rajeev.jpg" class="img-fluid mb-4" alt="" height="150px" width="150px">
+				$if(headshot)$
+					<img class="img-fluid mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/>
+				$else$
+					<img class="img-fluid mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
+				$endif$
       </div>
       <div class="col-lg-2 col-md-12">
-         <strong>Rajeev</strong>
+         <strong>$name$</strong>
          <br>
-         <strong>Alur</strong>
+         [<a href="mailto:$email$">email</a>]
          <br>
-         [<a href="mailto:alur@cis.upenn.edu">email</a>]
-         <br>
-         [<a href="https://www.cis.upenn.edu/~alur/">website</a>]
+         [<a href="$website$">website</a>]
       </div>
-      <div class="col-lg-2 col-md-12">
-         <img src="/img/people/mayur.jpg" class="img-fluid mb-4" alt="" height="150px" width="150px">
-      </div>
-      <div class="col-lg-2 col-md-12">
-         <strong>Mayur</strong>
-         <br>
-         <strong>Naik</strong>
-         <br>
-         [<a href="mailto:mhnaik@cis.upenn.edu">email</a>]
-         <br>
-         [<a href="https://www.cis.upenn.edu/~mhnaik/">website</a>]
-      </div>
-      <div class="col-lg-2 col-md-12">
-            <img src="/img/people/osbert.jpg" class="img-fluid mb-4" alt="" height="150px" width="150px">
-      </div>
-      <div class="col-lg-2 col-md-12">
-         <strong>Osbert</strong>
-         <br>
-         <strong>Bastani</strong>
-         <br>
-         [<a href="mailto:obastani@seas.upenn.edu">email</a>]
-         <br>
-         [<a href="https://obastani.github.io/">website</a>]
-      </div>
+      $endfor$
    </div>
+    $endfor$
+   <hr>
    
-   <h4 class="mt-5">Postdocs</h4>
-   <div class="row">
-      <div class="col-lg-2 col-md-12">
-         <img src="/img/people/steve.jpg" class="img-fluid mb-4" alt="" height="150px" width="150px">
-      </div>
-      <div class="col-lg-2 col-md-12">
-         <strong>Steve</strong> 
-         <br>
-         <strong>Zdancewic</strong>
-         <br>
-         [<a href="mailto:stevez@cis.upenn.edu">email</a>]
-         <br>
-         [<a href="https://www.cis.upenn.edu/~stevez/">website</a>]
-      </div>
-   </div>
-
-   <h4 class="mt-5">Ph.D. Students </h4>
-   <div class="row">
-      <div class="col-lg-2 col-md-12">
-         <img src="/img/people/benjamin.png" class="img-fluid mb-4" alt="" height="150px" width="150px">
-      </div>
-      <div class="col-lg-2 col-md-12">
-         <strong>Benjamin</strong> 
-         <br>
-         <strong>Pierce</strong>
-         <br>
-         [<a href="mailto:bcpierce@cis.upenn.edu">email</a>]
-         <br>
-         [<a href="https://www.cis.upenn.edu/~bcpierce/">website</a>]
-      </div>
-      <div class="col-lg-2 col-md-12">
-         <img src="/img/people/benjamin.png" class="img-fluid mb-4" alt="" height="150px" width="150px">
-      </div>
-      <div class="col-lg-2 col-md-12">
-         <strong>Benjamin</strong> 
-         <br>
-         <strong>Pierce</strong>
-         <br>
-         [<a href="mailto:bcpierce@cis.upenn.edu">email</a>]
-         <br>
-         [<a href="https://www.cis.upenn.edu/~bcpierce/">website</a>]
-      </div>
-   </div>
 </div>
 </div>
 </div>
