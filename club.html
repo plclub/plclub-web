@@ -1,0 +1,19 @@
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-1">
+      </div>
+      <div class="col-lg-9 text-left">
+        <br><br><br>
+        <h3 id="meetings" class="mt-5">PL Club Meetings</h3>
+        <p class="lead">   
+          We meet (usually) on Fridays, 12-1:30pm at Levine 307. 
+        </p>
+        <ul class="list-unstyled">
+	    $for(meetings)$
+		<li>
+			$date$ &nbsp&nbsp|&nbsp&nbsp <a href="$url$"><strong>$title$</strong></a>: $speaker$</a>
+		</li>
+	    $endfor$
+        </ul>
+	</div></div>
+      </div>

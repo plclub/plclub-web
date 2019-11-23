@@ -1,1 +1,10 @@
 .DS_Store
+
+.stack-work/
+*.lock
+_site/
+_cache/
+papers/*.html
+papers/*.bib
+papers/*.bak
+papers/*.keys
