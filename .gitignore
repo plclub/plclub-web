@@ -20,3 +20,12 @@ _store
 _site
 
 stack*.yaml.lock
+
+.stack-work/
+*.lock
+_site/
+_cache/
+papers/*.html
+papers/*.bib
+papers/*.bak
+papers/*.keys

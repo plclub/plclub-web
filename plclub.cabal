@@ -1,0 +1,29 @@
+name:               plclub
+version:            0.1.0.0
+build-type:         Simple
+cabal-version:      >= 1.10
+
+
+library
+    exposed-modules:      PLClub
+                        , PLClub.Publications
+    hs-source-dirs:     lib
+    default-language: Haskell2010
+    build-depends:      base == 4.*
+                    , hakyll == 4.12.*
+                    --- Below is needed only for hackery
+                    , temporary == 1.3.*
+                    , directory == 1.3.*
+                    , process == 1.6.*
+                    , filepath == 1.4.*
+                    , pandoc-types == 1.17.*
+                    , pandoc == 2.2.*
+                    , text == 1.2.*
+
+executable site
+    main-is:          Main.hs
+    hs-source-dirs:     bin
+    ghc-options:      -threaded
+    build-depends:       base    == 4.*
+                       , plclub
+    default-language: Haskell2010
