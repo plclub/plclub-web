@@ -1,26 +1,26 @@
 <div class="container">
 <div class="row">
-<div class="col-lg-1">
+<div class="col-lg-2">
 </div>
-<div class="col-lg-9 text-left">
+<div class="col-lg-8 text-left">
    <br><br><br>
+   <h3 class="mt-5"> PLClub Discussion Group</h3>
    <p class="lead"> 
-      Penn PL does x y z. 
+      Fridays, 12-1:30pm @ Levine 307.
    </p>
-   <h3 class="mt-5">Upcoming PL Club</h3>
-   <p class="lead">   
-      We meet (usually) on Fridays, 12-1:30pm at Levine 307. 
-   </p>
+
    <!--<ul class="list-unstyled"> --> </p>
-   <ul class="list-unstyled">
+   <table style="width:100%" cellpadding="10px">
       $for(meetings)$
-      <li>
-         $date$ &nbsp&nbsp|&nbsp&nbsp <a href="$url$"><strong>$title$</strong></a>: $speaker$</a>
-      </li>
+      <tr>
+         <td>$date$</td>
+         <td><a href="$url$">$title$</td>
+         <td>$speaker$</td>
+      </tr>
       $endfor$
-   </ul>
+   </table> 
    <div align="right">
-      <a href="/club.html#meetings">...More</a>
+      <a href="/club.html#meetings">More</a>
    </div>
    <h3 class="mt-5">Recent Publications</h3>
 	<table class="table">
@@ -30,7 +30,7 @@
 	</table>
 
    <div align="right">
-      <a href="/papers.html">...More</a>
+      <a href="/papers.html">More</a>
    </div>
    <h3 class="mt-5">Faculty</h3>
    <!--Grid row-->

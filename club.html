@@ -1,19 +1,35 @@
   <div class="container">
     <div class="row">
-      <div class="col-lg-1">
+      <div class="col-lg-2">
       </div>
-      <div class="col-lg-9 text-left">
+      <div class="col-lg-8 text-left">
         <br><br><br>
-        <h3 id="meetings" class="mt-5">PL Club Meetings</h3>
-        <p class="lead">   
-          We meet (usually) on Fridays, 12-1:30pm at Levine 307. 
-        </p>
-        <ul class="list-unstyled">
+        <h3 id="meetings" class="mt-5">PLClub Discussion Group</h3>
+        <br>
+        <i><b>PLClub Rules</b></i>
+        <ol>
+           <li>Talk about PLClub! Everyone's welcome.</li>
+           <li>We meet in Levine 307, sometimes.</li>
+           <li>If it's your first semester at PLClub, you have to PL.</li>
+           <li>Lunch starts at 12:15. The talk starts at 12:30.</li>
+           <li>Talks go on as long as they have to, or until 1:30.</li>
+        </ol>
+        <table style="width:100%" cellpadding="10px">
+          $for(meetings)$
+          <tr>
+            <td>$date$</td>
+            <td><a href="$url$">$title$</td>
+            <td>$speaker$</td>
+          </tr>
+          $endfor$
+        </table> 
+
+        <!-- <ul class="list-unstyled">
 	    $for(meetings)$
 		<li>
 			$date$ &nbsp&nbsp|&nbsp&nbsp <a href="$url$"><strong>$title$</strong></a>: $speaker$</a>
 		</li>
 	    $endfor$
-        </ul>
+        </ul> -->
 	</div></div>
       </div>
