@@ -1,7 +1,7 @@
 ---
 name: "Lawrence Dunn"
 email: "dunnla@seas.upenn.edu"
-website: "lawrencedunn.io"
+website: "https://lawrencedunn.io"
 headshot: "lawrence.jpeg"
 tags: ["student"]
 ---
