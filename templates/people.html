@@ -19,16 +19,16 @@
 					<img class="img-fluid mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
 				$endif$
 			</div>
-			<div class="col-lg-2 col-md-12">
+			<div class="col-lg-10 col-md-12">
 				<strong>$name$</strong> 
-				<br>
 				$if(email)$
 					[<a href="$email$">email</a>]
 				$endif$
-				<br>
 				$if(url)$
 					[<a href="$url$">website</a>]
 				$endif$
+				<br>
+				$body$
 			</div>
 		$endfor$
 		</div>
@@ -47,16 +47,16 @@
 					<img class="img-fluid mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
 				$endif$
 			</div>
-			<div class="col-lg-2 col-md-12">
+			<div class="col-lg-10 col-md-12">
 				<strong>$name$</strong> 
-				<br>
 				$if(email)$
 					[<a href="mailto:$email$">email</a>]
 				$endif$
-				<br>
 				$if(url)$
 					[<a href="$url$">website</a>]
 				$endif$
+				<br>
+				$body$
 			</div>
 		$endfor$
 		</div>
