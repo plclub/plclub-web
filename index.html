@@ -29,21 +29,19 @@
    <hr>
    <h3 class="mt-5"> PLClub Discussion Group</h3>
    We usually meet on Fridays, 12-1:30pm at Levine 307. Anyone is welcome!
-
+   <br><br>
+   <h5>Fall 2019 Schedule</h5>
    <!--<ul class="list-unstyled"> --> </p>
    <table style="width:100%" cellpadding="10px">
       $for(meetings)$
       <tr>
-         <td><strong>$date$</strong></td>
+         <td><i>$date$</i></td>
          <td><a href="$url$">$title$</td>
          <td>$speaker$</td>
       </tr>
       $endfor$
    </table> 
    <br>
-   <div align="right">
-      <a href="/club">More</a>
-   </div>
    <hr>
 
    <h4 class="mt-5">Faculty</h4><br>
@@ -61,6 +59,7 @@
       <div class="col-lg-2 col-md-12">
          <strong>$name$</strong>
          <br>
+         [<a href="mailto:$email$">email</a>]
       </div>
       $endfor$
    </div>
@@ -73,7 +72,7 @@
    $for(studentGroup)$
    <div class="row">
        $for(student)$
-       <div class="col-lg-2 col-md-12">
+      <div class="col-lg-2 col-md-12">
 				$if(headshot)$
 					<a href= "$website$"><img class="img-fluid mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/></a>
 				$else$
@@ -83,6 +82,7 @@
       <div class="col-lg-2 col-md-12">
          <strong>$name$</strong>
          <br>
+         [<a href="mailto:$email$">email</a>]
       </div>
       $endfor$
    </div>

@@ -13,8 +13,8 @@
 }
 
 .list-unstyled-item {
-      padding: 5px 0px;
-  }
+    padding: 5px 0px;
+}
 
 /* Table */
 table { border-collapse: collapse}
@@ -24,7 +24,6 @@ th, td {
     text-align: left;
 }
 
-/* Footer */
 Footer p {
     font-size: 12px;
     width: 80%;
@@ -47,13 +46,4 @@ a {
 h1, h2, h3, h4 {
     color:#9A0000;
     font-weight:400 
-}
-
-
-.vertical-center {
-    margin: 0;
-    position: absolute;
-    top: 50%;
-    -ms-transform: translateY(-50%);
-    transform: translateY(-50%);
 }
