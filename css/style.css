@@ -1,7 +1,12 @@
 .navbar {
     padding-top: 60px;
-    color: black;
-    font-size: 22px;
+    color: rgb(37, 68, 128);
+    font-size: 28px;
+}
+
+.navbar-default .navbar-brand:hover,
+.navbar-default .navbar-brand:focus {
+    color: rgb(37, 68, 128);
 }
 
 .navbar-brand {
@@ -15,6 +20,14 @@
 
 .list-unstyled-item {
     padding: 5px 0px;
+}
+
+hr {
+    border: 3px solid #D0EC75;
+}
+body {
+    font-family: Optima, Arial, Helvetica, sans-serif;
+    font-size: 18px
 }
 
 /* Table */
@@ -69,5 +82,5 @@ h1, h2, h3, h4 {
 }
 #links {
     position: absolute;
-    bottom: 40px;
+    bottom: 30px;
 }
