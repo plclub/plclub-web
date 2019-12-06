@@ -1,11 +1,12 @@
 .navbar {
-    padding-top: 40px;
+    padding-top: 60px;
     color: black;
     font-size: 22px;
 }
 
 .navbar-brand {
-    font-size: 22px;
+    font-weight: 1000;
+    font-size: 35px;
 }
 
 .list-unstyled {
@@ -41,9 +42,23 @@ td:nth-child(2n) {
 
 a {
     font-weight: 500;
-    color:#011F5B
+    color:rgb(41, 76, 147)
 }
 h1, h2, h3, h4 {
-    color:#9A0000;
+    color:rgb(164, 48, 48);
     font-weight:400 
 }
+
+.image {
+    @media (min-width: $on-laptop+1) {
+      float:left;
+    }
+    display:inline-block;
+    width: 140px;
+    height: 140px;
+    border-radius: 5%;
+    -webkit-background-size: cover !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    margin-right: 10px;
+  }
