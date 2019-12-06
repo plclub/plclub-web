@@ -21,7 +21,7 @@
 table { border-collapse: collapse}
 tr { border: none; }
 th, td {
-    padding: 2px;
+    padding: 3px;
     text-align: left;
 }
 
@@ -42,10 +42,10 @@ td:nth-child(2n) {
 
 a {
     font-weight: 500;
-    color:rgb(41, 76, 147)
+    color:rgb(37, 68, 128)
 }
 h1, h2, h3, h4 {
-    color:rgb(164, 48, 48);
+    color:rgb(138, 26, 26);
     font-weight:400 
 }
 
@@ -62,3 +62,12 @@ h1, h2, h3, h4 {
     background-position: center center !important;
     margin-right: 10px;
   }
+
+
+#info-container {
+    position: relative;
+}
+#links {
+    position: absolute;
+    bottom: 40px;
+}
