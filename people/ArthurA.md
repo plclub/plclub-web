@@ -2,7 +2,8 @@
 name : "Arthur Azevedo de Amorim"
 degree : "Ph.D."
 year : "2017"
-where : "Post-doc, CMU"
+where : "Postdoc, CMU"
 website : "http://arthuraa.net/"
 tags : ["alum"]
 ---
+Add description here.

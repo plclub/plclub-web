@@ -23,15 +23,16 @@
 }
 
 hr {
-    border: 1px dotted #D0EC75;
+    border: 1px solid #0232802f;
+    width: 96%
 }
 body {
     font-family: Optima, Arial, Helvetica, sans-serif;
-    font-size: 18px
+    font-size: 16px
 }
 
 /* Table */
-table { border-collapse: collapse}
+table { border-collapse: collapse; table-layout: fixed }
 tr { border: none; }
 th, td {
     padding: 3px;
@@ -55,7 +56,7 @@ td:nth-child(2n) {
 
 a {
     font-weight: 500;
-    color:rgb(37, 68, 128)
+    color: #023280f0
 }
 h1, h2, h3, h4 {
     color:rgb(138, 26, 26);

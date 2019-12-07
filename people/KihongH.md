@@ -1,8 +1,9 @@
 ---
 name : "Kihong Heo"
-degree : "Post-doc"
+degree : "Postdoc"
 year : "2019"
 where : "KAIST"
 website : "https://www.cis.upenn.edu/~kheo/"
 tags : ["alum"]
 ---
+Add description here.

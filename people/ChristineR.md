@@ -1,8 +1,9 @@
 ---
 name : "Christine Rizkallah"
-degree : "Post-doc"
+degree : "Postdoc"
 year : "2018"
 where : "UNSW"
 website : "http://www.cse.unsw.edu.au/~crizkallah/"
 tags : ["alum"]
 ---
+Add description here.

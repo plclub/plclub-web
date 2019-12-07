@@ -1,8 +1,9 @@
 ---
 name : "Thao Dang"
-degree : "Post-doc"
+degree : "Postdoc"
 year : "2001"
 where : "CNRS"
 website : "http://www-verimag.imag.fr/PEOPLE/Thao.Dang/"
 tags : ["alum"]
 ---
+Add description here.

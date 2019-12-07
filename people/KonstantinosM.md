@@ -1,8 +1,9 @@
 ---
 name : "Konstantinos Mamouras"
-degree : "Post-doc"
+degree : "Postdoc"
 year : "2018"
 where : "Rice"
 website : "https://csweb.rice.edu/konstantinos-mamouras"
 tags : ["alum"]
 ---
+Add description here.

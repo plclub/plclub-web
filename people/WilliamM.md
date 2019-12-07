@@ -1,8 +1,9 @@
 ---
 name : "William Mansky"
-degree : "Post-doc"
+degree : "Postdoc"
 year : "2016"
 where : "UIC"
 website : "https://www.cs.uic.edu/~mansky/"
 tags : ["alum"]
 ---
+Add description here.

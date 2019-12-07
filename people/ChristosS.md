@@ -1,8 +1,9 @@
 ---
 name : "Christos Stergiou"
-degree : "Post-doc"
+degree : "Postdoc"
 year : "2015"
 where : "Google"
 website : ""
 tags : ["alum"]
 ---
+Add description here.

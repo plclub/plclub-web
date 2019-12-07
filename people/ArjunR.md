@@ -1,8 +1,9 @@
 ---
 name : "Arjun Radhakrishna"
-degree : "Post-doc"
+degree : "Postdoc"
 year : "2017"
 where : "Microsoft"
 website : ""
 tags : ["alum"]
 ---
+Add description here.

@@ -1,8 +1,9 @@
 ---
 name : "Joachim Breitner"
-degree : "Post-doc"
+degree : "Postdoc"
 year : "2019"
 where : "DFINITY"
 website : "https://www.joachim-breitner.de/blog"
 tags : ["alum"]
 ---
+Add description here.
