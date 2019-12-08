@@ -63,7 +63,10 @@ a {
 rgb(138, 26, 26);*/
 h1, h2, h3, h4 {
     color:#023280f0;
-    font-weight:400 
+}
+
+h5 {
+    font-weight:300;
 }
 
 .image {

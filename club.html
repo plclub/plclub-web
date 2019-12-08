@@ -1,48 +1,39 @@
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-1">
-      </div>
-      <div class="col-lg-10 text-left">
-        <h3 id="meetings" class="mt-5">PLClub Discussion Group</h3>
-        <hr>
-        <div class="row">
-          <div class="mt-5 col-lg-8">
-            <h5>Rules</h5>
-            <ol>
-              <li>Talk about PLClub! Anyone is welcome.</li>
-              <li>If it's your first semester at PLClub, you have to PL.</li>
-              <li>Lunch starts at 12:15pm.</li>
-              <li>Talks start at 12:30pm.</li>
-              <li>Talks go on as long as they have to, or until 1:30pm.</li>
-            </ol>
-          </div>
-          <div class="col-lg-4">
-            <div style="float: right;">
-                <iframe src="https://www.google.com/calendar/embed?showTitle=0&amp;showTabs=0&amp;showCalendars=0&amp;showTz=0&amp;height=300&amp;wkst=1&amp;bgcolor=%23FFFFFF&amp;src=88hj97m6e4lg7p56ou3l0npon8%40group.calendar.google.com&amp;color=%23B1440E&amp;ctz=America%2FNew_York"
-                        style=" border-width:0 " width="400" height="300"
-                        frameborder="0" scrolling="no">
-                </iframe>
-            </div>
-         </div>
-       </div>
-        <hr>
-        <h4 class="mt-4">Fall 2019 Schedule</h4>
-        <div class="mt-5 row">
-        <div class="col-lg-1"></div>
-          <div class="col-lg-10">
-            <table>
-              $for(meetings)$
-              <tr>
-                <td>$date$</td>
-                <td><a href="$url$">$title$</td>
-                <td>$speaker$</td>
-              </tr>
-              $endfor$
-            </table> 
-          </div>
-        </div>
-        
-  </div></div>
-  
-      </div>
-      
+<h3 id="meetings" class="mt-5">PLClub Discussion Group</h3>
+<hr>
+<div class="row">
+  <div class="mt-5 col-lg-8">
+    <h5 style="font-weight:700">Rules</h5>
+    <ol>
+      <li>Talk about PLClub! Anyone is welcome.</li>
+      <li>If it's your first semester at PLClub, you have to PL.</li>
+      <li>Lunch starts at 12:15pm.</li>
+      <li>Talks start at 12:30pm.</li>
+      <li>Talks go on as long as they have to, or until 1:30pm.</li>
+    </ol>
+  </div>
+  <div class="col-lg-4">
+    <div style="float: right;">
+        <iframe src="https://www.google.com/calendar/embed?showTitle=0&amp;showTabs=0&amp;showCalendars=0&amp;showTz=0&amp;height=300&amp;wkst=1&amp;bgcolor=%23FFFFFF&amp;src=88hj97m6e4lg7p56ou3l0npon8%40group.calendar.google.com&amp;color=%23B1440E&amp;ctz=America%2FNew_York"
+                style=" border-width:0 " width="400" height="300"
+                frameborder="0" scrolling="no">
+        </iframe>
+    </div>
+  </div>
+</div>
+<hr>
+<h4 class="mt-4">Fall 2019 Schedule</h4>
+<div class="mt-5 row">
+<div class="col-lg-1"></div>
+  <div class="col-lg-10">
+    <table>
+      $for(meetings)$
+      <tr>
+        <td>$date$</td>
+        <td><a href="$url$">$title$</td>
+        <td>$speaker$</td>
+      </tr>
+      $endfor$
+    </table> 
+  </div>
+</div>
+

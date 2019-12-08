@@ -6,6 +6,8 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <meta name="description" content="University of Pennsylvania Programming Languages Club">
   <meta name="author" content="">
+  <!-- Load favicon -->
+  <link rel="icon" href="/img/favicon.ico">
 
   <title>Programming Languages @ Penn</title>
 
@@ -18,7 +20,15 @@
 <body>
 $partial("templates/header.html")$
 
-$body$
+<div class="container">
+  <div class="row">
+    <div class="col-lg-1">
+    </div>
+    <div class="col-lg-10">
+      $body$
+    </div>
+  </div>
+</div>
 
 $partial("templates/footer.html")$
 
