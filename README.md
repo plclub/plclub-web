@@ -40,8 +40,6 @@ Look under _meetings_
 
 ### Adding a new person
 
-(Not completely working yet. The front page currently is a static mock-up, while the _people_ page is built with Hakyll).
-
 Look under _people_
 
 ### Recent publications
