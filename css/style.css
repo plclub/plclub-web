@@ -56,10 +56,13 @@ td:nth-child(2n) {
 
 a {
     font-weight: 500;
-    color: #023280f0
+    color: #028045f0
 }
+
+/* #023280f0 
+rgb(138, 26, 26);*/
 h1, h2, h3, h4 {
-    color:rgb(138, 26, 26);
+    color:#023280f0;
     font-weight:400 
 }
 
