@@ -46,7 +46,6 @@ application = hakyll $ do
     --people tags
     ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
     
-        
     create ["people.html"] $ 
         rulesExtraDependencies [tagsDependency ptags] $ do
             route   $ idRoute <!> canonizeRoute

@@ -81,12 +81,11 @@ h5 {
   }
 
 #info-container {
-    position: relative;
+    position: static;
 }
 
 #links {
-    position: absolute;
-    bottom: 30px;
+    position: static;
 }
 
 #circle-list {
