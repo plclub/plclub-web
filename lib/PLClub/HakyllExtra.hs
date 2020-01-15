@@ -36,7 +36,7 @@ nestedListField ko ki ctx items =
  
 defaultContextDate :: Context String
 defaultContextDate =
-    dateField "date" "%b %e" `mappend`
+    dateField "date" "%b %e %Y" `mappend`
     defaultContext
 
 
@@ -95,7 +95,7 @@ canonicalUrlField key = field key $ \i -> do
 siteContext :: Context String
 siteContext =
     metadataField      `mappend`
-    dateField  "date" "%b %e" `mappend`
+    dateField  "date" "%b %e %Y" `mappend`
     bodyField  "body"  `mappend`
     titleField "title" `mappend`
     canonicalUrlField   "url" `mappend`
