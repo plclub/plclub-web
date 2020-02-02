@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 {-|
  - Module: PLClub
  - Description: Top-level module for PLClub website
@@ -17,9 +18,16 @@ import           PLClub.HakyllExtra
 (<!>) = composeRoutes
 thenRoute = composeRoutes
 
+config :: Configuration
+config = defaultConfiguration
+  { deployCommand =
+      "ssh plclub@eniac \"tar -zc -f html-$(date '+%F').tar.gz html\";\
+      \ rsync -vr _site/ plclub@eniac:html"
+  }
+  
 --------------------------------------------------------------------------------
 application :: IO ()
-application = hakyll $ do
+application = hakyllWith config $ do
     match "img/**" $ do
         route   idRoute
         compile copyFileCompiler
