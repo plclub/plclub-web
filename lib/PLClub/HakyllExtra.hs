@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {-|
@@ -11,7 +12,9 @@ module PLClub.HakyllExtra where
 import       Hakyll
 import       System.FilePath.Posix
 import       Data.List (reverse)
-
+import       Control.Monad (liftM)
+import       Data.Ord (comparing)
+import       Data.List (sortBy)
 
 --- Suppose
 -- C is a compiler that returns a LIST (x) of LISTS (y)
@@ -100,5 +103,17 @@ siteContext =
     titleField "title" `mappend`
     canonicalUrlField   "url" `mappend`
     missingField
+    
+-- | Get graduation year field
+-- Look up the "year" field of an identifier's metadata
+-- Will throw a runtime error if the field does not exist
+-- or cannot be coerced to an integer
+getYear :: (MonadMetadata m)
+        => Item a
+        -> m Int
+getYear item =
+  read <$> getMetadataField' (itemIdentifier item) "year"
 
-
+sortByM :: (Monad m, Ord k) => (a -> m k) -> [a] -> m [a]
+sortByM f xs = liftM (map fst . sortBy (comparing snd)) $
+  mapM (\x -> liftM (x,) (f x)) xs

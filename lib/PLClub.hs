@@ -58,15 +58,6 @@ application = hakyllWith config $ do
         rulesExtraDependencies [tagsDependency ptags] $ do
             route   $ idRoute <!> canonizeRoute
             compile $ do
-                let faculty = (unbindList 4) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
-                let students = (unbindList 4) <$> loadTag ptags "student" :: Compiler [[Item String]]
-                let postdocs = (unbindList 4) <$> loadTag ptags "postdoc" :: Compiler [[Item String]]
-                let alum = (unbindList 4) <$> loadTag ptags "alum" :: Compiler [[Item String]]
-                let peopleGroupCtx = 
-                        nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
-                        nestedListField "studentGroup" "student" siteContext students`mappend`
-                        nestedListField "postdocGroup" "postdoc" siteContext postdocs`mappend`
-                        nestedListField "alumGroup"    "alum"    siteContext alum    `mappend`
                         constField "title" "People"            `mappend`
                         siteContext
                 makeItem ""
@@ -111,7 +102,8 @@ application = hakyllWith config $ do
                 let faculty = (unbindList 3) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
                 let students = (unbindList 3) <$> loadTag ptags "student" :: Compiler [[Item String]]
                 let postdocs = (unbindList 4) <$> loadTag ptags "postdoc" :: Compiler [[Item String]]
-                let alum = (unbindList 4) <$> loadTag ptags "alum" :: Compiler [[Item String]]
+                let alum' = loadTag ptags "alum" :: Compiler [Item String]
+                let alum = (unbindList  4) <$> ((sortByM getYear) =<< alum')
                 let indexCtx =
                         nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
                         nestedListField "studentGroup" "student" siteContext students`mappend`
