@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Xavier Leroy's solution to the POPLmark Challenge</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+
+  <body>
+  <div class="content">
+    <a href="index.html"><img src="poplmark.png" alt="POPLmark logo" class="logo" /></a>
+
+    <p class="heading">Xavier Leroy's solution</p>
+
+    <ul>
+      <li>Author: <a href="http://pauillac.inria.fr/~xleroy/">Xavier Leroy.</a></li>
+      <li>Parts addressed: 1a, 2a and 3.</li>
+      <li>Proof assistant / theorem prover used: Coq.</li>
+      <li>Encoding technique: Locally nameless.</li>
+      <li>Files: available from
+          the <a href="http://cristal.inria.fr/~xleroy/POPLmark/locally-nameless/">author's
+          page</a>.</li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <p class="heading">Commentary</p>
+
+    <p>
+      A <a href="http://gallium.inria.fr/~xleroy/publi/POPLmark-locally-nameless.pdf">technical
+      report</a> describes the solution.  The following remarks are
+      copied from
+      <a href="http://lists.seas.upenn.edu/pipermail/poplmark/2005-October/000253.html">
+      a message</a> from Leroy to the POPLmark mailing list.</p>
+
+    <p>Some good things about this representation:</p>
+    <ul>
+      <li>Alpha-equivalence is term equality, which makes life much
+        simpler in Coq.</li>
+      <li>The statements (and even the proofs) of the main theorems
+        are quite close to what one would write on paper.</li>
+      <li>Despite not being completely nominal, it still illustrates
+        some of the key aspects of fully nominal approaches,
+        especially the "forall/exists" equivalence for the choice of
+        fresh variables.</li>
+    </ul>
+
+  <p>Some bad things about this representation:</p>
+  <ul>
+    <li>There is a lot of boilerplate involved before getting to the
+      meat of the proof: two substitution functions (of names and of
+      de Bruijn variables), computation and properties of free names,
+      swaps, commutation of swaps with many definitions, the
+      "forall/exists" theorems, etc. Consequently, the development is
+      larger than a pure de Bruijn solution.</li>
+    <li>Extending this approach to part 2 of the challenge exceeds my
+      fortitude: two sorts of names, six substitution functions, even
+      more swaps, commutation theorems all over the place, ... Enough
+      is enough :-)</li>
+    </ul>
+
+  <p>One good thing about my solution: It is heavily commented, then
+    typeset using the coqdoc tool. Message to my fellow solution
+    submitters: you, too, can write good English; don't be shy.</p>
+  
+  <p>One bad thing about my solution: My Coq proof scripts do not have
+    the conciseness and elegance of Jérôme Vouillon's. Sorry, I've been
+    using Coq for only 6 years...</p>
+
+  <p>Final thoughts:</p>
+  <ul>
+    <li>If the purpose is just to solve the challenge and be done
+      with it, I would rather go for pure de Bruijn.</li>
+    <li>However, this could change if some of the nominal boilerplate
+      was built into the logic or at least into the prover.</li>
+    <li>The exercise has some educational value, to me at least.</li>
+  </ul>
+  </div>
+</html>
+  

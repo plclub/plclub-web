@@ -1,0 +1,1000 @@
+// POPLmark Challenge
+
+// An encoding of Subject Reduction and Progress theorems for Fsub in ATS/LF
+
+// By Hongwei Xi (July 2005)
+
+// [tp]: static encoding of types in Fsub
+
+datasort tp =
+  | TPtop
+  | TPfun of (tp, tp)
+  | TPall of (tp, tp -> tp)
+
+// [TPEQ]: type equality
+
+dataprop TPEQ (tp, tp) = {t:tp} TPEQ (t, t)
+
+// [tm]: static encoding of terms in Fsub
+
+datasort tm =
+  | lm of (tm -> tm) | ap of (tm, tm)
+  | tlm of (tp, tp -> tm) | tap of (tm, tp)
+
+// [ads]: subtyping context
+
+datasort ads = adnil | admore of (ads, tp, tp)
+
+// deBrujin indexes
+
+dataprop ADIN (tp, tp, ads) =
+  | {ads:ads, X:tp, T:tp} ADINone (X, T, admore (ads, X, T))
+  | {ads:ads, X:tp, T:tp, X':tp, T':tp}
+      ADINshi (X, T, admore (ads, X', T')) of ADIN (X, T, ads)
+
+// subtying derivation
+
+dataprop AD (ads, tp, tp, int) =
+  | {ads:ads, T:tp} ADtop (ads, T, TPtop, 0)
+
+  | {ads:ads, T:tp} ADref (ads, T, T, 0)
+
+  | {ads:ads, T1:tp, T2:tp, T3:tp, n1:nat, n2:nat}
+       ADtra (ads, T1, T3, n1+n2+1) of (AD (ads, T1, T2, n1), AD (ads, T2, T3, n2))
+
+  | {ads:ads, X:tp, T:tp} ADvar (ads, X, T, 0) of ADIN (X, T, ads)
+
+  | {ads:ads, T11:tp, T12:tp, T21:tp, T22:tp, n1:nat, n2:nat}
+       ADfun (ads, TPfun (T11, T12), TPfun (T21, T22), n1+n2+1) of
+         (AD (ads, T21, T11, n1), AD (ads, T12, T22, n2))
+
+  | {ads:ads, T11:tp, F12:tp->tp, T21:tp, F22:tp->tp, n1:nat, n2:nat}
+       ADall (ads, TPall (T11, F12), TPall (T21, F22), n1+n2+1) of
+         (AD (ads, T21, T11, n1), {X:tp} AD (admore (ads, X, T21), F12 X, F22 X, n2))
+
+propdef AD0 (ads:ads, T1:tp, T2:tp) = [n:nat] AD (ads, T1, T2, n)
+
+//
+
+propdef ADSUP (ads1:ads, ads2:ads) = {X:tp, T:tp} ADIN (X, T, ads2) -> ADIN (X, T, ads1)
+
+prfun adsupId {ads:ads, X:tp, T:tp} .< >.
+    : ADSUP (ads, ads) = lam i => i
+
+prfun adsupShi {ads1:ads, ads2:ads, X:tp, T:tp} .< >.
+     (f: ADSUP (ads1, ads2)): ADSUP (admore (ads1, X, T), admore (ads2, X, T)) =
+  lam i => case* i of ADINone () => ADINone () | ADINshi i => ADINshi (f i)
+
+//
+
+prfun adsup {ads1:ads, ads2:ads, X:tp, T:tp, n:nat} .<n>.
+     (f: ADSUP (ads1, ads2), ad: AD (ads2, X, T, n)): AD (ads1, X, T, n) =
+  case* ad of
+    | ADtop () => ADtop ()
+    | ADref () => ADref ()
+    | ADtra (ad1, ad2) => ADtra (adsup (f, ad1), adsup (f, ad2))
+    | ADvar i => ADvar (f i)
+    | ADfun (ad1, ad2) => ADfun (adsup (f, ad1), adsup (f, ad2))
+    | ADall (ad, fad) =>
+        ADall (adsup (f, ad), lam {X:tp} => adsup (adsupShi f, fad{X}))
+
+//
+
+prfun adsupWeak {ads:ads, X:tp, T:tp} .< >.
+    : ADSUP (admore (ads, X, T), ads) = lam i => ADINshi i
+
+// the weakening lemma for subtyping
+
+prfun adWeakLemma {ads:ads, X:tp, T:tp, X':tp, T':tp, n:nat} .< >.
+     (ad: AD (ads, X, T, n)): AD (admore (ads, X', T'), X, T, n) =
+  adsup (adsupWeak {...}, ad)
+
+prfun adsupExch {ads:ads, X1:tp, T1:tp, X2:tp, T2:tp} .< >.
+    : ADSUP (admore (admore (ads, X1, T1), X2, T2), admore (admore (ads, X2, T2), X1, T1)) =
+  lam i =>
+    case* i of
+      | ADINone () => ADINshi (ADINone)
+      | ADINshi (ADINone ()) => ADINone
+      | ADINshi (ADINshi i) => ADINshi (ADINshi i)
+
+// the exchanging lemma for subtyping
+
+prfun adExchLemma {ads:ads, X1:tp, T1:tp, X2:tp, T2:tp, T:tp, T':tp, n:nat} .< >.
+     (ad: AD (admore (admore (ads, X1, T1), X2, T2), T, T', n))
+    : AD (admore (admore (ads, X2, T2), X1, T1), T, T', n) =
+    adsup (adsupExch {...}, ad)
+
+
+// the narrowing lemma for subtyping
+
+prfun adNarrowLemma {ads:ads, X:tp, T1:tp, T2:tp, T:tp, T':tp, n:nat} .<n>.
+     (ad: AD (admore (ads, X, T1), T, T', n), ad0: AD0 (ads, T2, T1))
+    : AD0 (admore (ads, X, T2), T, T') =
+  case* ad of
+    | ADtop () => ADtop ()
+
+    | ADref () => ADref ()
+
+    | ADtra (ad1, ad2) =>
+        ADtra (adNarrowLemma (ad1, ad0), adNarrowLemma (ad2, ad0))
+
+    | ADvar i => begin
+        case* i of
+          | ADINone () => ADtra (ADvar (ADINone ()), adWeakLemma ad0)
+          | ADINshi i => ADvar (ADINshi i)
+      end
+
+    | ADfun (ad1, ad2) =>
+        ADfun (adNarrowLemma (ad1, ad0), adNarrowLemma (ad2, ad0))
+
+    | ADall {_, T, F, T', F', _, _} (ad, fad) =>
+        ADall (adNarrowLemma (ad, ad0), 
+               lam {Y:tp}: AD0 (admore (admore (ads, X, T2), Y, T'), F Y, F' Y) =>
+                 adExchLemma
+                   (adNarrowLemma (adExchLemma (fad{Y}), adWeakLemma ad0)))
+//
+
+prfun lemma10 {T1:tp,T21:tp, T22:tp, n:nat} .<n>.
+     (ad: AD (adnil, T1, TPfun (T21, T22), n))
+    : [T11:tp, T12:tp] TPEQ (T1, TPfun (T11, T12)) =
+  case* ad of
+    | ADref () => TPEQ ()
+    | ADtra (ad1, ad2) =>
+        let prval TPEQ () = lemma10 ad2 in lemma10 ad1 end
+    | ADfun _ => TPEQ ()
+    | ADvar i =/=> (case* i of ADINone () => '() | ADINshi _ => '())
+
+prfun lemma11 {T11:tp, T12:tp, T21:tp, T22:tp, n:nat} .<n>.
+     (ad: AD (adnil, TPfun (T11, T12), TPfun (T21, T22), n))
+    : [n1:nat,n2:nat | n1 <= n, n2 <= n]
+        '(AD (adnil, T21, T11, n1), AD (adnil, T12, T22, n2)) =
+  case* ad of
+    | ADref () => '(ADref (), ADref ())
+
+    | ADtra (ad1, ad2) =>
+        let
+           prval TPEQ () = lemma10 ad2
+           prval '(ad11, ad12) = lemma11 ad1
+           prval '(ad21, ad22) = lemma11 ad2
+        in
+           '(ADtra (ad21, ad11), ADtra (ad12, ad22))
+        end
+
+    | ADfun (ad1, ad2) => '(ad1, ad2)
+
+    | ADvar i =/=> (case* i of ADINone () => '() | ADINshi _ => '())
+
+//
+
+prfun lemma12 {T1:tp,T21:tp, F22:tp->tp, n:nat} .<n>.
+     (ad: AD (adnil, T1, TPall (T21, F22), n))
+    : [T11:tp, F12:tp->tp] TPEQ (T1, TPall (T11, F12)) =
+  case* ad of
+    | ADref () => TPEQ ()
+
+    | ADall _ => TPEQ ()
+
+    | ADtra (ad1, ad2) =>
+        let prval TPEQ () = lemma12 ad2 in lemma12 ad1 end
+
+    | ADvar i =/=> (case* i of ADINone () => '() | ADINshi _ => '())
+//
+
+prfun lemma13 {T11:tp, F12:tp->tp, T21:tp, F22:tp->tp, n:nat} .<n>.
+     (ad: AD (adnil, TPall (T11, F12), TPall (T21, F22), n))
+    : '(AD0 (adnil, T21, T11), {X:tp} AD0 (admore (adnil, X, T21), F12 X, F22 X)) =
+  case* ad of
+    | ADref () => '(ADref (), lam {X:tp} => ADref {admore (adnil, X, T21), F12 X} ())
+
+    | ADtra (ad1, ad2) =>
+        let
+           prval TPEQ () = lemma12 ad2
+           prval '(ad11, fad12) = lemma13 ad1
+           prval '(ad21, fad22) = lemma13 ad2
+        in
+           '(ADtra (ad21, ad11),
+             lam {X:tp}: AD0 (admore (adnil, X, T21), F12 X, F22 X) =>
+               ADtra (adNarrowLemma (fad12{X}, ad21), fad22{X}))
+        end
+
+    | ADall (ad1, ad2) => '(ad1, ad2)
+
+    | ADvar i =/=> (case* i of ADINone () => '() | ADINshi _ => '())
+
+// substitution lemma for subtyping derivations
+
+prfun substitutionLemma0
+     {ads:ads, X:tp, T:tp, T1:tp, T2:tp, n:nat} .<n>.
+     (ad: AD (admore (ads, X, T), T1, T2, n), ad0: AD0 (ads, X, T))
+    : AD0 (ads, T1, T2) =
+  case* ad of
+    | ADtop () => ADtop ()
+
+    | ADref () => ADref ()
+
+    | ADtra (ad1, ad2) =>
+        ADtra (substitutionLemma0 (ad1, ad0), substitutionLemma0 (ad2, ad0))
+
+    | ADvar i => (case* i of ADINone () => ad0 | ADINshi i => ADvar i)
+
+    | ADfun (ad1, ad2) =>
+        ADfun (substitutionLemma0 (ad1, ad0), substitutionLemma0 (ad2, ad0))
+
+    | ADall (ad, fad) =>
+        ADall
+          (substitutionLemma0 (ad, ad0),
+           lam {X:tp} =>
+             substitutionLemma0 (adExchLemma (fad {X}), adWeakLemma ad0))
+
+//
+
+datasort tds = tdnil | tdmore of (tds, tm, tp)
+
+// deBruijn indexes
+
+dataprop TDIN (tm, tp, tds) =
+  | {tds:tds, t:tm, T:tp} TDINone (t, T, tdmore (tds, t, T))
+  | {tds:tds, t:tm, t':tm, T:tp, T':tp}
+      TDINshi (t, T, tdmore (tds, t', T')) of TDIN (t, T, tds)
+
+// typing derviations
+
+dataprop TD (ads, tds, tm, tp, int) = // typing derivation
+  | {ads:ads, tds:tds, t:tm, T:tp}
+      TDvar (ads, tds, t, T, 0) of TDIN (t, T, tds)
+
+  | {ads:ads, tds:tds, f:tm->tm, T1:tp, T2:tp, n:nat}
+      TDlam (ads, tds, lm f, TPfun (T1, T2), n+1) of
+        {t:tm} TD (ads, tdmore (tds, t, T1), f t, T2, n)
+
+  | {ads:ads, tds:tds, t1:tm, t2:tm, T1:tp, T2:tp, n1:nat, n2:nat}
+      TDapp (ads, tds, ap (t1, t2), T2, n1+n2+1) of
+        (TD (ads, tds, t1, TPfun (T1, T2), n1), TD (ads, tds, t2, T1, n2))
+
+  | {ads:ads, tds:tds, f: tp->tm, T:tp, F: tp->tp, n:nat}
+      TDtlam (ads, tds, tlm (T, f), TPall (T, F), n+1) of
+        {X:tp} TD (admore (ads, X, T), tds, f X, F X, n)
+
+  | {ads:ads, tds:tds, t:tm, T0:tp, F:tp->tp, T:tp, n:nat}
+      TDtapp (ads, tds, tap (t, T), F T, n+1) of
+        (TD (ads, tds, t, TPall (T0, F), n), AD0 (ads, T, T0))
+
+  | {ads:ads, tds:tds, t:tm, T1:tp, T2:tp, n:nat}
+      TDsub (ads, tds, t, T2, n+1) of
+        (TD (ads, tds, t, T1, n), AD0 (ads, T1, T2))
+
+propdef TD0 (ads:ads, tds:tds, t:tm, T:tp) = [n:nat] TD (ads, tds, t, T, n)
+
+//
+
+propdef TDSUP (tds1:tds, tds2:tds) = {t:tm, T:tp} TDIN (t, T, tds2) -> TDIN (t, T, tds1)
+
+prfun tdsupId {tds:tds, t:tm, T:tp} .< >.
+    : TDSUP (tds, tds) = lam i => i
+
+prfun tdsupWeak {tds:tds, t:tm, T:tp} .< >.
+    : TDSUP (tdmore (tds, t, T), tds) = lam i => TDINshi i
+
+prfun tdsupShi {tds1:tds, tds2:tds, t:tm, T:tp} .< >.
+     (f: TDSUP (tds1, tds2)): TDSUP (tdmore (tds1, t, T), tdmore (tds2, t, T)) =
+  lam i => case* i of TDINone () => TDINone () | TDINshi i => TDINshi (f i)
+
+prfun tdsup {ads1:ads, ads2:ads, tds1:tds, tds2:tds, t:tm, T:tp, n:nat} .<n>.
+     (af: ADSUP (ads1, ads2), tf: TDSUP (tds1, tds2), td: TD (ads2, tds2, t, T, n))
+    : TD (ads1, tds1, t, T, n) =
+  case* td of
+    | TDvar i => TDvar (tf i)
+
+    | TDlam (ftd) => TDlam (lam {x:tm} => tdsup (af, tdsupShi tf, ftd{x}))
+
+    | TDapp (td1, td2) => TDapp (tdsup (af, tf, td1), tdsup (af, tf, td2))
+
+    | TDtlam (ftd) => TDtlam (lam {X:tp} => tdsup (adsupShi af, tf, ftd{X}))
+
+    | TDtapp (td1, ad2) => TDtapp (tdsup (af, tf, td1), adsup (af, ad2))
+
+    | TDsub (td1, ad2) => TDsub (tdsup (af, tf, td1), adsup (af, ad2))
+
+// the weakening lemmas for typing
+
+prfun tdWeakLemma1 {ads:ads, tds:tds, t:tm, T:tp, T1:tp, T2:tp, n:nat} .< >.
+     (td: TD (ads, tds, t, T, n)): TD (admore (ads, T1, T2), tds, t, T, n) =
+  tdsup (adsupWeak {...}, tdsupId {...}, td)
+
+
+prfun tdWeakLemma2 {ads:ads, tds:tds, t:tm, t':tm, T:tp, T':tp, n:nat} .< >.
+     (td: TD (ads, tds, t, T, n)): TD (ads, tdmore (tds, t', T'), t, T, n) =
+  tdsup (adsupId {...}, tdsupWeak {...}, td)
+
+//
+
+prfun tdsupExch {tds:tds, t1:tm, T1:tp, t2:tm, T2:tp} .< >.
+    : TDSUP (tdmore (tdmore (tds, t1, T1), t2, T2), tdmore (tdmore (tds, t2, T2), t1, T1)) =
+  lam i =>
+    case* i of
+      | TDINone () => TDINshi (TDINone)
+      | TDINshi (TDINone ()) => TDINone
+      | TDINshi (TDINshi i) => TDINshi (TDINshi i)
+
+// the exchanging lemmas for typing
+
+prfun tdExchLemma1
+     {ads:ads, tds:tds, t:tm, T:tp, X1:tp, T1:tp, X2:tp, T2:tp, n:nat} .< >.
+     (td: TD (admore (admore (ads, X1, T1), X2, T2), tds, t, T, n))
+    : TD (admore (admore (ads, X2, T2), X1, T1), tds, t, T, n) =
+  tdsup (adsupExch {...}, tdsupId {...}, td)
+
+prfun tdExchLemma2
+     {ads:ads, tds:tds, t:tm, T:tp, t1:tm, T1:tp, t2:tm, T2:tp, n:nat} .< >.
+     (td: TD (ads, tdmore (tdmore (tds, t1, T1), t2, T2), t, T, n))
+    : TD (ads, tdmore (tdmore (tds, t2, T2), t1, T1), t, T, n) =
+  tdsup (adsupId {...}, tdsupExch {...}, td)
+
+//
+
+prfun tdNarrowLemma1
+     {ads:ads, tds:tds, t:tm, X:tp, T1:tp, T2:tp, T:tp, n:nat} .<n>.
+     (td: TD (admore (ads, X, T1), tds, t, T, n), ad0: AD0 (ads, T2, T1))
+    : TD0 (admore (ads, X, T2), tds, t, T) =
+  case* td of
+    | TDvar i => TDvar i
+
+    | TDlam ftd => TDlam (lam {x:tm} => tdNarrowLemma1 (ftd{x}, ad0))
+
+    | TDapp (td1, td2) =>
+        TDapp (tdNarrowLemma1 (td1, ad0), tdNarrowLemma1 (td2, ad0))
+
+    | TDtlam {_, _, f, T, F, _} (ftd) =>
+        TDtlam (
+          lam {Y:tp}: TD0 (admore (admore (ads, X, T2), Y, T), tds, f Y, F Y)  =>
+            tdExchLemma1
+              (tdNarrowLemma1 (tdExchLemma1 (ftd {Y}), adWeakLemma ad0))
+        )
+
+    | TDtapp (td, ad) =>
+        TDtapp (tdNarrowLemma1 (td, ad0), adNarrowLemma (ad, ad0))
+
+    | TDsub (td, ad) =>
+        TDsub (tdNarrowLemma1 (td, ad0), adNarrowLemma (ad, ad0))
+
+//
+
+prfun tdNarrowLemma2 {ads:ads, tds:tds, x:tm, t:tm, T1:tp, T2:tp, T:tp, n:nat} .<n>.
+      (td: TD (ads, tdmore (tds, x, T1), t, T, n), ad0: AD0 (ads, T2, T1))
+     : TD0 (ads, tdmore (tds, x, T2), t, T) =
+  case* td of
+    | TDvar i => begin
+        case* i of
+          | TDINone () => TDsub (TDvar (TDINone ()), ad0)
+          | TDINshi i => TDvar (TDINshi i)
+      end
+
+
+    | TDlam {_, _, f, T, T', _} (ftd) =>
+        TDlam (
+          lam {y:tm}: TD0 (ads, tdmore (tdmore (tds, x, T2), y, T), f y, T') =>
+            tdExchLemma2 (tdNarrowLemma2 (tdExchLemma2 (ftd {y}), ad0))
+        )
+
+    | TDapp (td1, td2) => TDapp (tdNarrowLemma2 (td1, ad0), tdNarrowLemma2 (td2, ad0))
+
+    | TDtlam ftd => TDtlam (lam {X:tp} => tdNarrowLemma2 (ftd{X}, adWeakLemma ad0))
+
+    | TDtapp (td, ad) => TDtapp (tdNarrowLemma2 (td, ad0), ad) 
+
+    | TDsub (td, ad) => TDsub (tdNarrowLemma2 (td, ad0), ad)
+
+//
+
+dataprop ISV (tm) = // [ISV t]: t is a value
+  {f:tm->tm} ISVlam (lm f) | {f:tp->tm, T:tp} ISVtlam (tlm (T, f))
+
+// defintion for redexes
+
+dataprop RED (tm, tm) =
+  | {f:tm->tm, t:tm} REDbeta (ap (lm f, t), f t) of ISV t
+  | {f:tp->tm, T1:tp, T2:tp} REDtbeta (tap (tlm (T1, f), T2), f T2)
+
+propdef ISR (t1: tm) = [t2:tm] RED (t1, t2) // [ISR t]: t is a redex
+
+// syntactic term equality
+
+dataprop TMEQ (tm, tm) = {t:tm} TMEQ (t, t)
+
+// definition for evaluation contexts
+
+dataprop EC (tm->tm) =
+  | ECemp (lam (x:tm):tm => x)
+  | {f:tm->tm, t:tm} ECapp1 (lam (x:tm):tm => ap (f x, t)) of EC f
+  | {f:tm->tm, t:tm} ECapp2 (lam (x:tm):tm => ap (t, f x)) of (ISV t, EC f)
+  | {f:tm->tm, T:tp} ECtapp (lam (x:tm):tm => tap (f x, T)) of EC f
+
+// evaluation relation
+
+propdef EV (t1:tm, t2:tm) = // [EV (t1, t2)]: t1 reduces to t2 in one step
+  [f:tm->tm, r:tm, c:tm] '(EC f, RED (r, c), TMEQ (t1, f r), TMEQ (t2, f c))
+
+prfun EVbeta {f:tm->tm, t:tm} .< >. (pf: ISV t)
+  : EV (ap (lm f, t), f t) = '(ECemp, REDbeta pf, TMEQ (), TMEQ ())
+
+prfun EVtbeta {f:tp->tm, T1:tp, T2:tp} .< >.
+    : EV (tap (tlm (T1, f), T2), f T2) = '(ECemp, REDtbeta (), TMEQ (), TMEQ ())
+
+// substitution lemmas for typing derivations
+
+prfun substitutionLemma1
+     {ads:ads, tds:tds, t:tm, T1:tp, T2:tp, T:tp, n:nat} .<n>.
+     (td: TD (admore (ads, T1, T2), tds, t, T, n), ad: AD0 (ads, T1, T2))
+    : TD0 (ads, tds, t, T) =
+  case* td of
+    | TDvar i => TDvar i
+
+    | TDlam ftd => TDlam (lam {x:tm} => substitutionLemma1 (ftd {x}, ad))
+
+    | TDapp (td1, td2) =>
+        TDapp (substitutionLemma1 (td1, ad), substitutionLemma1 (td2, ad))
+
+    | TDtlam (ftd) =>
+        TDtlam
+          (lam {X:tp} =>
+             substitutionLemma1 (tdExchLemma1 (ftd {X}), adWeakLemma ad))
+
+    | TDtapp (td, ad') =>
+        TDtapp (substitutionLemma1 (td, ad), substitutionLemma0 (ad', ad))
+
+    | TDsub (td, ad') =>
+        TDsub (substitutionLemma1 (td, ad), substitutionLemma0 (ad', ad))
+
+//
+
+prfun substitutionLemma2
+     {ads:ads, tds:tds, t1:tm, t2:tm, T1:tp, T2:tp, n:nat} .<n>.
+     (td: TD (ads, tdmore (tds, t1, T1), t2, T2, n), td0: TD0 (ads, tds, t1, T1))
+    : TD0 (ads, tds, t2, T2) =
+  case* td of
+    | TDvar i => begin
+        case* i of
+          | TDINone () => td0
+          | TDINshi i => TDvar i
+      end
+
+    | TDlam ftd =>
+        TDlam (
+          lam {x:tm} =>
+            substitutionLemma2 (tdExchLemma2 (ftd {x}), tdWeakLemma2 td0))
+
+    | TDapp (td1, td2) =>
+        TDapp (substitutionLemma2 (td1, td0), substitutionLemma2 (td2, td0))
+
+    | TDtlam (ftd) =>
+        TDtlam (lam {X:tp} => substitutionLemma2 (ftd {X}, tdWeakLemma1 td0))
+
+    | TDtapp (td, ad) => TDtapp (substitutionLemma2 (td, td0), ad)
+
+    | TDsub (td, ad) => TDsub (substitutionLemma2 (td, td0), ad)
+
+//
+
+// ------------------------------------------------------------------------
+
+// Subject Reduction
+
+prfun subjectReductionTheorem {t:tm, t':tm, T:tp, n:nat} .<n, 0>. 
+     (td: TD (adnil, tdnil, t, T, n), pf: EV (t, t')): TD0 (adnil, tdnil, t', T) =
+  case* td of
+    | TDsub (td, ad) => TDsub (subjectReductionTheorem (td, pf), ad)
+
+    | TDapp (td1, td2) => subjectReductionTheoremApp (td1, td2, pf)
+
+    | TDtapp (td, ad) => subjectReductionTheoremTapp (td, ad, pf)
+
+    | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+
+    | TDlam _ =/=>
+        let prval '(pf1, pf2, pf3, _) = pf in
+          case* pf1 of
+            | ECemp () => begin
+                case* pf2 of
+                  | REDbeta _ => let prval TMEQ () = pf3 in '() end
+                  | REDtbeta _ => let prval TMEQ () = pf3 in '() end
+              end
+            | ECapp1 _ => let prval TMEQ () = pf3 in '() end
+            | ECapp2 _ => let prval TMEQ () = pf3 in '() end
+            | ECtapp _ => let prval TMEQ () = pf3 in '() end
+        end
+
+    | TDtlam _ =/=>
+        let prval '(pf1, pf2, pf3, _) = pf in
+          case* pf1 of
+            | ECemp () => begin
+                case* pf2 of
+                  | REDbeta _ => let prval TMEQ () = pf3 in '() end
+                  | REDtbeta _ => let prval TMEQ () = pf3 in '() end
+              end
+            | ECapp1 _ => let prval TMEQ () = pf3 in '() end
+            | ECapp2 _ => let prval TMEQ () = pf3 in '() end
+            | ECtapp _ => let prval TMEQ () = pf3 in '() end
+        end
+
+and subjectReductionTheoremApp
+   {t1:tm, t2:tm, t':tm, T1:tp, T2:tp, n1:nat, n2:nat} .<n1+n2, n1+1>. 
+     (td1: TD (adnil, tdnil, t1, TPfun (T1, T2), n1), 
+      td2: TD (adnil, tdnil, t2, T1, n2),
+      pf: EV (ap (t1, t2), t')): TD0 (adnil, tdnil, t', T2) =
+  let prval '(pf1, pf2, pf3, pf4) = pf in
+     case* pf1 of
+       | ECemp () => begin
+           case* td1 of
+             | TDlam (ftd1) =>
+                 let
+                    prval TMEQ () = pf3
+                    prval TMEQ () = pf4
+                    prval REDbeta _ = pf2
+                 in
+                    substitutionLemma2 (ftd1 {...}, td2)
+                 end
+
+             | TDsub (td1, ad1) =>
+                 let
+                    prval TPEQ () = lemma10 (ad1)
+                    prval '(ad11, ad12) = lemma11 (ad1)
+                    prval td2 = TDsub (td2, ad11)
+                 in
+                    TDsub (subjectReductionTheoremApp (td1, td2, pf), ad12)
+                 end
+
+             | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+
+             | TDapp _ =/=>
+                 let
+                    prval TMEQ () = pf3
+                    prval REDbeta _ = pf2
+                 in
+                    '()
+                 end
+
+             | TDtapp _ =/=>
+                 let
+                    prval TMEQ () = pf3
+                    prval REDbeta _ = pf2
+                 in
+                    '()
+                 end
+
+         end
+
+       | ECapp1 pf1 =>
+           let
+              prval TMEQ () = pf3
+              prval TMEQ () = pf4
+              prval td1 =
+                subjectReductionTheorem (td1, '(pf1, pf2, TMEQ (), TMEQ ()))
+           in
+              TDapp (td1, td2)
+           end
+
+       | ECapp2 (_, pf1) =>
+           let
+              prval TMEQ () = pf3
+              prval TMEQ () = pf4
+              prval td2 =
+                subjectReductionTheorem (td2, '(pf1, pf2, TMEQ (), TMEQ ()))
+           in
+              TDapp (td1, td2)
+           end
+
+       | ECtapp _ =/=> let prval TMEQ () = pf3 in '() end
+  end
+
+
+and subjectReductionTheoremTapp
+   {t:tm, t':tm, T1:tp, F2: tp->tp, T:tp, n:nat} .<n, 1>.
+   (td: TD (adnil, tdnil, t, TPall (T1, F2), n),
+    ad: AD0 (adnil, T, T1),
+    pf: EV (tap (t, T), t')): TD0 (adnil, tdnil, t', F2 T) =
+  let prval '(pf1, pf2, pf3, pf4) = pf in
+     case* pf1 of
+       | ECemp () => begin
+           case* td of
+             | TDtlam (ftd) =>
+                 let
+                    prval TMEQ () = pf3
+                    prval TMEQ () = pf4
+                    prval REDtbeta () = pf2
+                 in
+                    substitutionLemma1 (ftd {...}, ad)
+                 end
+
+
+                   | TDsub (td, ad') =>
+                       let
+                          prval TPEQ () = lemma12 (ad')
+                          prval '(ad1', ad2') = lemma13 (ad')
+                          prval ad2' = substitutionLemma0 (ad2', ad)
+                          prval ad = ADtra (ad, ad1')
+                          prval td = TDtapp (td, ad)
+                       in
+                          TDsub (subjectReductionTheorem (td, pf), ad2')
+                       end
+
+             | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+
+             | TDapp _ =/=>
+                 let
+                    prval TMEQ () = pf3
+                    prval REDtbeta () = pf2
+                 in
+                    '()
+                 end
+
+             | TDtapp _ =/=>
+                 let
+                    prval TMEQ () = pf3
+                    prval REDtbeta () = pf2
+                 in
+                    '()
+                 end
+         end
+
+       | ECtapp pf1 =>
+           let
+              prval TMEQ () = pf3
+              prval TMEQ () = pf4
+              prval td =
+                subjectReductionTheorem (td, '(pf1, pf2, TMEQ (), TMEQ ()))
+           in
+              TDtapp (td, ad)
+           end
+
+       | ECapp1 _ =/=> let prval TMEQ () = pf3 in '() end
+       | ECapp2 _ =/=> let prval TMEQ () = pf3 in '() end
+  end
+
+
+
+// ------------------------------------------------------------------------
+
+// Progress Theorem
+
+dataprop ORELSE (p1: prop, p2: prop) = inl (p1, p2) of p1 | inr (p1, p2) of p2
+
+infixl ORELSE
+
+//
+
+prfun decompositionLemma {t:tm, T:tp, n:nat} .<n>. (td: TD (adnil, tdnil, t, T, n))
+    : ISV t ORELSE [f:tm->tm, r:tm] '(EC f, ISR r, TMEQ (f r, t)) =
+  case* td of
+    | TDlam _ => inl (ISVlam ())
+    | TDapp (d1, d2) => begin
+        case* decompositionLemma d1 of
+          | inl pf1 => begin
+              case* decompositionLemma d2 of
+                | inl pf2 => inr '(ECemp, REDbeta pf2, TMEQ ())
+                | inr '(pf21, pf22, _) => inr '(ECapp2 (pf1, pf21), pf22, TMEQ ())
+             end
+
+          | inr '(pf11, pf12, _) => inr '(ECapp1 pf11, pf12, TMEQ ())
+      end
+    | TDtlam _ => inl (ISVtlam ())
+    | TDtapp (d1, _) => begin
+        case* decompositionLemma d1 of
+          | inl pf => inr '(ECemp, REDtbeta (), TMEQ ())
+          | inr '(pf11, pf12, _) => inr '(ECtapp pf11, pf12, TMEQ ())
+      end
+    | TDsub (td1, _) => decompositionLemma (td1)
+    | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+
+prfun progressTheorem {t:tm, T:tp, n:nat} .< >. (td: TD (adnil, tdnil, t, T, n))
+    : ISV (t) ORELSE [t':tm] EV (t, t') =
+  case* decompositionLemma td of
+    | inl pf => inl pf
+    | inr '(pf1, pf2, _) => inr '(pf1, pf2, TMEQ (), TMEQ ())
+     
+
+// ------------------------------------------------------------------------
+
+// A verified implementation of Fsub
+
+dataprop EVAL (tm, tm, int) =
+  | {f:tm->tm} EVALlam (lm f, lm f, 0)
+  | {t1:tm, t2:tm, f:tm->tm, v1:tm, v2:tm, n1:nat, n2:nat, n3:nat}
+      EVALapp (ap (t1, t2), v2, n1+n2+n3+1) of
+        (EVAL (t1, lm f, n1), EVAL (t2, v1, n2), EVAL (f v1, v2, n3))
+  | {f:tp->tm, T:tp} EVALtlam (tlm (T, f), tlm (T, f), 0)
+  | {t:tm, f:tp->tm, v:tm, T1:tp, T2:tp, n1:nat, n2:nat}
+      EVALtapp (tap (t, T1), v, n1+n2+1) of (EVAL (t, tlm (T2, f), n1), EVAL (f T1, v, n2))
+
+propdef EVAL0 (t:tm, v:tm) = [n:nat] EVAL (t, v, n)
+
+prfun lemma30 {t:tm, v:tm, n:nat} .<n>. (pf: EVAL (t, v, n)): ISV v =
+  case* pf of
+    | EVALlam () => ISVlam ()
+    | EVALapp (_, _, pf3) => lemma30 pf3
+    | EVALtlam () => ISVtlam ()
+    | EVALtapp (_, pf2) => lemma30 pf2
+
+prfun lemma31 {t:tm} .< >. (pf: ISV t): EVAL0 (t, t) =
+  case* pf of
+    | ISVlam () => EVALlam ()
+    | ISVtlam () => EVALtlam ()
+
+prfun lemma32 {t:tm, T1:tp, T2:tp, n:nat} .<n>.
+     (td: TD (adnil, tdnil, t, TPfun (T1, T2), n), pf: ISV t)
+    : [f:tm->tm] TMEQ (t, lm f) =
+  case* pf of
+    | ISVlam () => TMEQ ()
+    | ISVtlam () => begin
+        case* td of
+          | TDsub (td, ad) =>
+              let prval TPEQ () = lemma10 ad in lemma32 (td, pf) end
+          | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+          | _ =/=>> '()
+      end
+
+prfun lemma33 {t:tm, T:tp, F:tp->tp, n:nat} .<n>.
+     (td: TD (adnil, tdnil, t, TPall (T, F), n), pf: ISV t)
+    : [f:tp->tm, T0:tp] TMEQ (t, tlm (T0, f)) =
+  case* pf of
+    | ISVtlam () => TMEQ ()
+    | ISVlam () => begin
+        case* td of
+          | TDsub (td, ad) =>
+              let prval TPEQ () = lemma12 ad in lemma33 (td, pf) end
+          | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+          | _ =/=>> '()
+      end
+
+//
+
+datasort tms = tmnil | tmmore of (tms, tm)
+
+datatype TMIN (tm, tms) =
+  | {ts:tms, t:tm} TMINone (t, tmmore (ts, t))
+  | {ts:tms, t:tm, t':tm} TMINshi (t, tmmore (ts, t')) of TMIN (t, ts)
+
+datatype TM (tms, tm) =
+  | {ts:tms, t:tm} TMvar (ts, t) of TMIN (t, ts)
+
+  | {ts:tms, f:tm->tm}
+      TMlam (ts, lm f) of ({t: tm} TM (tmmore (ts, t), f t))
+
+  | {ts:tms, t1:tm, t2:tm}
+      TMapp (ts, ap (t1, t2)) of (TM (ts, t1), TM (ts, t2))
+
+  | {ts:tms, f:tp->tm, T:tp}
+      TMtlam (ts, tlm (T, f)) of ({X:tp} TM (ts, f X))
+
+  | {ts:tms, t:tm, T:tp}
+      TMtapp (ts, tap (t, T)) of TM (ts, t)
+//
+
+datatype VAL (tm) =
+  | {ts:tms, f: tm->tm} 
+      VALclo (lm f) of (ENV ts, {x:tm} TM (tmmore (ts, x), f x))
+  | {ts:tms, f: tp->tm, T:tp}
+      VALtclo (tlm (T, f)) of (ENV ts, {X:tp} TM (ts, f X))
+
+and ENV (tms) =
+  | ENVnil (tmnil)
+  | {ts:tms, t:tm} ENVcons (tmmore (ts, t)) of (ISV t | ENV ts, VAL t)
+
+//
+
+fun evalVar {ts:tms, t:tm} (env: ENV ts, i: TMIN (t, ts)): '(ISV t | VAL t) =
+  case* i of
+    | TMINone () => let val ENVcons (pf | _, v) = env in '(pf | v) end
+    | TMINshi i => let val ENVcons (_ | env, _) = env in evalVar (env, i) end
+
+//
+
+prfun lemma40 {t1:tm, t2:tm, T:tp, n:nat} .<n>.
+     (td: TD (adnil, tdnil, ap (t1, t2), T, n))
+    : [T1:tp, T2:tp]
+        '(TD0 (adnil, tdnil, t1, TPfun (T1, T2)),
+          TD0 (adnil, tdnil, t2, T1),
+          AD0 (adnil, T2, T)) =
+  case* td of
+    | TDapp (td1, td2) => '(td1, td2, ADref ())
+    | TDsub (td, ad) =>
+        let
+           prval '(td1, td2, ad') = lemma40 td
+        in
+           '(td1, td2, ADtra (ad', ad))
+        end
+    | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+
+//
+
+prfun lemma41 {f:tm->tm, T1:tp, T2:tp, n:nat} .<n>.
+     (td: TD (adnil, tdnil, lm f, TPfun (T1, T2), n))
+    : {x:tm} TD0 (adnil, tdmore (tdnil, x, T1), f x, T2) =
+  case* td of
+    | TDlam ftd => ftd
+
+    | TDsub (td, ad) =>
+        lam {x:tm}: TD0 (adnil, tdmore (tdnil, x, T1), f x, T2) =>
+          let
+              prval TPEQ () = lemma10 ad
+              prval '(ad1, ad2) = lemma11 ad
+              prval ftd = lemma41 td
+          in
+              TDsub (tdNarrowLemma2 (ftd {x}, ad1), ad2)
+          end
+
+    | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+
+prfun lemma42 {t:tm, T1:tp, T:tp, n:nat} .<n>.
+     (td: TD (adnil, tdnil, tap (t, T1), T, n))
+    : [T2:tp, F:tp->tp]
+        '(TD0 (adnil, tdnil, t, TPall (T2, F)),
+          AD0 (adnil, T1, T2),
+          AD0 (adnil, F T1, T)) =
+  case* td of
+    | TDtapp (td, ad) => '(td, ad, ADref ())
+    | TDsub (td, ad) =>
+        let
+           prval '(td, ad1, ad2) = lemma42 td
+        in
+           '(td, ad1, ADtra (ad2, ad))
+        end
+    | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+
+prfun lemma43 {f:tp->tm, T1:tp, T2:tp, F:tp->tp, n:nat} .<n>.
+     (td: TD (adnil, tdnil, tlm (T1, f), TPall (T2, F), n))
+    : {X:tp} TD0 (admore (adnil, X, T2), tdnil, f X, F X) =
+  case* td of
+    | TDtlam ftd => ftd
+
+    | TDsub (td, ad) =>
+        lam {X:tp}: TD0 (admore (adnil, X, T2), tdnil, f X, F X) =>
+          let
+              prval TPEQ () = lemma12 ad
+              prval '(ad1, fad2) = lemma13 ad
+              prval ftd = lemma43 td
+          in
+              TDsub (tdNarrowLemma1 (ftd {X}, ad1), fad2 {X})
+          end
+
+    | TDvar i =/=> (case* i of TDINone () => '() | TDINshi _ => '())
+
+//
+
+dataprop EVS (tm, tm, int) =
+  | {t:tm} EVSnil (t, t, 0) 
+  | {t:tm, t1:tm, t2:tm, n:nat}
+      EVScons (t, t2, n+1) of (EV (t, t1), EVS (t1, t2, n))
+
+propdef EVS0 (t1:tm, t2:tm) = [n:nat] EVS (t1, t2, n)
+
+prfun lemma50 {t1:tm, t2:tm, t:tm, n:nat} .<n>.
+     (pf: EVS (t1, t2, n)): EVS (ap (t1, t), ap (t2, t), n) =
+  case* pf of
+    | EVSnil () => EVSnil ()
+    | EVScons (pf1, pf2) =>
+        let
+           prval '(pf11, pf12, TMEQ (), TMEQ ()) = pf1
+           prval pf1 = '(ECapp1 pf11, pf12, TMEQ (), TMEQ ())
+           prval pf2 = lemma50 pf2
+        in
+           EVScons (pf1, pf2)
+        end
+
+prfun lemma51 {t1:tm, t2:tm, t:tm, n:nat} .<n>.
+     (pf: EVS (t1, t2, n), pf0: ISV t): EVS (ap (t, t1), ap (t, t2), n) =
+  case* pf of
+    | EVSnil () => EVSnil ()
+    | EVScons (pf1, pf2) =>
+        let
+           prval '(pf11, pf12, TMEQ (), TMEQ ()) = pf1
+           prval pf1 = '(ECapp2 (pf0, pf11), pf12, TMEQ (), TMEQ ())
+           prval pf2 = lemma51 (pf2, pf0)
+        in
+           EVScons (pf1, pf2)
+        end
+
+prfun lemma52 {t1:tm, t2:tm, T:tp, n:nat} .<n>.
+     (pf: EVS (t1, t2, n)): EVS (tap (t1, T), tap (t2, T), n) =
+  case* pf of
+    | EVSnil () => EVSnil ()
+    | EVScons (pf1, pf2) =>
+        let
+           prval '(pf11, pf12, TMEQ (), TMEQ ()) = pf1
+           prval pf1 = '(ECtapp pf11, pf12, TMEQ (), TMEQ ())
+           prval pf2 = lemma52 pf2
+        in
+           EVScons (pf1, pf2)
+        end
+
+prfun lemma53 {t1:tm, t2:tm, t3:tm, n1:nat, n2:nat} .<n1>.
+     (pf1: EVS (t1, t2, n1), pf2: EVS (t2, t3, n2))
+    : EVS (t1, t3, n1+n2) =
+  case* pf1 of
+    | EVSnil () => pf2
+    | EVScons (pf11, pf12) => EVScons (pf11, lemma53 (pf12, pf2))
+
+prfun lemma54 {t:tm,v:tm,n:nat} .<n>.
+     (pf: EVAL (t, v, n)): EVS0 (t, v) =
+  case* pf of
+    | EVALlam () => EVSnil ()
+    | EVALapp (pf1, pf2, pf3) =>
+        let
+           prval pf10 = lemma30 pf1
+           prval pf20 = lemma30 pf2
+           prval pf1' = lemma54 pf1
+           prval pf2' = lemma54 pf2
+           prval pf3' = lemma54 pf3
+           prval pf12' = lemma53 (lemma50 pf1', lemma51 (pf2', pf10))
+        in
+           lemma53 (pf12', EVScons (EVbeta pf20, pf3'))
+        end
+
+    | EVALtlam () => EVSnil ()
+    | EVALtapp (pf1, pf2) =>
+        let
+           prval pf1' = lemma54 pf1
+           prval pf2' = lemma54 pf2
+        in
+           lemma53 (lemma52 pf1', EVScons (EVtbeta {...}, pf2'))
+        end
+
+fun eval {ts:tms, t:tm, T:tp}
+   (td: TD0 (adnil, tdnil, t, T) | env: ENV ts, t: TM (ts, t))
+  : [v:tm] '(EVAL0 (t, v), TD0 (adnil, tdnil, v, T) | VAL v) =
+  case* t of
+    | TMvar i =>
+        let val '(pf | v) = evalVar (env, i) in '(lemma31 pf, td | v) end
+
+    | TMlam body => '(EVALlam (), td | VALclo (env, body))
+
+    | TMapp (t1, t2) =>
+        let
+           prval '(td1, td2, ad) = lemma40 td
+
+           val '(pf1, td1 | v) = eval (td1 | env, t1)
+
+           prval TMEQ () = lemma32 (td1, lemma30 pf1)
+
+           val VALclo (env0, tf1) = v
+
+           prval ftd1 = lemma41 td1
+
+           val '(pf2, td2 | v2) = eval (td2 | env, t2)
+
+           prval td = substitutionLemma2 (ftd1 {...}, td2)
+
+           val '(pf3, td | v) =
+              eval (td | ENVcons (lemma30 pf2 | env0, v2), tf1 {...})
+        in
+           '(EVALapp (pf1, pf2, pf3), TDsub (td, ad) | v)
+        end
+
+    | TMtlam body => '(EVALtlam (), td | VALtclo (env, body))
+
+    | TMtapp t =>
+        let
+           prval '(td, ad1, ad2) = lemma42 td
+
+           val '(pf1, td | v) = eval (td | env, t)
+
+           prval TMEQ () = lemma33 (td, lemma30 pf1)
+
+           val VALtclo (env0, tf) = v
+
+           prval ftd = lemma43 td
+
+           prval td = substitutionLemma1 (ftd {...}, ad1)
+
+           val '(pf2, td | v) = eval (td | env0, tf {...})
+        in
+           '(EVALtapp (pf1, pf2), TDsub (td, ad2) | v)
+        end 
+
+fun evaluate {t:tm, T:tp}
+   (td: TD0 (adnil, tdnil, t, T) | e: TM (tmnil, t))
+  : [v:tm] '(ISV v, EVS0 (t, v), TD0 (adnil, tdnil, v, T) | VAL v) =
+  let
+     val '(pf, td | v) = eval (td | ENVnil, e)
+  in
+     '(lemma30 pf, lemma54 pf, td | v)
+  end

@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Arthur Charguéraud's solution to the POPLmark Challenge</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+
+  <body>
+  <div class="content">
+    <a href="index.html"><img src="poplmark.png" alt="POPLmark logo" class="logo" /></a>
+
+    <p class="heading">Arthur Charguéraud's locally nameless solution</p>
+
+    <ul>
+      <li>Author: <a href="http://arthur.chargueraud.org/">Arthur Charguéraud</a>.</li>
+      <li>Parts addressed: 1a + lemma A.10 and type safety for STLC.</li>
+      <li>Proof assistant / theorem prover used: Coq.</li>
+      <li>Encoding technique: Locally nameless.</li>
+      <li>Files: available from
+          the <a href="http://arthur.chargueraud.org/research/2006/poplmark/">author's
+          page</a>.</li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <p class="heading">Commentary</p>
+    
+    <p>This locally nameless formalization is the result towards which
+      I have converged at the end of an internship focused on the
+      POPLMark Challenge. The work took place from March to July 2006
+      at the University of Pennsylvania, with Benjamin Pierce and
+      Stephanie Weirich as advisors.</p>
+
+    <p>This solution benefits from two nice properties:</p>
+    <ul>
+      <li>The proofs of the main results are short and simple to
+        follow through: the arguments are mostly the same as in a paper
+        proof.</li>
+      <li>The machinery involved is rather intuitive (in the sense
+        that it does not require the ingenuity needed with pure
+        de-Bruijn indices), and in the same time it is not too heavy
+        (this is probably not true of a representation fully relying
+        on names).</li>
+    </ul>
+    
+    <p>Main aspects of the solution:</p>
+    <ul>
+      <li>It is based on a locally nameless representation. As usual
+        with this representation, there are two substitutions
+        involved: one for indices and another one for names.</li>
+      <li>Environments are built as lists of bindings, but then used
+        as sets of bindings. This makes the proofs simpler because we
+        can "forget" about the ordering of the environment. We use
+        this not only to capture weakening, but also to capture
+        substitution in environment. A nice side-effect is that the
+        narrowing lemma becomes an instance of the "preservation of
+        subtyping through type substitution" lemma.</li>
+      <li>In SA-all rule, the name introduced is not quantified as
+        "exists X # E", nor as "forall X # E", but as "forall X not_in
+        L", where L is an arbitrary list of names (note that L is
+        introduced by the constructor SA-all, and is not a parameter
+        of the relation). The interest of this quantification is that
+        there is no need for a formal proof of equivariance: this
+        SA-all rule works everywhere. (Remark: equivariance is still
+        needed to show the adequacy of the universal quantification
+        with respect to the existential one).</li>
+      <li>All the subtyping rules have premises enforcing the
+        well-formation of the arguments. Tanks to a special notation
+        for this, it does not look too bad. The advantage is that
+        symmetry are preserved, and it seems to simplify the
+        proofs.</li>
+      <li>Proofs by inductions on the size of types are replaced by
+        proofs on the derivation of the well-formation relation, which
+        are closer to the notion of "induction on the structure of a
+        type".</li>
+    </ul>
+
+    <p>About the implementation:</p>
+    <ul>
+      <li>At first sight, the source file is quite long (580
+         lines). This is because there are a good numbers of
+         definitions, and many lemmas. But then the total amount of
+         proof is quite small. More precisely, Coqwc reports some 300
+         lines of specifications and some 150 lines of proofs</li>
+      <li>There are around 40 lemmas, but most of them have less than
+        3 lines of proofs. Only 6 lemmas have more than 4 lines of
+        proof, and together the lines of proofs of those 6 lemma add
+        up to about 50 lines.</li>
+      <li>Proof-search tactics are used extensively; as a result, only
+        the key arguments appear in the proofs.</li>
+      <li>Very few tactics specialized for this development are
+        introduced. Thus the proofs are easy to follow and one does
+        not need to learn the syntax of the tactic language to use the
+        code.</li>
+    </ul>
+
+    <p>Possible improvements in the solution:</p>
+    <ul>
+      <li>For some reason, the proof-search tactic sometimes fail to
+        solve some goals while we could expect it to do so. This is
+        why some cases labelled "Case SA-arrow" have to be done by
+        hand.</li>
+      <li>Proofs of some lemmas dealing with well-formation could
+        probably be simplified, or at least beautified.</li>
+    </ul>
+  </div>
+</html>
+  
