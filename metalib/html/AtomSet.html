@@ -1,0 +1,249 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>AtomSet</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library AtomSet</h1>
+
+<code>
+
+<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSets.html#">FSets</a>.<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="AdditionalTactics.html#">AdditionalTactics</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="Atom.html#">Atom</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="FSetWeakNotin.html#">FSetWeakNotin</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="ListFacts.html#">ListFacts</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="PennFSetDecide.html#">PennFSetDecide</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab38"></a><h1 class="section">Definitions</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We use our implementation of atoms to obtain an implementation of
+    finite sets of atoms.  We give the resulting type an intuitive
+    name, as well as import names of set operations for use within
+    this library. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <span class="keyword">Import</span> <a name="AtomSetImpl"></a>AtomSetImpl &lt;: <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetInterface.html#">FSetInterface.WS</a> <span class="keyword">with</span> <span class="keyword">Module</span> E := <a class="idref" href="Atom.html#">AtomImpl</a><br/>
+&nbsp;&nbsp;:= <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetWeakList.html#">FSetWeakList.Make</a> <a class="idref" href="Atom.html#">AtomImpl</a>.<br/>
+<span class="keyword">Definition</span> <a name="atoms"></a>atoms := <a class="idref" href="AtomSet.html#AtomSetImpl.t">AtomSetImpl.t</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+From our implementation of finite sets of atoms, we can
+    instantiate the decision procedures for solving facts about such
+    finite sets. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="AtomSetDecide"></a>AtomSetDecide := <a class="idref" href="PennFSetDecide.html#">PennFSetDecide.WDecide</a> <a class="idref" href="Atom.html#">AtomImpl</a> <a class="idref" href="AtomSet.html#AtomSetImpl">AtomSetImpl</a>.<br/>
+<span class="keyword">Ltac</span> atomsetdec := AtomSetDecide.fsetdec.<br/>
+
+<br/>
+<span class="keyword">Module</span> <a name="AtomSetNotin"></a>AtomSetNotin := <a class="idref" href="FSetWeakNotin.html#">FSetWeakNotin.Notin</a> <a class="idref" href="AtomSet.html#AtomSetImpl">AtomSetImpl</a>.<br/>
+<span class="keyword">Ltac</span> destruct_atomset_notin := AtomSetNotin.destruct_notin.<br/>
+<span class="keyword">Ltac</span> solve_atomset_notin := AtomSetNotin.solve_notin.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Given the <code>atomsetdec</code> tactic, we typically do not need to refer
+    to specific lemmas about finite sets.  However, instantiating the
+    <code>FSetWeakFacts.Facts</code> functor makes a number of setoid rewrites
+    available.  These rewrites are crucial to developments since they
+    allow us to replace a set with an extensionally equal set (see the
+    <code>Equal</code> relation on finite sets) in propositions about finite
+    sets. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="AtomSetProperties"></a>AtomSetProperties := <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetFacts.html#">FSetFacts.WFacts</a> <a class="idref" href="Atom.html#">AtomImpl</a> <a class="idref" href="AtomSet.html#AtomSetImpl">AtomSetImpl</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab39"></a><h1 class="section">Properties</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We can generate an atom fresh for any given finite set of
+    atoms. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="atom_fresh_for_set"></a>atom_fresh_for_set : forall L : <a class="idref" href="AtomSet.html#atoms">atoms</a>, { x : <a class="idref" href="Atom.html#atom">atom</a> | ~ <a class="idref" href="AtomSet.html#AtomSetImpl.In">In</a> x L }.<br/>
+<br/>
+<br/>
+<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab40"></a><h1 class="section">Tactic support</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The auxiliary tactic <code>simplify_list_of_atom_sets</code> takes a list of
+    finite sets of atoms and unions everything together, returning the
+    resulting single finite set.  It's rarely used by itself; see the
+    example below.  The tactic does assume that <code>L</code>, after
+    simplification using <code>simpl</code>, is built using only <code>nil</code> and
+    <code>cons</code>.  This is the case when used following the pattern
+    below. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> simplify_list_of_atom_sets L :=<br/>
+&nbsp;&nbsp;ltac_fold_and_simpl AtomSetImpl.union AtomSetImpl.empty L.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>(pick fresh Y <span class="keyword">for</span> L)</code> takes a finite set of atoms <code>L</code>
+    and a fresh name <code>Y</code>, and adds to the context an atom with name
+    <code>Y</code> and a proof that <code>(~ In Y L)</code>, i.e., that <code>Y</code> is fresh for
+    <code>L</code>.  The tactic will fail if <code>Y</code> is already declared in the
+    context. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "pick" "fresh" ident(Y) "for" constr(L) :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> Fr := fresh "Fr" <span class="keyword">in</span><br/>
+&nbsp;&nbsp;(destruct (<a class="idref" href="AtomSet.html#atom_fresh_for_set">atom_fresh_for_set</a> L) <span class="keyword">as</span> [Y Fr]).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab41"></a><h2 class="section">Example</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>example_pick_fresh</code> tactic below illustrates the general
+    pattern for collecting together atoms in a context and picking an
+    atom fresh for them.
+
+<br/><br/>
+    We first define a tactic that gathers the atoms in the current
+    context and returns them as a finite set.  We repeatedly invoke
+    the tactic <code>ltac_map</code>, using each time a unary function that
+    returns a finite set of atoms.  The type of the function
+    determines the hypotheses that are processed.  Each invocation
+    returns a list of finite sets of atoms.  We append everything
+    together and use <code>simplify_list_of_atom_sets</code> to obtain a single
+    finite set. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> example_gather_atoms :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> A := ltac_map (<span class="keyword">fun</span> x : <a class="idref" href="AtomSet.html#atoms">atoms</a> =&gt; x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> B := ltac_map (<span class="keyword">fun</span> x : <a class="idref" href="Atom.html#atom">atom</a> =&gt; <a class="idref" href="AtomSet.html#AtomSetImpl.singleton">singleton</a> x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;simplify_list_of_atom_sets (A ++ B).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Given <code>example_gather_atoms</code>, we can implement a specialized
+    version of "<code>pick fresh</code>". 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> example_pick_fresh Y :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> L := example_gather_atoms <span class="keyword">in</span><br/>
+&nbsp;&nbsp;pick fresh Y <span class="keyword">for</span> L.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Finally, we gave a trivial example of using
+    <code>example_pick_fresh</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="example_pick_fresh_use"></a>example_pick_fresh_use : forall (x y z : <a class="idref" href="Atom.html#atom">atom</a>) (L1 L2 L3: <a class="idref" href="AtomSet.html#atoms">atoms</a>), <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x y z L1 L2 L3.<br/>
+&nbsp;&nbsp;example_pick_fresh k.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+At this point in the proof, we have a new atom <code>k</code> and a
+      hypothesis <code>Fr : ~ In k (union L1 (union L2 (union L3 (union
+      (singleton x) (union (singleton y) (union (singleton z)
+      empty)))))</code>. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;trivial.<br/>
+<span class="keyword">Qed</span>.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

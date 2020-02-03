@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>AtomSet</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library AtomSet</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSets.html#">FSets</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#">List</a></span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="AdditionalTactics.html#">AdditionalTactics</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="Atom.html#">Atom</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="FSetWeakNotin.html#">FSetWeakNotin</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="ListFacts.html#">ListFacts</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="PennFSetDecide.html#">PennFSetDecide</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab38"></a><h1 class="section">Definitions</h1>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+We use our implementation of atoms to obtain an implementation of
+    finite sets of atoms.  We give the resulting type an intuitive
+    name, as well as import names of set operations for use within
+    this library. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <span class="id" type="keyword">Import</span> <span class="id" type="module"><a name="AtomSetImpl">AtomSetImpl</a></span> &lt;: <span class="id" type="module"><a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetInterface.html#">FSetInterface.WS</a></span> <span class="id" type="keyword">with</span> <span class="id" type="keyword">Module</span> <span class="id" type="var">E</span> := <span class="id" type="module"><a class="idref" href="Atom.html#">AtomImpl</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id" type="module"><a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetWeakList.html#">FSetWeakList.Make</a></span> <span class="id" type="module"><a class="idref" href="Atom.html#">AtomImpl</a></span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="atoms">atoms</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.t">AtomSetImpl.t</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+From our implementation of finite sets of atoms, we can
+    instantiate the decision procedures for solving facts about such
+    finite sets. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <span class="id" type="module"><a name="AtomSetDecide">AtomSetDecide</a></span> := <span class="id" type="module"><a class="idref" href="PennFSetDecide.html#">PennFSetDecide.WDecide</a></span> <span class="id" type="module"><a class="idref" href="AtomSet.html#AtomSetImpl">AtomSetImpl</a></span>.<br/>
+<span class="id" type="keyword">Ltac</span> <span class="id" type="var">fsetdec</span> := <span class="id" type="var">AtomSetDecide.fsetdec</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Module</span> <span class="id" type="module"><a name="AtomSetNotin">AtomSetNotin</a></span> := <span class="id" type="module"><a class="idref" href="FSetWeakNotin.html#">FSetWeakNotin.Notin</a></span> <span class="id" type="module"><a class="idref" href="Atom.html#">AtomImpl</a></span> <span class="id" type="module"><a class="idref" href="AtomSet.html#AtomSetImpl">AtomSetImpl</a></span>.<br/>
+<span class="id" type="keyword">Ltac</span> <span class="id" type="var">destruct_notin</span> := <span class="id" type="var">AtomSetNotin.destruct_notin</span>.<br/>
+<span class="id" type="keyword">Ltac</span> <span class="id" type="var">solve_notin</span> := <span class="id" type="var">AtomSetNotin.solve_notin</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab39"></a><h1 class="section">Properties</h1>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+We can generate an atom fresh for any given finite set of
+    atoms. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="lemma"><a name="atom_fresh_for_set">atom_fresh_for_set</a></span> : ∀ <span class="id" type="var">L</span> : <span class="id" type="definition"><a class="idref" href="AtomSet.html#atoms">atoms</a></span>, { <span class="id" type="var">x</span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span> | ~ <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.In">In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">L</span> }.<br/>
+<br/>
+<br/>
+<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab40"></a><h1 class="section">Tactic support</h1>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+The auxiliary tactic <span class="inlinecode"><span class="id" type="var">simplify_list_of_atom_sets</span></span> takes a list of
+    finite sets of atoms and unions everything together, returning the
+    resulting single finite set.  It's rarely used by itself; see the
+    example below.  The tactic does assume that <span class="inlinecode"><span class="id" type="var">L</span></span>, after
+    simplification using <span class="inlinecode"><span class="id" type="tactic">simpl</span></span>, is built using only <span class="inlinecode"><span class="id" type="var">nil</span></span> and
+    <span class="inlinecode"><span class="id" type="var">cons</span></span>.  This is the case when used following the pattern
+    below. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Ltac</span> <span class="id" type="var">simplify_list_of_atom_sets</span> <span class="id" type="var">L</span> :=<br/>
+&nbsp;&nbsp;<span class="id" type="var">ltac_fold_and_simpl</span> <span class="id" type="var">AtomSetImpl.union</span> <span class="id" type="var">AtomSetImpl.empty</span> <span class="id" type="var">L</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The tactic <span class="inlinecode">(<span class="id" type="var">pick</span> <span class="id" type="tactic">fresh</span> <span class="id" type="var">Y</span> <span class="id" type="keyword">for</span> <span class="id" type="var">L</span>)</span> takes a finite set of atoms <span class="inlinecode"><span class="id" type="var">L</span></span>
+    and a fresh name <span class="inlinecode"><span class="id" type="var">Y</span></span>, and adds to the context an atom with name
+    <span class="inlinecode"><span class="id" type="var">Y</span></span> and a proof that <span class="inlinecode">(~ <span class="id" type="var">In</span> <span class="id" type="var">Y</span> <span class="id" type="var">L</span>)</span>, i.e., that <span class="inlinecode"><span class="id" type="var">Y</span></span> is fresh for
+    <span class="inlinecode"><span class="id" type="var">L</span></span>.  The tactic will fail if <span class="inlinecode"><span class="id" type="var">Y</span></span> is already declared in the
+    context. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Tactic Notation</span> "pick" "fresh" <span class="id" type="var">ident</span>(<span class="id" type="var">Y</span>) "for" <span class="id" type="var">constr</span>(<span class="id" type="var">L</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">Fr</span> := <span class="id" type="tactic">fresh</span> "Fr" <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;(<span class="id" type="tactic">destruct</span> (<span class="id" type="lemma"><a class="idref" href="AtomSet.html#atom_fresh_for_set">atom_fresh_for_set</a></span> <span class="id" type="var">L</span>) <span class="id" type="keyword">as</span> [<span class="id" type="var">Y</span> <span class="id" type="var">Fr</span>]).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab41"></a><h2 class="section">Example</h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><span class="id" type="var">example_pick_fresh</span></span> tactic below illustrates the general
+    pattern for collecting together atoms in a context and picking an
+    atom fresh for them.
+
+<br/><br/>
+    We first define a tactic that gathers the atoms in the current
+    context and returns them as a finite set.  We repeatedly invoke
+    the tactic <span class="inlinecode"><span class="id" type="var">ltac_map</span></span>, using each time a unary function that
+    returns a finite set of atoms.  The argument type of the function
+    determines the hypotheses that are processed.  Each invocation
+    returns a list of finite sets of atoms.  We append everything
+    together and use <span class="inlinecode"><span class="id" type="var">simplify_list_of_atom_sets</span></span> to obtain a single
+    finite set. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Ltac</span> <span class="id" type="var">example_gather_atoms</span> :=<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">A</span> := <span class="id" type="var">ltac_map</span> (<span class="id" type="keyword">fun</span> <span class="id" type="var">x</span> : <span class="id" type="definition"><a class="idref" href="AtomSet.html#atoms">atoms</a></span> ⇒ <span class="id" type="var">x</span>) <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">B</span> := <span class="id" type="var">ltac_map</span> (<span class="id" type="keyword">fun</span> <span class="id" type="var">x</span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span> ⇒ <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.singleton">singleton</a></span> <span class="id" type="var">x</span>) <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="id" type="var">simplify_list_of_atom_sets</span> (<span class="id" type="var">A</span> ++ <span class="id" type="var">B</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Given <span class="inlinecode"><span class="id" type="var">example_gather_atoms</span></span>, we can implement a specialized
+    version of "<span class="inlinecode"><span class="id" type="var">pick</span> <span class="id" type="tactic">fresh</span></span>". 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Ltac</span> <span class="id" type="var">example_pick_fresh</span> <span class="id" type="var">Y</span> :=<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">L</span> := <span class="id" type="var">example_gather_atoms</span> <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="id" type="var">pick</span> <span class="id" type="tactic">fresh</span> <span class="id" type="var">Y</span> <span class="id" type="keyword">for</span> <span class="id" type="var">L</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Finally, we gave a trivial example of using
+    <span class="inlinecode"><span class="id" type="var">example_pick_fresh</span></span>. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="lemma"><a name="example_pick_fresh_use">example_pick_fresh_use</a></span> : ∀ (<span class="id" type="var">x</span> <span class="id" type="var">y</span> <span class="id" type="var">z</span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>) (<span class="id" type="var">L1</span> <span class="id" type="var">L2</span> <span class="id" type="var">L3</span>: <span class="id" type="definition"><a class="idref" href="AtomSet.html#atoms">atoms</a></span>), <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span>.<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">x</span> <span class="id" type="var">y</span> <span class="id" type="var">z</span> <span class="id" type="var">L1</span> <span class="id" type="var">L2</span> <span class="id" type="var">L3</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="var">example_pick_fresh</span> <span class="id" type="var">k</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+At this point in the proof, we have a new atom <span class="inlinecode"><span class="id" type="var">k</span></span> and a
+      hypothesis <span class="inlinecode"><span class="id" type="var">Fr</span> : ~ <span class="id" type="var">In</span> <span class="id" type="var">k</span> (<span class="id" type="var">union</span> <span class="id" type="var">L1</span> (<span class="id" type="var">union</span> <span class="id" type="var">L2</span> (<span class="id" type="var">union</span> <span class="id" type="var">L3</span> (<span class="id" type="var">union</span>
+      (<span class="id" type="var">singleton</span> <span class="id" type="var">x</span>) (<span class="id" type="var">union</span> (<span class="id" type="var">singleton</span> <span class="id" type="var">y</span>) (<span class="id" type="var">union</span> (<span class="id" type="var">singleton</span> <span class="id" type="var">z</span>)
+      <span class="id" type="var">empty</span>)))))</span>. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">trivial</span>.<br/>
+<span class="id" type="keyword">Qed</span>.<br/>
+</div>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

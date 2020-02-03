@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>Atom</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Atom</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.Arith.Arith.html#">Arith</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.Logic.DecidableTypeEx.html#">DecidableTypeEx</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#">List</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.Arith.Max.html#">Max</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab21"></a><h1 class="section">Main definition (and implementation)</h1>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+Atoms are structureless objects such that we can always generate
+    one fresh from a finite collection.  Equality on atoms is <span class="inlinecode"><span class="id" type="var">eq</span></span> and
+    decidable.  We use Coq's module system to make abstract the
+    implementation of atoms.  The module type <span class="inlinecode"><span class="id" type="var">ATOM</span></span>, defined below,
+    is compatible with <span class="inlinecode"><span class="id" type="var">UsualDecidableType</span></span>.  
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <span class="id" type="keyword">Type</span> <span class="id" type="module"><a name="ATOM">ATOM</a></span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Parameter</span> <span class="id" type="axiom"><a name="ATOM.t">t</a></span> : <span class="id" type="keyword">Set</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="ATOM.eq">eq</a></span> := @<span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a></span> <span class="id" type="axiom"><a class="idref" href="Atom.html#ATOM.t">t</a></span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="ATOM.eq_refl">eq_refl</a></span> := @<span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#refl_equal">refl_equal</a></span> <span class="id" type="axiom"><a class="idref" href="Atom.html#ATOM.t">t</a></span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="ATOM.eq_sym">eq_sym</a></span> := @<span class="id" type="lemma"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#sym_eq">sym_eq</a></span> <span class="id" type="axiom"><a class="idref" href="Atom.html#ATOM.t">t</a></span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="ATOM.eq_trans">eq_trans</a></span> := @<span class="id" type="lemma"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#trans_eq">trans_eq</a></span> <span class="id" type="axiom"><a class="idref" href="Atom.html#ATOM.t">t</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Parameter</span> <span class="id" type="axiom"><a name="ATOM.eq_dec">eq_dec</a></span> : ∀ <span class="id" type="var">x</span> <span class="id" type="var">y</span> : <span class="id" type="axiom"><a class="idref" href="Atom.html#ATOM.t">t</a></span>, {<span class="id" type="var">x</span> = <span class="id" type="var">y</span>} + {<span class="id" type="var">x</span> ≠ <span class="id" type="var">y</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Parameter</span> <span class="id" type="axiom"><a name="ATOM.atom_fresh_for_list">atom_fresh_for_list</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;∀ (<span class="id" type="var">xs</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="axiom"><a class="idref" href="Atom.html#ATOM.t">t</a></span>), {<span class="id" type="var">x</span> : <span class="id" type="axiom"><a class="idref" href="Atom.html#ATOM.t">t</a></span> | ~ <span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">xs</span>}.<br/>
+
+<br/>
+<span class="id" type="keyword">End</span> <span class="id" type="module"><a class="idref" href="Atom.html#ATOM">ATOM</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The implementation of the above interface is hidden for
+    documentation purposes. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <span class="id" type="module"><a name="AtomImpl">AtomImpl</a></span> : <span class="id" type="module"><a class="idref" href="Atom.html#ATOM">ATOM</a></span>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">End</span> <span class="id" type="module"><a class="idref" href="Atom.html#AtomImpl">AtomImpl</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab22"></a><h1 class="section">Auxiliary definitions</h1>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+We give more suggestive names to some of the constants provided by
+    the <span class="inlinecode"><span class="id" type="var">AtomImpl</span></span> module. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="atom">atom</a></span> : <span class="id" type="keyword">Set</span> :=<br/>
+&nbsp;&nbsp;<span class="id" type="axiom"><a class="idref" href="Atom.html#AtomImpl.t">AtomImpl.t</a></span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="eq_atom_dec">eq_atom_dec</a></span> : ∀ (<span class="id" type="var">x</span> <span class="id" type="var">y</span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>), {<span class="id" type="var">x</span> = <span class="id" type="var">y</span>} + {<span class="id" type="var">x</span> ≠ <span class="id" type="var">y</span>} :=<br/>
+&nbsp;&nbsp;<span class="id" type="axiom"><a class="idref" href="Atom.html#AtomImpl.eq_dec">AtomImpl.eq_dec</a></span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Hint</span> <span class="id" type="keyword">Resolve</span> <span class="id" type="definition"><a class="idref" href="Atom.html#eq_atom_dec">eq_atom_dec</a></span>.<br/>
+</div>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

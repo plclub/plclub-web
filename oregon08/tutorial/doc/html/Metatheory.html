@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>Metatheory</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Metatheory</h1>
+
+<code>
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Peano_dec.<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="AdditionalTactics.html">AdditionalTactics</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="Atom.html">Atom</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="AtomSet.html">AtomSet</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="AtomEnv.html">AtomEnv</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> List.<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="ListFacts.html">ListFacts</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab71"></a><h1 class="section">Modules</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We export the types, functions, lemmas, etc. provided by the
+    implementations of association lists whose keys are atoms (from
+    <code>AtomEnv</code>).
+
+<br/><br/>
+    Implementation note: We specifically do not <code><span class="keyword">Export</span></code> the
+    <code>AtomImpl</code> and <code>AtomSetImpl</code> modules in order to avoid polluting
+    Coq's namespace.  Commonly used items from those files are given
+    convenient definitions and notations, either here or in the
+    libraries that implement those modules. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Export</span> AtomEnvImpl.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab72"></a><h1 class="section">Notations</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Decidable equality on atoms and natural numbers may be written
+    using suggestive notation. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> "x == y" :=<br/>
+&nbsp;&nbsp;(AtomImpl.eq_dec x y) (at level 67) : metatheory_scope.<br/>
+<span class="keyword">Notation</span> "i === j" :=<br/>
+&nbsp;&nbsp;(Peano_dec.eq_nat_dec i j) (at level 67) : metatheory_scope.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We can use list-like notation to write association lists
+    consisting of a single binding. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> "[ x ]" := (AtomEnvImpl.one x) : metatheory_scope.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Common set operations may be written using infix notation.  The
+    ones for equality and subset match the notations used in the FSets
+    library.  Implementation note: Since we do not <code><span class="keyword">Export</span></code> the
+    <code>AtomSetImpl</code> module, we have to (re)define notations as
+    needed. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> "E `union` F" :=<br/>
+&nbsp;&nbsp;(AtomSetImpl.union E F)<br/>
+&nbsp;&nbsp;(at level 69, right associativity, format "E  `union`  '/' F")<br/>
+&nbsp;&nbsp;: set_scope.<br/>
+<span class="keyword">Notation</span> "x `<span class="keyword">in</span>` E" :=<br/>
+&nbsp;&nbsp;(AtomSetImpl.In x E) (at level 69) : set_scope.<br/>
+<span class="keyword">Notation</span> "x `notin` E" :=<br/>
+&nbsp;&nbsp;(~ AtomSetImpl.In x E) (at level 69) : set_scope.<br/>
+<span class="keyword">Notation</span> "E [=] F" :=<br/>
+&nbsp;&nbsp;(AtomSetImpl.Equal E F) (at level 70, no associativity) : set_scope.<br/>
+<span class="keyword">Notation</span> "E [&lt;=] F" :=<br/>
+&nbsp;&nbsp;(AtomSetImpl.Subset E F) (at level 70, no associativity) : set_scope.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We define some abbreviations for the empty set, singleton
+    sets, and the union of two sets. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> empty := AtomSetImpl.empty.<br/>
+<span class="keyword">Notation</span> singleton := AtomSetImpl.singleton.<br/>
+<span class="keyword">Notation</span> union := AtomSetImpl.union.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We define some abbreviations for some lemmas about set
+    non-membership. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> notin_empty := AtomSetNotin.notin_empty.<br/>
+<span class="keyword">Notation</span> notin_union := AtomSetNotin.notin_union.<br/>
+<span class="keyword">Notation</span> notin_singleton := AtomSetNotin.notin_singleton.<br/>
+<span class="keyword">Notation</span> notin_add := AtomSetNotin.notin_add.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Open the notation scopes declared above. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Open</span> <span class="keyword">Scope</span> metatheory_scope.<br/>
+<span class="keyword">Open</span> <span class="keyword">Scope</span> set_scope.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab73"></a><h1 class="section">Tactic for working with cofinite quantification</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Consider a rule <code>H</code> (equivalently, constructor, lemma, etc.) whose
+    type begins with <code>forall L, ...</code> and contains hypotheses of the
+    form <code>(forall y, y `notin` L -&gt; ...)</code>.
+
+<br/><br/>
+    The tactic <code>(pick fresh x excluding F and apply H)</code> applies <code>H</code> to
+    the current goal, instantiating <code>H</code>'s first argument (<code>L</code>) with
+    the finite set of atoms <code>F</code>.  In each new subgoal of the form
+    <code>(forall y, y `notin` F -&gt; ...)</code>, the atom <code>y</code> is introduced as
+    <code>x</code>, and <code>(y `notin` F)</code> is introduced using a generated name.
+
+<br/><br/>
+    If we view <code>H</code> as a rule that uses cofinite quantification, the
+    tactic can be read as picking a sufficiently fresh atom to open a
+    term with. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;"pick" "fresh" ident(atom_name)<br/>
+&nbsp;&nbsp;"excluding" constr(L)<br/>
+&nbsp;&nbsp;"and" "apply" constr(H)<br/>
+&nbsp;&nbsp;:=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;first [apply (@H L) | eapply (@H L)];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- forall _, _ `notin` _ -&gt; _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> Fr := fresh "Fr" <span class="keyword">in</span> intros atom_name Fr<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- forall _, _ `notin` _ -&gt; _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fail 1 "because" atom_name "is already defined"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idtac<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab74"></a><h1 class="section">Automation</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The next two blocks of hints should discharge many of the
+    freshness and inequality goals that arise in programming language
+    metatheory proofs, in particular those arising from cofinite
+    quantification.
+
+<br/><br/>
+    Implementation note: The invocation of <code>simpl_env</code> is risky since
+    <code>autorewrite</code> does not interact nicely with the existential
+    variables introduced by <code>eauto</code>.  In practice, this does not seem
+    to be a problem.  However, practice also shows that a similar
+    problem does occurs if we use <code>atomsetdec</code> instead of
+    solve_atomset_notin. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve AtomSetNotin.notin_empty.<br/>
+<span class="keyword">Hint</span> Resolve AtomSetNotin.notin_union.<br/>
+<span class="keyword">Hint</span> Resolve AtomSetNotin.notin_singleton.<br/>
+<span class="keyword">Hint</span> Resolve AtomSetNotin.notin_add.<br/>
+
+<br/>
+<span class="keyword">Hint</span> Extern 4 (_ `notin` _) =&gt; simpl_env <span class="keyword">in</span> *; solve_atomset_notin.<br/>
+<span class="keyword">Hint</span> Extern 4 (_ &lt;&gt; _ :&gt; atom) =&gt; simpl_env <span class="keyword">in</span> *; solve_atomset_notin.<br/>
+<span class="keyword">Hint</span> Extern 4 (_ &lt;&gt; _ :&gt; AtomSetImpl.elt) =&gt; simpl_env <span class="keyword">in</span> *; solve_atomset_notin.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The following are hints for equalities on environments. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve app_assoc app_nil_1 app_nil_2.<br/>
+<span class="keyword">Hint</span> Resolve nil_neq_one_mid one_mid_neq_nil.<br/>
+<span class="keyword">Hint</span> Resolve map_nil map_one map_app.<br/>
+<span class="keyword">Hint</span> Resolve dom_nil dom_one dom_app dom_map.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The following hints are primarily about <code>uniq</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve uniq_nil uniq_cons uniq_one uniq_push.<br/>
+<span class="keyword">Hint</span> Resolve uniq_insert_mid.<br/>
+<span class="keyword">Hint</span> <span class="keyword">Immediate</span> uniq_remove_mid.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The following hints are primarily about <code>binds</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve binds_one_1 binds_app_1 binds_app_2.<br/>
+<span class="keyword">Hint</span> Resolve binds_map binds_weaken.<br/>
+<span class="keyword">Hint</span> <span class="keyword">Immediate</span> binds_remove_mid.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

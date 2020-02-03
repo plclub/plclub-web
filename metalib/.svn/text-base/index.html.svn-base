@@ -1,0 +1,321 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="Description" content="" />
+<meta name="Keywords" content="" />
+
+<meta http-equiv="imagetoolbar" content="no" />
+<meta name="MSSmartTagsPreventParsing" content="TRUE" />
+<meta name="googlebot" content="noodp" />
+
+<title>Penn PLClub: Metatheory library</title>
+
+<style type="text/css" media="all">
+@import "css/_defaults.css";
+@import "css/mediumLayout.css";
+@import "css/nosideLayout.css";
+</style>
+<!--[if IE]>
+<link rel="stylesheet" type="text/css" href="css/ie.css" media="all" />
+<![endif]-->
+<link rel="stylesheet" type="text/css" href="css/mediumPrint.css" media="print" />
+</head>
+
+<!--
+<body class="three-column">
+-->
+<body>
+
+<div id="container">
+
+<div id="header" class="clearfix">
+
+<!-- change image to school or deptartment logo-->
+<div class="navigation-logo">
+<a href="http://www.upenn.edu/" title="University of Pennsylvania homepage"><img
+  src="logo.gif"
+  width="175"
+  height="55"
+  alt="University of Pennsylvania logo" /></a>
+</div> <!-- End class="navigation-logo" -->
+<div class="top-navigation">
+  <!-- These are the links at the top of the page -->
+  <ul class="clearfix">
+    <li class="first"><a href="http://www.seas.upenn.edu/"
+    title="School of Engineering and Applied Science">SEAS</a></li>
+    <li><a href="http://www.cis.upenn.edu/" title="Department of
+    Computer and Information Science">CIS</a></li>
+    <li><a href="http://www.cis.upenn.edu/~plclub/" title="Programming
+    Languages Research at Penn">PLClub</a></li>
+  </ul>
+  <!-- Replace the image with an image of the department name -->
+  <!--
+  <div class="department-logo">
+    <a href="#" title="Department Name"><img src="../../images/dept_title_blue_back.jpg" alt="Department Name"/></a>
+  </div>
+  -->
+</div> <!-- End class="top-navigation" -->
+</div> <!-- End id="header" -->
+
+<div id="wrapper">
+<div id="content">
+
+<div id="mainContent" class="clearfix">
+
+<h1>Metatheory library</h1>
+
+<p style="margin-bottom: 1em">The Penn PLClub has developed, and
+  continues to work on, a collection of Coq libraries for mechanizing
+  programming language metatheory in
+  the <a href="http://coq.inria.fr/">Coq proof assistant</a>.</p>
+
+<h2>Download</h2>
+
+<ul>
+  <li>The latest <b>unstable</b> version is dated 2008-09-10.
+    <ul>
+      <li>Compatibility: Known to work with the r11390 SVN snapshot of
+        Coq 8.2beta.</li>
+      <li>Download: <a href="dists/metatheory-20080910.zip">metatheory-20080910.zip</a></li>
+      <li><a href="changes.html">Change log</a></li>
+    </ul>
+  </li>
+</ul>
+
+<ul>
+  <li>The latest <b>stable</b> version is dated 2008-07-17.
+    <ul>
+      <li>Compatibility: Known to work with Coq 8.1pl3.</li>
+      <li>Download: <a href="dists/metatheory-20080717.zip">metatheory-20080717.zip</a></li>
+      <li><a href="changes.html">Change log</a></li>
+    </ul>
+  </li>
+</ul>
+
+<ul>
+  <li>Previous versions include the following distributions:
+    <ul>
+      <li>The first public release accompanied
+        <a href="http://www.plclub.org/popl08-tutorial/">a tutorial at
+        POPL 2008</a>.</li>
+      <li>The second public release
+        accompanied <a href="http://www.cis.upenn.edu/~plclub/oregon08/">a
+        course</a> at the
+        <a href="http://www.cs.uoregon.edu/research/summerschool/summer08/">Summer
+        School on Logic and Theorem Proving in Programming
+        Languages</a> held at the University of Oregon in 2008.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>Installation instructions</h2>
+
+<ol>
+
+  <li>Install an appropriate version of Coq according to the
+    instructions distributed with it.  It should not matter whether
+    you install a binary package or compile it from source.  In
+    addition to the resources available through Coq's homepage, the POPLmark
+    wiki also
+    contains <a href="http://alliance.seas.upenn.edu/~plclub/cgi-bin/poplmark/index.php?title=Installing_Coq">some
+    tips on installing Coq</a>.</li>
+
+  <li>Download the metatheory library distribution (see the link
+    above).</li>
+
+  <li>Unpack the zip file.</li>
+
+  <li>To install the library globally:
+    <ul>
+      <li>Unpack the zip file and copy the resulting directory to some
+        location within Coq's <code>theories</code> directory,
+        e.g., <code>theories/metatheory</code>.  The exact location
+        of <code>theories</code> will depend on how you installed
+        Coq.</li>
+      <li>Run <code>make</code> within the directory.</li>
+      <li>You should now be able to import the library,
+        e.g., <code>Require Import Metatheory</code>, without any
+        other commands or options to Coq.</li>
+    </ul>
+  </li>
+
+  <li>The library can also be used locally by unpacking the zip file
+    and copying all the <code>.v</code> files to the same directory as
+    the Coq development with which you wish to use the library.
+    Compile the library using the same means as you would to compile
+    your development.</li>
+
+  <li>Note that the distribution includes a <code>README.txt</code>
+    file, and a <code>doc</code> directory that contains a copy of
+    this web page and the HTML documentation linked to below.</li>
+
+</ol>
+
+<h2>Documentation</h2>
+
+<p><span style="color: red">The documentation below applies to the
+    unstable version of the library.  Documentation for the stable
+    version is included in the distribution above.</span></p>
+
+<p>The library is roughly divided into three parts: auxiliary
+libraries, main libraries, and a library to pull everything
+together.</p>
+
+<h3>Auxiliary libraries</h3>
+
+<p>Generic additions to Coq's standard library:</p>
+
+<ul>
+
+  <li><a href="html/AdditionalTactics.html">AdditionalTactics</a>:
+  This library contains general purpose tactics that are not included
+  with Coq.  The tactics for delineating cases in proofs are
+  particularly useful since programing language metatheory typically
+  contains inductive proofs with many cases.</li>
+
+  <li><a href="html/ListFacts.html">ListFacts</a>: This library
+  contains assorted facts about lists.  It is not specifically geared
+  towards programming language metatheory, but the facts may be
+  useful anywhere one uses lists in a development.</li>
+
+</ul>
+
+<p>Libraries that extend Coq's FSets library:</p>
+
+<ul>
+
+  <li><a href="html/PennFSetDecide.html">PennFSetDecide</a>: This
+  library provides a decision procedure (as the
+  tactic <code>fsetdec</code>) for solving goals about finite sets, as
+  implemented by Coq's FSets library.  This library largely similar to
+  the FSetDecide library in Coq's standard library.  Our version
+  differs in the implementation of one of the internal helper tactics,
+  enabling our <code>fsetdec</code> tactic to solve slightly more
+  goals.  (The difference will hopefully be incorporated into Coq's
+  standard library.)</li>
+
+  <li><a href="html/FSetWeakNotin.html">FSetWeakNotin</a>: This
+  library provides a tactic <code>solve_notin</code> that solves
+  particular forms of non-membership goals about finite sites.  This
+  tactic is strictly less powerful than <code>fsetdec</code>.
+  However, it seems to behave more predictably when used as a hint for
+  Coq's <code>auto</code> and <code>eauto</code>
+  tactics: <code>fsetdec</code>'s use of rewriting can interact poorly
+  with existential variables in goals.  The tactic is intended to
+  discharge the many freshness goals that appear in programming
+  language metatheory.</li>
+
+</ul>
+
+<h3>Main libraries</h3>
+
+<p>Support for names:</p>
+
+<ul>
+
+  <li><a href="html/Atom.html">Atom</a>:  This library provides an
+  implementation of atoms, structureless objects with a decidable
+  equality relation.  It is also possible to generate an atom fresh
+  for a finite collection of atoms.</li>
+
+  <li><a href="html/AtomSet.html">AtomSet</a>: This library provides
+  an implementation of finite sets of atoms using Coq's FSets library.
+  It also instantiates the finite set tactics provided by
+  <a href="html/PennFSetDecide.html">PennFSetDecide</a>
+  and <a href="html/FSetWeakNotin.html">FSetWeakNotin</a>.  Note that
+  the tactics are named here as <code>atomsetdec</code>
+  and <code>solve_atomset_notin</code>.  This library also defines a
+  "<code>pick fresh</code>" tactic for generating an atom fresh for
+  given finite set.</li>
+
+</ul>
+
+<p>Support for environments:</p>
+
+<ul>
+
+  <li><a href="html/AssocList.html">AssocList</a>: This library
+  provides a functor which implements association lists, i.e., lists
+  of pairs of keys and values, over a given type of keys.  It provides
+  basic functions and predicates on association lists, as well as
+  properties of those functions and predicates.  Association lists can
+  be used to represent, for example, the environments that appear in
+  programming language definitions.</li>
+
+  <li><a href="html/AtomEnv.html">AtomEnv</a>: This library provides a
+  signature for the functor
+  in <a href="html/AssocList.html">AssocList</a> where the keys have
+  been specialized to atoms.  Such association lists can be used to
+  represent environments (a.k.a. contexts).  To reflect this fact,
+  tactics whose names ended in "<code>alist</code>" now end in
+  "<code>env</code>".  (Coq's module system does not require that
+  tactics be defined identically in a module signature and its
+  implementation.) <b>Note:</b> This library is automatically
+  generated from <a href="html/AssocList.html">AssocList</a>.  As a
+  result, some of the documentation may not quite fit.</li>
+
+</ul>
+
+<h3>Pulling everything together</h3>
+
+<ul>
+
+  <li><a href="html/Metatheory.html">Metatheory</a>: By design, the
+  libraries above do not declare many hints or define many notations.
+  The intent is for users to glue the libraries together in some
+  fashion that suits their particular needs and preferences.
+  The <a href="html/Metatheory.html">Metatheory</a> library provides a
+  reasonable default combination of the libraries above.  In addition
+  to declaring an assortment of hints and notations, it also defines a
+  tactic for working with cofinite quantification.  Users of the
+  metatheory library (as a whole) can simply <code>Require Import
+  Metatheory</code> to get started on their developments.</li>
+
+</ul>
+
+<h2>Additional reading</h2>
+
+<p>The metatheory library was originally developed to support the paper
+  <a href="http://doi.acm.org/10.1145/1328897.1328443">Engineering
+  Formal Metatheory</a>.  (The link is to the ACM Digital Library.
+  The paper is also available from the authors' homepages.)  The
+  "<code>pick fresh and apply</code>" tactic, defined
+  in <a href="html/Metatheory.html">Metatheory</a>, supports working
+  with the cofinite quantification technique discussed in that paper.
+  Aside from this, the library is potentially useful wherever one
+  needs to work with atoms, finite sets, and association lists.</p>
+
+<h2>Contact</h2>
+
+<p>If you have any questions about the library, feel free to contact
+  <a href="http://www.cis.upenn.edu/~baydemir/">Brian Aydemir</a>.</p>
+
+</div> <!-- End id="mainContent" -->
+
+<!--
+<div id="rightColumn">
+<div id="spotlight">
+<h2>Spotlight</h2>
+<p>EEP!</p>
+</div>
+</div>
+-->
+
+<div id="footer">
+
+<p>
+Page last changed on: $Date$.<br />
+<a href="http://validator.w3.org/check?uri=referer">Valid XHTML 1.0</a>
+and
+<a href="http://jigsaw.w3.org/css-validator/check/referer">Valid CSS</a>.
+</p>
+
+</div>
+
+</div> <!-- End id="content" -->
+</div> <!-- End id="wrapper" -->
+</div> <!-- End id="container" -->
+
+</body>
+</html>
