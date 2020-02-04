@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html><head><title>Dependent Types and Program Equivalence</title>
+   <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.77 [en] (X11; U; Linux 2.4.21 i686) [Netscape]">
+   <title> </title>
+</head><body>
+
+     <td align="left" valign="middle" colspan="3"> 
+      <p></p>
+      <table width="95%" border="0" cellspacing="2" cellpadding="2">
+
+     	<tr valign="top"> 
+          <td width="5%"><img src="images/plclub-logo_small.png" width="40" height="40"></td>
+          <td> 
+            <p><font size="3">
+	            <b> Dependent Types and Program Equivalence. </b> 
+	            <br> Limin Jia, Jianzhou Zhao, Vilhelm Sj&ouml;berg and Stephanie Weirich. 
+	            <p> <b>Abstract:</b> The definition of type equivalence is one of the most important design
+                   issues for any typed language. In dependently-typed languages, because
+                   terms appear in types, this definition must rely on a definition of
+                   term equivalence. In that case, decidability of type checking requires
+                   decidability for the term equivalence relation. </p>
+              <p> Almost all dependently-typed languages require this relation to be
+                   decidable. Some, such as Coq, Epigram or Agda, do so by employing
+                   analyses to force all programs to terminate. Conversely, others, such
+                   as DML, ATS, Omega, or Haskell, allow nonterminating computation,
+                   but do not allow those terms to appear in types. Instead, they
+                   identify a terminating index language and use singleton types to
+                   connect indices to computation. In both cases, decidable type checking
+                   comes at a cost, in terms of complexity and expressiveness. </p>
+              <p> Conversely, the benefits to be gained by decidable type checking are
+                  modest. Termination analyses allow dependently typed programs to
+                  verify total correctness properties. However, decidable type checking
+                  is not a prerequisite for type safety.
+                  Furthermore, decidability does not
+                  imply tractability. A decidable approximation of program equivalence
+                  may not be useful in practice. </p>
+              <p> Therefore, we take a different approach: instead of a fixed notion for term equivalence, 
+                  we parameterize our type system with an abstract relation that is not necessarily decidable. 
+                  We then design a novel set of typing rules that require only weak properties of this abstract 
+                  relation in the proof of the preservation and progress lemmas. This design provides flexibility: 
+                  we compare valid instantiations of term equivalence which range from beta-equivalence, 
+                  to contextual equivalence, to some exotic equivalences. </p>
+	            <br> Nov 2009. [<a href="lambda-eek.pdf">PDF</a>] to appear in <a href="http://www.cse.psu.edu/popl/10">POPL 2010</a>.
+	            <br> Tar ball of the Coq Proofs [<a href="lambda-eek.tgz">tgz</a>]<br>.
+	    </font></p>
+          </td>
+
+        </tr>
+     </table>
+    </td>
+
+</body></html>
