@@ -27,3 +27,4 @@ papers/*.html
 papers/*.bib
 papers/*.bak
 papers/*.keys
+_site/
