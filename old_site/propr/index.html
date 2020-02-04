@@ -1,0 +1,344 @@
+<html>
+<title>Principles of Provenance Workshop</title>
+<style type="text/css">
+body {background:#eeeeff;
+	margin:.5in 1in;
+}
+
+#banner { 
+  margin:auto;
+  text-align:center;
+}
+
+#program {
+  width:700;
+  border:1px solid;
+}
+
+#program td { 
+  border:1px solid; 
+  padding-top:20px;
+  padding-bottom:20px;
+}
+
+#program li { 
+  padding-top:10px;
+}
+
+</style>
+</html>
+<body>
+
+<div id="banner">
+<p><img src="philly.jpg"/></p>
+<h1>Principles of Provenance (PrOPr)</h1>
+<h2>26 June 2007</h2>
+<h2>Philadelphia, PA</h2>
+</div>
+
+<h2>News</h2>
+
+<ul>
+  <li>Slides posted (24 July).</li>
+  <li>Location updated to Raisler Lounge (22 June).</li>
+  <li>Preliminary <a href="#program">program</a> posted (20 June).</li>
+  <li>Web page created (7 June).</li>
+</ul>
+
+<h2> Description </h2>
+
+<p>
+Provenance is metadata describing the creation, modification history,
+ownership, and other influences of data.  Traditionally, provenance
+information has been used in database and scientific computation
+settings, where it is essential for characterizing the quality,
+integrity, and authenticity of data.  More recently, it has been
+applied to a number of new areas including probabilistic databases,
+synchronization, annotation propagation, version control, and
+archiving.  Yet while good practical work is being done in a growing
+number of areas, no cross-cutting, foundational studies of provenance
+have been undertaken.  We believe the time is ripe for such studies,
+and are organizing a workshop to bring together researchers with
+interests in this area and to address questions such as:
+
+<ul>
+   <li> What does it mean for information to be "provenance"?</li>
+
+   <li> What kinds of problems does provenance address, and how does one
+     characterize correct solutions?</li>
+
+   <li> How does one compare different models of provenance?</li>
+
+   <li> Why is provenance so hard to get right, even though it seems
+     rather obvious?</li>
+
+   <li> Where should research efforts be focused to make the best
+     progress?</li>
+</ul>
+</p>
+
+<h2>Local Arrangements</h2>
+
+PrOPr will take place on Tuesdsay, 26 June 2007 at the 
+<a href="http://www.facilities.upenn.edu/visitUs/">University of
+Pennsylvania</a> in the Raisler Lounge, which is located on the second floor of the
+<a
+href="http://www.facilities.upenn.edu/mapsBldgs/view_map.php3?id=158">Towne
+Building</a>. 
+<p>
+Please contact <a href="mailto:jnfoster@cis.upenn.edu">Nate Foster</a>
+for additional local information.
+
+<h2><a name="program">Program</a></h2>
+
+Each session will alternate between short (12 minute)
+presentations and discussion.
+
+<p>
+<center>
+<table id="program">
+<tr>
+<td>
+9:00-9:30
+</td>
+<td>
+<b>Breakfast</b>
+</td>
+</tr>
+
+<tr>
+<td>
+9:30-11:00
+</td>
+<td>
+<ul>
+<li>Privacy in RFID Data<br>
+    <i>Dan Suciu (Washington)</i><br>
+    [slides: <a href="dan-slides.ppt">ppt</a> | <a href="dan-slides.pdf">pdf</a>]
+</li>
+
+<li>Program Analysis and Information Flow<br>
+    <i>James Cheney (Edinburgh) and Steve Zdancewic (Penn)</i><br>
+    [James slides: <a href="james-slides.pdf">pdf</a>][Steve slides: <a href="stevez-slides.pdf">pdf</a>]
+   </li>
+
+<li>Data Synchronization<br>
+   <i>Nate Foster (Penn)</i><br>
+    [slides: <a href="nate-slides.pdf">pdf</a>]
+</li>
+
+<li><a href="#john">Provenance and copyright: Some practical problems</a><br>
+   <i>John Ockerbloom (Penn Library)</i><br>
+    [slides: <a href="john-slides.ppt">ppt</a> | <a href="john-slides.pdf">pdf</a>]
+</li>
+</ul>
+</td>
+</tr>
+
+<tr>
+<td>
+11:00-11:30
+</td>
+<td>
+<b>Coffee</b>
+</td>
+</tr>
+
+<tr>
+<td>
+11:30-12:30
+</td>
+
+<td>
+<ul>
+<li><a href="#bertram">A Quick Tour through the Provenance Zoo</a><br>
+    <i>Bertram Ludaescher (UC Davis)</i><br>
+    [slides: <a href="bertram-slides.ppt">ppt</a>]
+</li>
+
+<li>Querying Provenance through User Views<br>
+    <i>Susan Davidson (Penn)</i></li>
+
+<li><a href="#yi">Data Provenance for Query Result Explanation</a><br>
+    <i>Yi Chen (Arizona State)</i><br>
+    [slides: <a href="yi-slides.pdf">pdf</a>]
+</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>
+12:30-2:00
+</td>
+<td>
+  <b>Lunch</b>
+</td>
+</tr>
+<tr>
+<td>
+2:00-3:30
+</td>
+<td>
+<ul>
+<li><a href="#greg">Provenance Semirings</a><br>
+    <i>Grigoris Karvounarakis (Penn)</i><br>
+    [slides: <a href="greg-slides.ppt">ppt</a> | <a href="greg-slides.pdf">pdf</a>]
+
+</li>
+
+<li><a href="#tj">Provenance in Orchestra</a><br>
+    <i>TJ Green (Penn)</i><br>
+    [slides: <a href="tj-slides.ppt">ppt</a> | <a href="tj-slides.pdf">pdf</a>]
+</li>
+
+<li>Provenance for Complex Values<br>
+    <i>Val Tannen (Penn)</i>
+</li>
+
+</ul>
+</td>
+</tr>
+<tr>
+<td>
+3:30-4:00
+</td>
+<td>
+  <b>Coffee</b>
+</td>
+</tr>
+<tr>
+<td>
+4:00-5:00
+</td>
+<td>
+<ul>
+<li>How to change the world (and keep track of the changes).</li>
+<li>Future meeting plans.</li>
+</td>
+</tr>
+<tr>
+</tr>
+</table>
+</center>
+
+<h2>Organizers</h2>
+<ul>
+  <li><a href="http://homepages.inf.ed.ac.uk/opb/">Peter Buneman</a></li>
+  <li><a href="http://homepages.inf.ed.ac.uk/jcheney/">James Cheney</a></li>
+  <li><a href="http://www.cis.upenn.edu/%7Ejnfoster">Nate Foster</a></li>
+  <li><a href="http://www.cis.upenn.edu/%7Ebcpierce">Benjamin Pierce</a></li>
+
+</ul>
+
+<h2>Abstracts</h2>
+
+<h3><a name="john">Provenance and copyright: Some practical problems</a></h3>
+<i>John Ockerbloom</i>
+<p>
+As information seekers increasingly move from print to digital media,
+print resources are being digitized, both by nonprofit libraries
+and for-profit companies like Google and Microsoft, at an ever-accelerating
+rate.  Increasingly, the force that most tightly constrains the process
+for many of the most important research sources is not the cost or complexity
+of the digitization itself, but the cost and complexity of clearing
+copyrights.  For material less than 100 years old, clearing copyright
+can involve establishing a complex and tricky provenance chain for a work,
+its publication, its registration, its derivative sources, its authorship,
+and its ownership.  Moreover, to clear copyrights at high volume with low risk,
+it is important to be able to quickly and automatically identify relevant
+factual assertions deriving from reliable sources.  My talk will informally
+review some of the provenance-related issues and challenges in clearing
+copyrights at large scale, discuss some current work and proposals
+to more efficiently gather and share copyright information, and
+provide useful examples for applying principles of provenance.
+
+<h3><a name="bertram">A Quick Tour through the Provenance Zoo</a></h3>
+<i>Bertram Ludaescher (UC Davis)</i>
+<p>
+The term 'provenance' has become increasingly popular in a number of
+foundational and applied computer science areas, in particular in
+databases, scientific workflows, and Grid computing.  
+(About twenty years ago, as object-orientation became increasingly
+popular, the phrase "my cat is object-oriented" was coined.  
+Today we might add, "my cat does provenance", emphasizing that it has
+become an activity to be engaged in and excited about, as opposed to a
+boring static property -- of course every cat *has* provenance.)
+<p>
+We first give a brief overview of what people sometimes mean by
+provenance in the context of scientific workflows, e.g. some
+distinguish 'data provenance', 'workflow provenance', 'process
+provenance', etc.  We then present a view of (data) provenance as an
+approximation (and/or augmentation) of a processing history according
+to a model of computation (MoC). In our view, a model of provenance
+(MoP) approximates a MoC via a set of observables.  Finally, we turn
+to some basic research questions and directions, in particular to
+provenance modeling and design to support use cases as queries.
+<p>
+We hope that this workshop can begin to identify basic notions and
+characteristics of different types of provenance, thus marking a step
+towards a provenance taxonomy which will bring at least some order to
+the teaming provenance zoo.
+
+<h3><a name="yi">Data Provenance for Query Result Explanation</a></h3>
+<i>Yi Chen</i>
+<p>
+As more and more information from autonomous web databases becomes
+available, query processing over these databases must adapt to deal with
+the imprecise nature of user queries as well as the incompleteness of
+data due to missing attribute values and schema heterogeneity. In such
+scenarios, a query processor begins to acquire the role of a recommender
+system. Specifically, in addition to presenting answers which satisfy
+the user's query, the query processor is expected to provide highly
+relevant answers even though they do not exactly satisfy the query
+predicates. In this case, it is important that the query results
+recommended by the system are trusted by the user. While query result
+explanation is critical in traditional databases, it is even more
+critical in order to obtain user trust in the presence of imprecision
+and incompleteness. For example, consider a scenario where the user
+gives a query that searches for car whose model is Civic, one of the
+tuples returned by the system has a null value on model, and another has
+a value of Corolla on model. Without an accompanying explanation, the
+user would be hard pressed to understand why these are relevant answers
+to her query. To provide such explanation, we need to record the
+provenance information as how we derive query results and how we rank
+them, and design a user-friendly interface for query result explanation.
+<p>
+I will briefly introduce the QUIC system that handles data
+incompleteness and query imprecision during data integration, ranks
+answers in the order of their expected relevance to users, and attempts
+to explain the relevance of its answers by providing snippets of its
+reasoning about query result identification and ranking. Then, I will
+discuss several challenges on data provenance that we found in
+developing QUIC. 
+
+<h3><a name="greg">Provenance Semirings</a></h3>
+<i>Grigoris Karvounarakis (Penn)</i>
+<p>
+We show that relational algebra calculations for incomplete
+databases, probabilistic databases, bag semantics and why-provenance
+are particular cases of the same general algorithms involving
+semirings. This further suggests a comprehensive provenance representation
+that uses semirings of polynomials.
+
+<h3><a name="tj">Provenance in Orchestra</a></h3>
+<i>TJ Green (Penn)</i>
+<p>
+We consider systems for data sharing among heterogeneous peers
+related by a network of schema mappings.  Each peer has a locally
+controlled and edited database instance, but wants to ask queries
+over related data from other peers as well. To achieve this, a
+peer's updates propagate along the mappings to the other peers.
+However, this <i>update exchange<i> is filtered by <i>trust
+conditions</i> -- expressing what data and sources a peer judges to
+be authoritative -- which may cause a peer to reject another's
+updates.  In order to support such filtering, updates carry <i>provenance</i> information.
+<p>
+In this talk we present methods for realizing such systems.
+Specifically, we extend techniques from data integration, data
+exchange, and incremental view maintenance to propagate updates
+along mappings and we integrate a novel model for tracking data
+provenance, such that curators may filter updates based on trust
+conditions over this provenance, as implemented in our
+Orchestra prototype system.
+</body>
+</html>
