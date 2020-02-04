@@ -1,0 +1,69 @@
+8
+
+dir
+1946
+https://svn.cis.upenn.edu/svnroot/provers/tutorial/webpage
+https://svn.cis.upenn.edu/svnroot/provers
+
+
+
+2008-01-04T22:32:05.511712Z
+1946
+baydemir
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+288ffd01-ebfc-0310-91cb-ffb82c326009
+
+flyer.doc
+file
+
+
+
+
+2007-09-28T00:59:52.000000Z
+c65e664a731e1a92c15322d31ba92969
+2007-09-26T20:35:00.662609Z
+1677
+sweirich
+has-props
+
+css
+dir
+
+shield.color.gif
+file
+
+
+
+
+2007-11-02T02:15:55.000000Z
+30323641242cae626e76cb808953776f
+2007-10-19T02:15:39.720560Z
+1745
+baydemir
+has-props
+
+index.html
+file
+
+
+
+
+2008-01-04T22:32:26.000000Z
+f9fa8a2317c6a5552d85132330689cf7
+2008-01-04T22:32:05.511712Z
+1946
+baydemir
+

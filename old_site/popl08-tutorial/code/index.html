@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="Description" content="" />
+	<meta name="Keywords" content="" />
+
+	<meta http-equiv="imagetoolbar" content="no" />
+	<meta name="MSSmartTagsPreventParsing" content="TRUE" />
+	<meta name="googlebot" content="noodp" />
+
+	<title>Tutorial Materials for Programming Language Research</title>
+
+	<link rel="shortcut icon" href="/favicon.ico" />
+
+	<style type="text/css" media="all">
+		@import "css/_defaults.css";
+		@import "css/mediumLayout.css";
+		@import "css/bluetoolbarLayout.css";
+
+		/* BEA added the following */
+		#mainContent li { margin-bottom: .75em; }
+	</style>
+	<!--[if IE]>
+	<link rel="stylesheet" type="text/css" href="css/ie.css" media="all" />
+	<![endif]-->
+	<link rel="stylesheet" type="text/css" href="css/mediumPrint.css" media="print" />
+</head>
+
+<body>
+
+<div id="container">
+
+		<!--
+		<div id="header" class="clearfix">
+
+			<div class="navigation-logo">
+				<a href="#" title="School or Penn Home"><img src="../../images/logo_here_template.gif" alt="School or Penn Logo" /></a>
+			</div>
+			<div class="top-navigation clearfix">
+				<ul class="clearfix">
+					<li class="first"><a href="http://www.upenn.edu/" title="Univeristy of Pennsylvania">Penn</a></li>
+					<li><a href="http://www.seas.upenn.edu/" title="School of Engineering and Applied Science">SEAS</a></li>
+					<li><a href="http://www.cis.upenn.edu/" title="Computer and Information Science">CIS</a></li>
+				</ul>
+				<div class="department-logo">
+					<a href="#" title="Department Name"><img src="../../images/dept_blue_text.jpg" alt="Department Name"/></a>
+				</div>
+			</div>
+		</div>
+		-->
+
+
+<div id="wrapper">
+
+<!-- This is the navigation bar on the left side of the page -->
+<div id="navigation">
+
+<div class="highlights">
+<h2>Table of contents</h2>
+<ul>
+<li><a href="#coqintro" title="Introduction to Coq">Introduction to Coq</a></li>
+<li><a href="#stlc" title="Simply-typed lambda calculus">STLC</a></li>
+<li><a href="#fsub" title="System F with subtyping">System F<sub>&lt;:</sub></a></li>
+<li><a href="metatheory_lib.html" title="Metatheory library">Metatheory library</a></li>
+</ul>
+</div>
+
+<div class="highlights">
+<h2>Related projects</h2>
+<ul>
+<li><a href="http://alliance.seas.upenn.edu/~plclub/cgi-bin/poplmark/" title="The POPLmark Challenge">POPLmark</a></li>
+<li><a href="http://coq.inria.fr/" title="Coq Proof Assistant">Coq</a></li>
+<li><a href="http://proofgeneral.inf.ed.ac.uk/" title="Proof General">Proof General</a></li>
+</ul>
+</div>
+
+<!--
+<div class="facts">
+</div>
+-->
+
+</div> <!-- id=navigation -->
+
+<div id="content">
+<div id="mainContent">
+<!-- Edit main content here -->
+
+
+<!-- ============================================================= -->
+<h1>Tutorial Materials for Programming Language Research</h1>
+
+<p><span style="color: red"><b>Getting started:</b></span> You will need the
+following software.</p>
+
+<ul>
+
+<li><a href="http://coq.inria.fr/">Coq</a>: Version 8.1 or a later
+  release.  Binary and source packages are available from the Coq
+  homepage.</li>
+
+<li>Either CoqIDE (comes with Coq)
+  or <a href="http://proofgeneral.inf.ed.ac.uk/">Proof General</a>.
+  Both provide interactive environments for developing proofs and are
+  easier to work with than Coq's toploop.</li>
+
+<li><a href="coq-tutorial.zip">coq-tutorial.zip</a>, which contains
+  all the Coq files and documentation for this tutorial.  The
+  remainder of this page is dedicated to describing the contents of
+  this zip-file and providing easy-to-browse HTML versions of the Coq
+  code; you do not need to download anything else.  The README.txt
+  file explains how to compile our library for programming language
+  metatheory.  You should compile this library before proceeding
+  further.</li>
+
+</ul>
+
+
+<!-- ============================================================= -->
+<h2><a name="coqintro"></a>Introduction to Coq</h2>
+
+<p>The file <a href="coqdoc/CoqIntro.html">CoqIntro.v</a> is a
+  self-contained introduction to Coq, with a number of examples and
+  exercises demonstrating Coq's basic facilities.  The file is
+  designed to be worked through interactively.  (Note that you should
+  work through the .v file that came with the .zip file you
+  downloaded.  The HTML version linked to above is there in case you
+  want an easy to browser version of the file.)  Solutions to
+  exercises are at the end of the file.</p>
+
+
+<!-- ============================================================= -->
+<h2><a name="stlc"></a>The simply-typed lambda calculus</h2>
+
+<p>The file <a href="coqdoc/STLC_Tutorial.html">STLC_Tutorial.v</a> is
+  a formalization of the simply-typed lambda calculus.  Like
+  CoqIntro.v, this file contains a number of examples and exercises,
+  and is designed to be worked through interactively.  (As before, you
+  should work through the .v file that came with the .zip file, not
+  the HTML version linked above.)  Solutions to the exercises are
+  in <a href="coqdoc/STLC_Solutions.html">STLC_Solutions.v</a>.</p>
+
+<p>This part of the tutorial relies on
+a <a href="metatheory_lib.html">library for programming language
+metatheory</a> that we have developed.  Working through
+STLC_Tutorial.v introduces this library as it is used in practice.</p>
+
+
+<!-- ============================================================= -->
+<h2><a name="fsub"></a>System F<sub>&lt;:</sub></h2>
+
+<p>The final portion of this tutorial is to extend our formalization
+  of type safety for System F<sub>&lt;:</sub> (Fsub) to include sum types
+  and let expressions.  This development consists of four
+  files: <a href="coqdoc/Fsub_Definitions.html">Fsub_Definitions.v</a>,
+  <a href="coqdoc/Fsub_Infrastructure.html">Fsub_Infrastructure.v</a>, <a href="coqdoc/Fsub_Lemmas.html">Fsub_Lemmas.v</a>,
+  and <a href="coqdoc/Fsub_Soundness.html">Fsub_Soundness.v</a>.</p>
+
+<p>In order to get a handle on this relatively large development, you
+  may want to first look through its four files using the links above.
+  They're organized so that related definitions and lemmas are placed
+  in the same file.  A few additional points that were not covered
+  in <a href="coqdoc/STLC_Tutorial.html">STLC_Tutorial.v</a> are
+  listed below.</p>
+
+<ul>
+
+  <li>The later files in this development load the earlier ones
+    using <code>Require Export</code> lines near the beginning of the
+    files.  (You can read more about this command in the Coq Reference
+    Manual.)  For example, the "infrastructure" file loads the
+    "definitions" file.</li>
+
+  <li><code>Require Export</code> loads a compiled version of the file
+    given to it, not the original source file.  To compile,
+    e.g., <a href="coqdoc/Fsub_Definitions.html">Fsub_Definitions.v</a>,
+    run <code>coqc Fsub_Definitions.v</code>.  This creates a file
+    Fsub_Definitions.vo, which is a compiled version of the .v file.
+    Whenever you change a file that is loaded by another, you should
+    recompile it.  (Note that Coq will <b>not</b> warn you if a .v
+    file is newer than the corresponding .vo file.)</li>
+
+
+  <li>The development uses substantial amounts of automation to make
+  the proofs tractable.  Every file
+  except <a href="coqdoc/Fsub_Soundness.html">Fsub_Soundness.v</a>
+  ends with a block of hints for Coq's auto and eauto tactics, and a
+  brief discussion of what those hints accomplish.</li>
+
+  <li>The proof
+  of <a href="coqdoc/Fsub_Soundness.html#typing_through_subst_ee">typing_through_subst_ee</a>
+  is heavily commented, since it illustrates several tactics for
+  working with environments.  (The comments will make more sense if
+  you are interactively stepping through the proof.)  These tactics
+  were skipped over in
+  <a href="coqdoc/STLC_Tutorial.html">STLC_Tutorial.v</a>.</li>
+
+</ul>
+
+<p><b>Our solution:</b> The files Fsub_LetSum_*.v contain our
+  solution.  The one non-obvious (and non-necessary) difference is the
+  definition of a new unary
+  predicate <a href="coqdoc/Fsub_LetSum_Definitions.html#body_e_doc">body_e</a>,
+  which is used in the definition of the reduction and associated
+  infrastructure lemmas.</p>
+
+<ul>
+
+  <li><b><a href="coqdoc/Fsub_LetSum_Definitions.html">Fsub_LetSum_Definitions</a></b></li>
+  <li><b><a href="coqdoc/Fsub_LetSum_Infrastructure.html">Fsub_LetSum_Infrastructure</a></b></li>
+  <li><b><a href="coqdoc/Fsub_LetSum_Lemmas.html">Fsub_LetSum_Lemmas</a></b></li>
+  <li><b><a href="coqdoc/Fsub_LetSum_Soundness.html">Fsub_LetSum_Soundness</a></b></li>
+
+</ul>
+
+
+<!-- End main content -->
+
+		        </div> <!-- id=mainContent -->
+
+				<!--
+				<div id="footer" class="top-sep">
+				</div>
+				-->
+
+			</div> <!-- id=content -->
+		</div> <!-- id=wrapper -->
+
+</div> <!-- id=container -->
+
+</body>
+</html>

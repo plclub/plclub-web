@@ -117,3 +117,17 @@ getYear item =
 sortByM :: (Monad m, Ord k) => (a -> m k) -> [a] -> m [a]
 sortByM f xs = liftM (map fst . sortBy (comparing snd)) $
   mapM (\x -> liftM (x,) (f x)) xs
+
+-- | Move /foo/bar/bang.ext to /bar/bang.ext
+routeTail :: Routes
+routeTail = customRoute $
+  joinPath. tail. splitPath. toFilePath
+
+htaccessHackRoute :: Routes
+htaccessHackRoute = customRoute $
+    fix . toFilePath
+  where
+    fix path =
+      if takeBaseName path == "htaccess"
+      then replaceBaseName path ".htaccess"
+      else path

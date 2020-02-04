@@ -1,0 +1,1070 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>Environment</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Environment</h1>
+
+<code>
+</code>
+
+<div class="doc">
+Operations, lemmas, and tactics for working with environments,
+    association lists whose keys are atoms.  Unless stated otherwise,
+    implicit arguments will not be declared by default.
+
+<br/><br/>
+    Authors: Brian Aydemir and Arthur Charguéraud, with help from
+    Aaron Bohannon, Benjamin Pierce, Jeffrey Vaughan, Dimitrios
+    Vytiniotis, Stephanie Weirich, and Steve Zdancewic.
+
+<br/><br/>
+    Table of contents:
+
+<ul>
+<li> <a href="#overview">Overview</a>
+
+</li>
+<li> <a href="#functions">Functions on environments</a>
+
+</li>
+<li> <a href="#env_rel">Relations on environments</a>
+
+</li>
+<li> <a href="#op_prop">Properties of operations</a>
+
+</li>
+<li> <a href="#auto1">Automation and tactics (I)</a>
+
+</li>
+<li> <a href="#props">Properties of well-formedness and freshness</a>
+
+</li>
+<li> <a href="#binds_prop">Properties of binds</a>
+
+</li>
+<li> <a href="#auto2">Automation and tactics (II)</a>
+
+</li>
+<li> <a href="#binds_prop2">Additional properties of binds</a>
+
+</li>
+<li> <a href="#auto3">Automation and tactics (III)</a> 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> List.<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="ListFacts.html">ListFacts</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="Atom.html">Atom</a>.<br/>
+
+<br/>
+<span class="keyword">Import</span> AtomSet.F.<br/>
+<span class="keyword">Hint</span> <span class="keyword">Local</span> Unfold E.eq.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab15"></a><h1 class="section"><a name="overview"></a> Overview</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+An environment is a list of pairs, where the first component of
+    each pair is an <code>atom</code>.  We view the second component of each pair
+    as being bound to the first component.  In a well-formed
+    environment, there is at most one binding for any given atom.
+    Bindings at the head of the list are "more recent" than bindings
+    toward the tail of the list, and we view an environment as growing
+    on the left, i.e., at its head.
+
+<br/><br/>
+    We normally work only with environments built up from the
+    following: the empty list, one element lists, and concatenations
+    of two lists.  This seems to be more convenient in practice.  For
+    example, we don't need to distinguish between consing on a binding
+    and concatenating a binding, a difference that Coq's tactics can
+    be sensitive to.
+
+<br/><br/>
+    However, basic definitions are by induction on the usual structure
+    of lists (<code>nil</code> and <code>cons</code>).
+
+<br/><br/>
+    To make it convenient to write one element lists, we define a
+    special notation.  Note that this notation is local to this
+    particular library, to allow users to use alternate notations if
+    they desire. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> <span class="keyword">Local</span> "[ x ]" := (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">cons</a> x <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+In the remainder of this library, we define a number of
+    operations, lemmas, and tactics that simplify working with
+    environments. 
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab16"></a><h1 class="section"><a name="functions"></a> Functions on environments</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Implicit arguments will be declared by default for the definitions
+    in this section. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Set</span> <span class="keyword">Implicit</span> <span class="keyword">Arguments</span>.<br/>
+
+<br/>
+<span class="keyword">Section</span> Definitions.<br/>
+
+<br/>
+<span class="keyword">Variables</span> A B : <span class="keyword">Type</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The domain of an environment is the set of atoms that it maps. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="dom"></a>dom (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A)) : atoms :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> E <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> =&gt; <a class="idref" href="Atom.html#AtomSet.F.empty">empty</a><br/>
+&nbsp;&nbsp;| (x, _) :: E' =&gt; <a class="idref" href="Atom.html#AtomSet.F.union">union</a> (<a class="idref" href="Atom.html#AtomSet.F.singleton">singleton</a> x) (dom E')<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>map</code> applies a function to all bindings in the environment. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="map"></a>map (f : A -&gt; B) (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A)) : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * B) :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> E <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> =&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a><br/>
+&nbsp;&nbsp;| (x, V) :: E' =&gt; (x, f V) :: map f E'<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>get</code> returns the value bound to the given atom in an environment
+    or <code>None</code> if the given atom is not bound.  If the atom has
+    multiple bindings, the one nearest to the head of the environment
+    is returned. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="get"></a>get (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A)) : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a> A :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> E <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> =&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a><br/>
+&nbsp;&nbsp;| (y,a) :: E' =&gt; <span class="keyword">if</span> <a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x y <span class="keyword">then</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a> a <span class="keyword">else</span> get x E'<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">End</span> Definitions.<br/>
+
+<br/>
+<span class="keyword">Unset</span> <span class="keyword">Implicit</span> <span class="keyword">Arguments</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab17"></a><h1 class="section"><a name="env_rel"></a> Relations on environments</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Implicit arguments will be declared by default for the definitions
+    in this section. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Set</span> <span class="keyword">Implicit</span> <span class="keyword">Arguments</span>.<br/>
+
+<br/>
+<span class="keyword">Section</span> Relations.<br/>
+
+<br/>
+<span class="keyword">Variable</span> A : <span class="keyword">Type</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+An environment is well-formed if and only if each atom is bound at
+    most once. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="ok"></a>ok : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A) -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="ok_nil"></a>ok_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ok <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a><br/>
+&nbsp;&nbsp;| <a name="ok_cons"></a>ok_cons : forall (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A)) (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (a : A),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ok E -&gt; ~ <a class="idref" href="Atom.html#AtomSet.F.In">In</a> x (<a class="idref" href="Environment.html#dom">dom</a> E) -&gt; ok ((x, a) :: E).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="binds_doc"></a> An environment <code>E</code> contains a binding
+    from <code>x</code> to <code>b</code>, denoted <code>(binds x b E)</code>, if and only if the most
+    recent binding for <code>x</code> is mapped to <code>b</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="binds"></a>binds x b (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A)) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#get">get</a> x E = <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a> b.<br/>
+
+<br/>
+<span class="keyword">End</span> Relations.<br/>
+
+<br/>
+<span class="keyword">Unset</span> <span class="keyword">Implicit</span> <span class="keyword">Arguments</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab18"></a><h1 class="section"><a name="op_prop"></a> Properties of operations</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> OpProperties.<br/>
+<span class="keyword">Variable</span> A B : <span class="keyword">Type</span>.<br/>
+<span class="keyword">Implicit</span> Types E F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A).<br/>
+<span class="keyword">Implicit</span> Types a b : A.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab19"></a><h2 class="section">Facts about concatenation</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="concat_nil"></a>concat_nil : forall E,<br/>
+&nbsp;&nbsp;E ++ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> = E.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;auto <span class="keyword">using</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#app_nil_end">List.app_nil_end</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="nil_concat"></a>nil_concat : forall E,<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> ++ E = E.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="concat_assoc"></a>concat_assoc : forall E F G,<br/>
+&nbsp;&nbsp;(G ++ F) ++ E = G ++ (F ++ E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;auto <span class="keyword">using</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#app_ass">List.app_ass</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab20"></a><h2 class="section"><code>map</code> commutes with environment-building operations</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="map_nil"></a>map_nil : forall (f : A -&gt; B),<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#map">map</a> f <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> = <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="map_single"></a>map_single : forall (f : A -&gt; B) y b,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#map">map</a> f [(y,b)] = [(y, f b)].<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="map_push"></a>map_push : forall (f : A -&gt; B) y b E,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#map">map</a> f ([(y,b)] ++ E) = [(y, f b)] ++ <a class="idref" href="Environment.html#map">map</a> f E.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="map_concat"></a>map_concat : forall (f : A -&gt; B) E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#map">map</a> f (F ++ E) = (<a class="idref" href="Environment.html#map">map</a> f F) ++ (<a class="idref" href="Environment.html#map">map</a> f E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction F <span class="keyword">as</span> [|(x,a)]; simpl; congruence.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab21"></a><h2 class="section">Facts about the domain of an environment</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="dom_nil"></a>dom_nil :<br/>
+&nbsp;&nbsp;@<a class="idref" href="Environment.html#dom">dom</a> A <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> = <a class="idref" href="Atom.html#AtomSet.F.empty">empty</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="dom_single"></a>dom_single : forall x a,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#dom">dom</a> [(x,a)] = <a class="idref" href="Atom.html#AtomSet.F.singleton">singleton</a> x.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;simpl. intros. fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="dom_push"></a>dom_push : forall x a E,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#dom">dom</a> ([(x,a)] ++ E) = <a class="idref" href="Atom.html#AtomSet.F.union">union</a> (<a class="idref" href="Atom.html#AtomSet.F.singleton">singleton</a> x) (<a class="idref" href="Environment.html#dom">dom</a> E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;simpl. intros. reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="dom_concat"></a>dom_concat : forall E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#dom">dom</a> (F ++ E) = <a class="idref" href="Atom.html#AtomSet.F.union">union</a> (<a class="idref" href="Environment.html#dom">dom</a> F) (<a class="idref" href="Environment.html#dom">dom</a> E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction F <span class="keyword">as</span> [|(x,a) F IH]; simpl.<br/>
+&nbsp;&nbsp;fsetdec.<br/>
+&nbsp;&nbsp;rewrite IH. fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="dom_map"></a>dom_map : forall (f : A -&gt; B) E,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#dom">dom</a> (<a class="idref" href="Environment.html#map">map</a> f E) = <a class="idref" href="Environment.html#dom">dom</a> E.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction E <span class="keyword">as</span> [|(x,a)]; simpl; congruence.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab22"></a><h2 class="section">Other trivial rewrites</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="cons_concat_assoc"></a>cons_concat_assoc : forall x a E F,<br/>
+&nbsp;&nbsp;&nbsp;((x, a) :: E) ++ F = (x, a) :: (E ++ F).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">End</span> OpProperties.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab23"></a><h1 class="section"><a name="auto1"></a> Automation and tactics (I)</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab24"></a><h2 class="section"><code>simpl_env</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>simpl_env</code> tactic can be used to put environments in the
+    standardized form described above, with the additional properties
+    that concatenation is associated to the right and empty
+    environments are removed.  Similar to the <code>simpl</code> tactic, we
+    define "<code><span class="keyword">in</span> *</code>" and "<code><span class="keyword">in</span> H</code>" variants of <code>simpl_env</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="singleton_list"></a>singleton_list (A : <span class="keyword">Type</span>) (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A) := x :: <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>.<br/>
+<span class="keyword">Implicit</span> <span class="keyword">Arguments</span> singleton_list [A].<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="cons_concat"></a>cons_concat : forall (A : <span class="keyword">Type</span>) (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A)) x a,<br/>
+&nbsp;&nbsp;(x, a) :: E = <a class="idref" href="Environment.html#singleton_list">singleton_list</a> (x, a) ++ E.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="map_singleton_list"></a>map_singleton_list : forall (A B : <span class="keyword">Type</span>) (f : A -&gt; B) y b,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#map">map</a> f (<a class="idref" href="Environment.html#singleton_list">singleton_list</a> (y,b)) = [(y, f b)].<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="dom_singleton_list"></a>dom_singleton_list : forall (A : <span class="keyword">Type</span>) (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (a : A),<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#dom">dom</a> (<a class="idref" href="Environment.html#singleton_list">singleton_list</a> (x,a)) = <a class="idref" href="Atom.html#AtomSet.F.singleton">singleton</a> x.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;simpl. intros. fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Hint</span> Rewrite<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#cons_concat">cons_concat</a> <a class="idref" href="Environment.html#map_singleton_list">map_singleton_list</a> <a class="idref" href="Environment.html#dom_singleton_list">dom_singleton_list</a><br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#concat_nil">concat_nil</a> <a class="idref" href="Environment.html#nil_concat">nil_concat</a> <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a><br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#map_nil">map_nil</a> <a class="idref" href="Environment.html#map_single">map_single</a> <a class="idref" href="Environment.html#map_push">map_push</a> <a class="idref" href="Environment.html#map_concat">map_concat</a><br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#dom_nil">dom_nil</a> <a class="idref" href="Environment.html#dom_single">dom_single</a> <a class="idref" href="Environment.html#dom_push">dom_push</a> <a class="idref" href="Environment.html#dom_concat">dom_concat</a> <a class="idref" href="Environment.html#dom_map">dom_map</a> : rew_env.<br/>
+
+<br/>
+<span class="keyword">Ltac</span> simpl_env_change_aux :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H : context[?x :: <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change (x :: <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>) <span class="keyword">with</span> (<a class="idref" href="Environment.html#singleton_list">singleton_list</a> x) <span class="keyword">in</span> H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_env_change_aux<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- context[?x :: <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change (x :: <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>) <span class="keyword">with</span> (<a class="idref" href="Environment.html#singleton_list">singleton_list</a> x));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_env_change_aux<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idtac<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Ltac</span> simpl_env :=<br/>
+&nbsp;&nbsp;simpl_env_change_aux;<br/>
+&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rew_env;<br/>
+&nbsp;&nbsp;unfold singleton_list <span class="keyword">in</span> *.<br/>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "simpl_env" "<span class="keyword">in</span>" hyp(H) :=<br/>
+&nbsp;&nbsp;simpl_env_change_aux;<br/>
+&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rew_env <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;unfold singleton_list <span class="keyword">in</span> *.<br/>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "simpl_env" "<span class="keyword">in</span>" "*" :=<br/>
+&nbsp;&nbsp;simpl_env_change_aux;<br/>
+&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rew_env <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;unfold singleton_list <span class="keyword">in</span> *.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab25"></a><h2 class="section"><code>rewrite_env</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>(rewrite_env E)</code> replaces an environment in the
+    conclusion of the goal with <code>E</code>.  Suitability for replacement is
+    determined by whether <code>simpl_env</code> can put <code>E</code> and the chosen
+    environment in the same normal form, up to convertability in Coq.
+    We also define a "<code><span class="keyword">in</span> H</code>" variant that performs the replacement in
+    a hypothesis <code>H</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "rewrite_env" constr(E) :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change x <span class="keyword">with</span> E<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace x <span class="keyword">with</span> E; [ | try reflexivity; simpl_env; reflexivity ]<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "rewrite_env" constr(E) "<span class="keyword">in</span>" hyp(H) :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> type of H <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change x <span class="keyword">with</span> E <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace x <span class="keyword">with</span> E <span class="keyword">in</span> H; [ | try reflexivity; simpl_env; reflexivity ]<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab26"></a><h2 class="section">Hints</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Constructors ok.<br/>
+
+<br/>
+<span class="keyword">Hint</span> <span class="keyword">Local</span> Extern 1 (~ <a class="idref" href="Atom.html#AtomSet.F.In">In</a> _ _) =&gt; simpl_env <span class="keyword">in</span> *; fsetdec.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab27"></a><h1 class="section"><a name="props"></a> Properties of well-formedness and freshness</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> OkProperties.<br/>
+<span class="keyword">Variable</span> A B : <span class="keyword">Type</span>.<br/>
+<span class="keyword">Implicit</span> Types E F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A).<br/>
+<span class="keyword">Implicit</span> Types a b : A.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Facts about when an environment is well-formed. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="ok_push"></a>ok_push :  forall (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A)) (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (a : A),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> E -&gt; ~ <a class="idref" href="Atom.html#AtomSet.F.In">In</a> x (<a class="idref" href="Environment.html#dom">dom</a> E) -&gt; <a class="idref" href="Environment.html#ok">ok</a> ([(x, a)] ++ E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;exact (@<a class="idref" href="Environment.html#ok_cons">ok_cons</a> A).<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="ok_singleton"></a>ok_singleton : forall x a,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> [(x,a)].<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="ok_remove_mid"></a>ok_remove_mid : forall F E G,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (G ++ F ++ E) -&gt; <a class="idref" href="Environment.html#ok">ok</a> (G ++ E).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;induction G <span class="keyword">as</span> [|(y,a)]; intros Ok.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;induction F <span class="keyword">as</span> [|(y,a)]; simpl... inversion Ok...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Ok. simpl...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="ok_remove_mid_cons"></a>ok_remove_mid_cons : forall x a E G,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (G ++ (x, a) :: E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (G ++ E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros. simpl_env <span class="keyword">in</span> *. eauto <span class="keyword">using</span> <a class="idref" href="Environment.html#OkProperties.ok_remove_mid">ok_remove_mid</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="ok_map"></a>ok_map : forall E (f : A -&gt; B),<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> E -&gt; <a class="idref" href="Environment.html#ok">ok</a> (<a class="idref" href="Environment.html#map">map</a> f E).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;induction E <span class="keyword">as</span> [ | (y,b) E ] ; simpl...<br/>
+&nbsp;&nbsp;inversion H...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="ok_map_app_l"></a>ok_map_app_l : forall E F (f : A -&gt; A),<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ E) -&gt; <a class="idref" href="Environment.html#ok">ok</a> (<a class="idref" href="Environment.html#map">map</a> f F ++ E).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;intros. induction F <span class="keyword">as</span> [|(y,a)]; simpl...<br/>
+&nbsp;&nbsp;inversion H...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+A binding in the middle of an environment has an atom fresh from
+    all bindings before and after it. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="fresh_mid_tail"></a>fresh_mid_tail : forall E F x a,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ [(x,a)] ++ E) -&gt; ~ <a class="idref" href="Atom.html#AtomSet.F.In">In</a> x (<a class="idref" href="Environment.html#dom">dom</a> E).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;induction F <span class="keyword">as</span> [|(y,b)]; intros x c Ok; simpl_env <span class="keyword">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Ok...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Ok; subst. simpl_env <span class="keyword">in</span> *. apply (IHF _ _ H1).<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="fresh_mid_head"></a>fresh_mid_head : forall E F x a,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ [(x,a)] ++ E) -&gt; ~ <a class="idref" href="Atom.html#AtomSet.F.In">In</a> x (<a class="idref" href="Environment.html#dom">dom</a> F).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;induction F <span class="keyword">as</span> [|(y,b)]; intros x c Ok; simpl_env <span class="keyword">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Ok...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Ok; subst. simpl_env <span class="keyword">in</span> *. pose proof (IHF _ _ H1)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">End</span> OkProperties.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab28"></a><h1 class="section"><a name="binds_prop"></a> Properties of <code>binds</code></h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> BindsProperties.<br/>
+<span class="keyword">Variable</span> A B : <span class="keyword">Type</span>.<br/>
+<span class="keyword">Implicit</span> Types E F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A).<br/>
+<span class="keyword">Implicit</span> Types a b : A.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab29"></a><h2 class="section">Introduction forms for <code>binds</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following properties allow one to view <code>binds</code> as an
+    inductively defined predicate.  This is the preferred way of
+    working with the relation. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_singleton"></a>binds_singleton : forall x a,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a [(x,a)].<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x a. unfold binds. simpl. destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x x); intuition.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_tail"></a>binds_tail : forall x a E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a E -&gt; ~ <a class="idref" href="Atom.html#AtomSet.F.In">In</a> x (<a class="idref" href="Environment.html#dom">dom</a> F) -&gt; <a class="idref" href="Environment.html#binds">binds</a> x a (F ++ E).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;unfold binds. induction F <span class="keyword">as</span> [|(y,b)]; simpl...<br/>
+&nbsp;&nbsp;destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x y)... intros _ J. destruct J. fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_head"></a>binds_head : forall x a E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a F -&gt; <a class="idref" href="Environment.html#binds">binds</a> x a (F ++ E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold binds. induction F <span class="keyword">as</span> [|(y,b)]; simpl; intros H.<br/>
+&nbsp;&nbsp;discriminate.<br/>
+&nbsp;&nbsp;destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x y); intuition.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab30"></a><h2 class="section">Case analysis on <code>binds</code></h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_concat_inv"></a>binds_concat_inv : forall x a E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a (F ++ E) -&gt; (~ <a class="idref" href="Atom.html#AtomSet.F.In">In</a> x (<a class="idref" href="Environment.html#dom">dom</a> F) /\ <a class="idref" href="Environment.html#binds">binds</a> x a E) \/ (<a class="idref" href="Environment.html#binds">binds</a> x a F).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;unfold binds. induction F <span class="keyword">as</span> [|(y,b)]; simpl; intros H...<br/>
+&nbsp;&nbsp;destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x y).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (IHF H) <span class="keyword">as</span> [[? ?] | ?]. left... right...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_singleton_inv"></a>binds_singleton_inv : forall x y a b,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a [(y,b)] -&gt; x = y /\ a = b.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold binds. simpl. intros. destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x y).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split; congruence.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;discriminate.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab31"></a><h2 class="section">Retrieving bindings from an environment</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_mid"></a>binds_mid : forall x a E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ [(x,a)] ++ E) -&gt; <a class="idref" href="Environment.html#binds">binds</a> x a (F ++ [(x,a)] ++ E).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;unfold binds. induction F <span class="keyword">as</span> [|(z,b)]; simpl; intros Ok.<br/>
+&nbsp;&nbsp;destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x x); intuition.<br/>
+&nbsp;&nbsp;inversion Ok; subst. destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x z)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct H3. simpl_env. fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_mid_eq"></a>binds_mid_eq : forall z a b E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> z a (F ++ [(z,b)] ++ E) -&gt; <a class="idref" href="Environment.html#ok">ok</a> (F ++ [(z,b)] ++ E) -&gt; a = b.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;unfold binds. induction F <span class="keyword">as</span> [|(x,c)]; simpl; intros H Ok.<br/>
+&nbsp;&nbsp;destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> z z). congruence. intuition.<br/>
+&nbsp;&nbsp;inversion Ok; subst. destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> z x)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct H4. simpl_env. fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_mid_eq_cons"></a>binds_mid_eq_cons : forall x a b E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a (F ++ (x,b) :: E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ (x,b) :: E) -&gt;<br/>
+&nbsp;&nbsp;a = b.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros. simpl_env <span class="keyword">in</span> *. eauto <span class="keyword">using</span> <a class="idref" href="Environment.html#BindsProperties.binds_mid_eq">binds_mid_eq</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">End</span> BindsProperties.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab32"></a><h1 class="section"><a name="auto2"></a> Automation and tactics (II)</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab33"></a><h2 class="section">Hints</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> <span class="keyword">Immediate</span> <a class="idref" href="Environment.html#ok_remove_mid">ok_remove_mid</a> <a class="idref" href="Environment.html#ok_remove_mid_cons">ok_remove_mid_cons</a>.<br/>
+
+<br/>
+<span class="keyword">Hint</span> Resolve<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok_push">ok_push</a> <a class="idref" href="Environment.html#ok_singleton">ok_singleton</a> <a class="idref" href="Environment.html#ok_map">ok_map</a> <a class="idref" href="Environment.html#ok_map_app_l">ok_map_app_l</a><br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds_singleton">binds_singleton</a> <a class="idref" href="Environment.html#binds_head">binds_head</a> <a class="idref" href="Environment.html#binds_tail">binds_tail</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab34"></a><h2 class="section"><code>binds_get</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>(binds_get H)</code> takes a hypothesis <code>H</code> of the form
+    <code>(binds x a (F ++ [(x,b)] ++ E))</code> and introduces the equality
+    <code>a=b</code> into the context.  Then, the tactic checks if the equality
+    is discriminable and otherwise tries substituting <code>b</code> for <code>a</code>.
+    The <code>auto</code> tactic is used to show that <code>(ok (F ++ [(x,b)] ++ E))</code>,
+    which is needed to prove the equality <code>a=b</code> from <code>H</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> binds_get H :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> type of H <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Environment.html#binds">binds</a> ?z ?a (?F ++ [(?z,?b)] ++ ?E) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> K := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (K : <a class="idref" href="Environment.html#ok">ok</a> (F ++ [(z,b)] ++ E));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ auto<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="keyword">let</span> J := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (J := @<a class="idref" href="Environment.html#binds_mid_eq">binds_mid_eq</a> _ _ _ _ _ _ H K);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear K;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try discriminate;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try <span class="keyword">match</span> type of J <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| ?a = ?b =&gt; subst a<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab35"></a><h2 class="section"><code>binds_cases</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>(binds_case H)</code> performs a case analysis on an
+    hypothesis <code>H</code> of the form <code>(binds x a E)</code>.  There will be one
+    subgoal for each component of <code>E</code> that <code>x</code> could be bound in, and
+    each subgoal will have appropriate freshness conditions on <code>x</code>.
+    Some attempts are made to automatically discharge contradictory
+    cases. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> binds_cases H :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> Fr := fresh "Fr" <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> J1 := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> J2 := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> type of H <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Environment.html#binds">binds</a> _ _ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Environment.html#binds">binds</a> ?x ?a [(?y,?b)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (@<a class="idref" href="Environment.html#binds_singleton_inv">binds_singleton_inv</a> _ _ _ _ _ H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try discriminate;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try subst y;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try <span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ : ?z &lt;&gt; ?z |- _ =&gt; intuition<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Environment.html#binds">binds</a> ?x ?a (?F ++ ?E) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (@<a class="idref" href="Environment.html#binds_concat_inv">binds_concat_inv</a> _ _ _ _ _ H) <span class="keyword">as</span> [[Fr J1] | J2];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ binds_cases J1 | binds_cases J2 ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; idtac<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab36"></a><h1 class="section"><a name="binds_prop2"></a> Additional properties of <code>binds</code></h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemmas are proven in manner that should be
+    independent of the concrete definition of <code>binds</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> AdditionalBindsProperties.<br/>
+<span class="keyword">Variable</span> A B : <span class="keyword">Type</span>.<br/>
+<span class="keyword">Implicit</span> Types E F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * A).<br/>
+<span class="keyword">Implicit</span> Types a b : A.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Lemmas about the relationship between <code>binds</code> and the domain of an
+    environment. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_In"></a>binds_In : forall a x E,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a E -&gt; <a class="idref" href="Atom.html#AtomSet.F.In">In</a> x (<a class="idref" href="Environment.html#dom">dom</a> E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction E <span class="keyword">as</span> [|(y,b)]; simpl_env; intros H.<br/>
+&nbsp;&nbsp;binds_cases H.<br/>
+&nbsp;&nbsp;binds_cases H; subst. auto <span class="keyword">using</span> <a class="idref" href="Atom.html#AtomSet.F.union_3">union_3</a>. fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_fresh"></a>binds_fresh : forall x a E,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="Atom.html#AtomSet.F.In">In</a> x (<a class="idref" href="Environment.html#dom">dom</a> E) -&gt; ~ <a class="idref" href="Environment.html#binds">binds</a> x a E.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction E <span class="keyword">as</span> [|(y,b)]; simpl_env; intros Fresh H.<br/>
+&nbsp;&nbsp;binds_cases H.<br/>
+&nbsp;&nbsp;binds_cases H. intuition. fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Additional lemmas for showing that a binding is in an
+    environment. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_map"></a>binds_map : forall x a (f : A -&gt; B) E,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a E -&gt; <a class="idref" href="Environment.html#binds">binds</a> x (f a) (<a class="idref" href="Environment.html#map">map</a> f E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction E <span class="keyword">as</span> [|(y,b)]; simpl_env; intros H.<br/>
+&nbsp;&nbsp;binds_cases H.<br/>
+&nbsp;&nbsp;binds_cases H; auto. subst; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_concat_ok"></a>binds_concat_ok : forall x a E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a E -&gt; <a class="idref" href="Environment.html#ok">ok</a> (F ++ E) -&gt; <a class="idref" href="Environment.html#binds">binds</a> x a (F ++ E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction F <span class="keyword">as</span> [|(y,b)]; simpl_env; intros H Ok.<br/>
+&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;inversion Ok; subst. destruct (<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x y); subst; auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (<a class="idref" href="Atom.html#AtomSet.F.In">In</a> y (<a class="idref" href="Environment.html#dom">dom</a> (F ++ E))) by eauto <span class="keyword">using</span> <a class="idref" href="Environment.html#AdditionalBindsProperties.binds_In">binds_In</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intuition.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_weaken"></a>binds_weaken : forall x a E F G,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a (G ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (G ++ F ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a (G ++ F ++ E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction G <span class="keyword">as</span> [|(y,b)]; simpl_env; intros H Ok.<br/>
+&nbsp;&nbsp;auto <span class="keyword">using</span> <a class="idref" href="Environment.html#AdditionalBindsProperties.binds_concat_ok">binds_concat_ok</a>.<br/>
+&nbsp;&nbsp;inversion Ok; subst. binds_cases H; subst; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_weaken_at_head"></a>binds_weaken_at_head : forall x a F G,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a G -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ G) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a (F ++ G).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x a F G H J.<br/>
+&nbsp;&nbsp;rewrite_env (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> ++ F ++ G).<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Environment.html#AdditionalBindsProperties.binds_weaken">binds_weaken</a>; simpl_env; trivial.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_remove_mid"></a>binds_remove_mid : forall x y a b F G,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a (F ++ [(y,b)] ++ G) -&gt;<br/>
+&nbsp;&nbsp;x &lt;&gt; y -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a (F ++ G).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x y a b F G H J.<br/>
+&nbsp;&nbsp;binds_cases H; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="binds_remove_mid_cons"></a>binds_remove_mid_cons : forall x y a b E G,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a (G ++ (y, b) :: E) -&gt;<br/>
+&nbsp;&nbsp;x &lt;&gt; y -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x a (G ++ E).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros. simpl_env <span class="keyword">in</span> *. eauto <span class="keyword">using</span> <a class="idref" href="Environment.html#AdditionalBindsProperties.binds_remove_mid">binds_remove_mid</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">End</span> AdditionalBindsProperties.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab37"></a><h1 class="section"><a name="auto3"></a> Automation and tactics (III)</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Environment.html#binds_map">binds_map</a> <a class="idref" href="Environment.html#binds_concat_ok">binds_concat_ok</a> <a class="idref" href="Environment.html#binds_weaken">binds_weaken</a> <a class="idref" href="Environment.html#binds_weaken_at_head">binds_weaken_at_head</a>.<br/>
+
+<br/>
+<span class="keyword">Hint</span> <span class="keyword">Immediate</span> <a class="idref" href="Environment.html#binds_remove_mid">binds_remove_mid</a> <a class="idref" href="Environment.html#binds_remove_mid_cons">binds_remove_mid_cons</a>.<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

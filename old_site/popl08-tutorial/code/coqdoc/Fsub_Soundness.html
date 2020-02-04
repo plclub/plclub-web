@@ -1,0 +1,852 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>Fsub_Soundness</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Fsub_Soundness</h1>
+
+<code>
+</code>
+
+<div class="doc">
+Type-safety proofs for Fsub.
+
+<br/><br/>
+    Authors: Brian Aydemir and Arthur Charguéraud, with help from
+    Aaron Bohannon, Jeffrey Vaughan, and Dimitrios Vytiniotis.
+
+<br/><br/>
+    In parentheses are given the label of the corresponding lemma in
+    the appendix (informal proofs) of the POPLmark Challenge.
+
+<br/><br/>
+    Table of contents:
+
+<ul>
+<li> <a href="#subtyping">Properties of subtyping</a>
+
+</li>
+<li> <a href="#typing">Properties of typing</a>
+
+</li>
+<li> <a href="#preservation">Preservation</a>
+
+</li>
+<li> <a href="#progress">Progress</a> 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="Fsub_Lemmas.html">Fsub_Lemmas</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab234"></a><h1 class="section"><a name="subtyping"></a> Properties of subtyping</h1>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab235"></a><h2 class="section">Reflexivity (1)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="sub_reflexivity"></a>sub_reflexivity : forall E T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> E -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E T T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto.<br/>
+&nbsp;&nbsp;intros E T Ok Wf.<br/>
+&nbsp;&nbsp;induction Wf...<br/>
+&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#sub_all">sub_all</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab236"></a><h2 class="section">Weakening (2)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="sub_weakening"></a>sub_weakening : forall E F G S T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (G ++ E) S T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> (G ++ F ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (G ++ F ++ E) S T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; auto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_weakening">wf_typ_weakening</a>.<br/>
+&nbsp;&nbsp;intros E F G S T Sub Ok.<br/>
+&nbsp;&nbsp;remember (G ++ E) <span class="keyword">as</span> H.<br/>
+&nbsp;&nbsp;generalize dependent G.<br/>
+&nbsp;&nbsp;induction Sub; intros G Ok EQ; subst...<br/>
+&nbsp;&nbsp;Case "sub_trans_tvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Definitions.html#sub_trans_tvar">sub_trans_tvar</a> U)...<br/>
+&nbsp;&nbsp;Case "sub_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#sub_all">sub_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab237"></a><h2 class="section">Narrowing and transitivity (3)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="transitivity_on"></a>transitivity_on Q := forall E S T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E S Q -&gt; <a class="idref" href="Fsub_Definitions.html#sub">sub</a> E Q T -&gt; <a class="idref" href="Fsub_Definitions.html#sub">sub</a> E S T.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="sub_narrowing_aux"></a>sub_narrowing_aux : forall Q F E Z P S T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Soundness.html#transitivity_on">transitivity_on</a> Q -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (F ++ [(Z, bind_sub Q)] ++ E) S T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E P Q -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (F ++ [(Z, bind_sub P)] ++ E) S T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_narrowing">wf_typ_narrowing</a>, <a class="idref" href="Fsub_Lemmas.html#wf_env_narrowing">wf_env_narrowing</a>.<br/>
+&nbsp;&nbsp;intros Q F E Z P S T TransQ SsubT PsubQ.<br/>
+&nbsp;&nbsp;remember (F ++ [(Z, bind_sub Q)] ++ E) <span class="keyword">as</span> G. generalize dependent F.<br/>
+&nbsp;&nbsp;induction SsubT; intros F EQ; subst...<br/>
+&nbsp;&nbsp;Case "sub_top".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Definitions.html#sub_top">sub_top</a>...<br/>
+&nbsp;&nbsp;Case "sub_refl_tvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Definitions.html#sub_refl_tvar">sub_refl_tvar</a>...<br/>
+&nbsp;&nbsp;Case "sub_trans_tvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (X == Z); subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "X = Z".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Definitions.html#sub_trans_tvar">sub_trans_tvar</a> P); [ eauto using fresh_mid_head | ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply TransQ.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSCase "P &lt;: Q".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (empty ++ (F ++ [(Z, bind_sub P)]) ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Soundness.html#sub_weakening">sub_weakening</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSCase "Q &lt;: T".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds_get H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H1; subst...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "X &lt;&gt; Z".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Definitions.html#sub_trans_tvar">sub_trans_tvar</a> U)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H...<br/>
+&nbsp;&nbsp;Case "sub_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#sub_all">sub_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="sub_transitivity"></a>sub_transitivity : forall Q,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Soundness.html#transitivity_on">transitivity_on</a> Q.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; auto.<br/>
+&nbsp;&nbsp;unfold transitivity_on.<br/>
+&nbsp;&nbsp;intros Q E S T SsubQ QsubT.<br/>
+&nbsp;&nbsp;assert (W : <a class="idref" href="Fsub_Definitions.html#type">type</a> Q) by auto.<br/>
+&nbsp;&nbsp;generalize dependent T.<br/>
+&nbsp;&nbsp;generalize dependent S.<br/>
+&nbsp;&nbsp;generalize dependent E.<br/>
+&nbsp;&nbsp;remember Q <span class="keyword">as</span> Q' <span class="keyword">in</span> |-.<br/>
+&nbsp;&nbsp;generalize dependent Q'.<br/>
+&nbsp;&nbsp;induction W;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros Q' EQ E S SsubQ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;induction SsubQ; try discriminate; inversion EQ; subst;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros T' QsubT;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion QsubT; subst; eauto 4 <span class="keyword">using</span> <a class="idref" href="Fsub_Definitions.html#sub_trans_tvar">sub_trans_tvar</a>.<br/>
+&nbsp;&nbsp;Case "sub_all / sub_top".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E (<a class="idref" href="Fsub_Definitions.html#typ_all">typ_all</a> S1 S2) (<a class="idref" href="Fsub_Definitions.html#typ_all">typ_all</a> T1 T2)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SCase "proof of assertion".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick fresh y and apply <a class="idref" href="Fsub_Definitions.html#sub_all">sub_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;Case "sub_all / sub_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#sub_all">sub_all</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "bounds".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "bodies".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lapply (H0 Y); [ intros K | auto ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (K (<a class="idref" href="Fsub_Definitions.html#open_tt">open_tt</a> T2 Y))...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (empty ++ [(Y, bind_sub T0)] ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Soundness.html#sub_narrowing_aux">sub_narrowing_aux</a> T1)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold transitivity_on.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto <span class="keyword">using</span> (IHW T1).<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="sub_narrowing"></a>sub_narrowing : forall Q E F Z P S T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E P Q -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (F ++ [(Z, bind_sub Q)] ++ E) S T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (F ++ [(Z, bind_sub P)] ++ E) S T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;eapply <a class="idref" href="Fsub_Soundness.html#sub_narrowing_aux">sub_narrowing_aux</a>; eauto.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Fsub_Soundness.html#sub_transitivity">sub_transitivity</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab238"></a><h2 class="section">Type substitution preserves subtyping (10)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="sub_through_subst_tt"></a>sub_through_subst_tt : forall Q E F Z S T P,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (F ++ [(Z, bind_sub Q)] ++ E) S T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E P Q -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) F ++ E) (<a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a> Z P S) (<a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a> Z P T).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_env;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto 4 <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_subst_tb">wf_typ_subst_tb</a>, <a class="idref" href="Fsub_Lemmas.html#wf_env_subst_tb">wf_env_subst_tb</a>, <a class="idref" href="Fsub_Lemmas.html#wf_typ_weaken_head">wf_typ_weaken_head</a>.<br/>
+&nbsp;&nbsp;intros Q E F Z S T P SsubT PsubQ.<br/>
+&nbsp;&nbsp;remember (F ++ [(Z, bind_sub Q)] ++ E) <span class="keyword">as</span> G.<br/>
+&nbsp;&nbsp;generalize dependent F.<br/>
+&nbsp;&nbsp;induction SsubT; intros G EQ; subst; simpl <a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a>...<br/>
+&nbsp;&nbsp;Case "sub_top".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Definitions.html#sub_top">sub_top</a>...<br/>
+&nbsp;&nbsp;Case "sub_refl_tvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (X == Z); subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "X = Z".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Soundness.html#sub_reflexivity">sub_reflexivity</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "X &lt;&gt; Z".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Soundness.html#sub_reflexivity">sub_reflexivity</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H0; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H3...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Definitions.html#wf_typ_var">wf_typ_var</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a> Z P U))...<br/>
+&nbsp;&nbsp;Case "sub_trans_tvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (X == Z); subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "X = Z".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Soundness.html#sub_transitivity">sub_transitivity</a> Q).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSCase "left branch".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (empty ++ <a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) G ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Soundness.html#sub_weakening">sub_weakening</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSCase "right branch".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="Fsub_Infrastructure.html#subst_tt_fresh">subst_tt_fresh</a> Z P Q).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds_get H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H1; subst...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Lemmas.html#notin_fv_wf">notin_fv_wf</a> E); eauto <span class="keyword">using</span> <a class="idref" href="Environment.html#fresh_mid_tail">fresh_mid_tail</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "X &lt;&gt; Z".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Definitions.html#sub_trans_tvar">sub_trans_tvar</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a> Z P U))...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="Fsub_Lemmas.html#map_subst_tb_id">map_subst_tb_id</a> E Z P);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | auto | eapply fresh_mid_tail; eauto ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H...<br/>
+&nbsp;&nbsp;Case "sub_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh X and apply <a class="idref" href="Fsub_Definitions.html#sub_all">sub_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_Infrastructure.html#subst_tt_open_tt_var">subst_tt_open_tt_var</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_Infrastructure.html#subst_tt_open_tt_var">subst_tt_open_tt_var</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) ([(X, <a class="idref" href="Fsub_Definitions.html#bind_sub">bind_sub</a> T1)] ++ G) ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab239"></a><h1 class="section"><a name="typing"></a> Properties of typing</h1>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab240"></a><h2 class="section">Weakening (5)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_weakening"></a>typing_weakening : forall E F G e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> (G ++ E) e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> (G ++ F ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> (G ++ F ++ E) e T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_weakening">wf_typ_weakening</a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Lemmas.html#wf_typ_from_wf_env_typ">wf_typ_from_wf_env_typ</a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Lemmas.html#wf_typ_from_wf_env_sub">wf_typ_from_wf_env_sub</a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Soundness.html#sub_weakening">sub_weakening</a>.<br/>
+&nbsp;&nbsp;intros E F G e T Typ.<br/>
+&nbsp;&nbsp;remember (G ++ E) <span class="keyword">as</span> H.<br/>
+&nbsp;&nbsp;generalize dependent G.<br/>
+&nbsp;&nbsp;induction Typ; intros G EQ Ok; subst...<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh x and apply <a class="idref" href="Fsub_Definitions.html#typing_abs">typing_abs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;lapply (H x); [intros K | auto].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply (H0 x)...<br/>
+&nbsp;&nbsp;Case "typing_tabs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh X and apply <a class="idref" href="Fsub_Definitions.html#typing_tabs">typing_tabs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;lapply (H X); [intros K | auto].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply (H0 X)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab241"></a><h2 class="section">Strengthening (6)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="sub_strengthening"></a>sub_strengthening : forall x U E F S T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (F ++ [(x, bind_typ U)] ++ E) S T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> (F ++ E) S T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_strengthening">wf_typ_strengthening</a>, <a class="idref" href="Fsub_Lemmas.html#wf_env_strengthening">wf_env_strengthening</a>.<br/>
+&nbsp;&nbsp;intros x U E F S T SsubT.<br/>
+&nbsp;&nbsp;remember (F ++ [(x, bind_typ U)] ++ E) <span class="keyword">as</span> E'.<br/>
+&nbsp;&nbsp;generalize dependent F.<br/>
+&nbsp;&nbsp;induction SsubT; intros F EQ; subst...<br/>
+&nbsp;&nbsp;Case "sub_trans_tvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Definitions.html#sub_trans_tvar">sub_trans_tvar</a> U0)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H...<br/>
+&nbsp;&nbsp;Case "sub_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh X and apply <a class="idref" href="Fsub_Definitions.html#sub_all">sub_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab242"></a><h2 class="section">Narrowing for typing (7)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_narrowing"></a>typing_narrowing : forall Q E F X P e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E P Q -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> (F ++ [(X, bind_sub Q)] ++ E) e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> (F ++ [(X, bind_sub P)] ++ E) e T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto 6 <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_env_narrowing">wf_env_narrowing</a>, <a class="idref" href="Fsub_Lemmas.html#wf_typ_narrowing">wf_typ_narrowing</a>, <a class="idref" href="Fsub_Soundness.html#sub_narrowing">sub_narrowing</a>.<br/>
+&nbsp;&nbsp;intros Q E F X P e T PsubQ Typ.<br/>
+&nbsp;&nbsp;remember (F ++ [(X, bind_sub Q)] ++ E) <span class="keyword">as</span> E'.<br/>
+&nbsp;&nbsp;generalize dependent F.<br/>
+&nbsp;&nbsp;induction Typ; intros F EQ; subst...<br/>
+&nbsp;&nbsp;Case "typing_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H0...<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh y and apply <a class="idref" href="Fsub_Definitions.html#typing_abs">typing_abs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+&nbsp;&nbsp;Case "typing_tabs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#typing_tabs">typing_tabs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab243"></a><h2 class="section">Substitution preserves typing (8)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_through_subst_ee"></a>typing_through_subst_ee : forall U E F x T e u,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> (F ++ [(x, bind_typ U)] ++ E) e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> E u U -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> (F ++ E) (<a class="idref" href="Fsub_Infrastructure.html#subst_ee">subst_ee</a> x u e) T.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We provide detailed comments for the following proof, mainly to
+    point out several useful tactics and proof techniques.
+
+<br/><br/>
+    Starting a proof with "Proof with &lt;some tactic&gt;" allows us to
+    specify a default tactic that should be used to solve goals.  To
+    invoke this default tactic at the end of a proof step, we signal
+    the end of the step with three periods instead of a single one,
+    e.g., "apply typing_weakening...". 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto 4 <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_strengthening">wf_typ_strengthening</a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Lemmas.html#wf_env_strengthening">wf_env_strengthening</a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Soundness.html#sub_strengthening">sub_strengthening</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The proof proceeds by induction on the given typing derivation
+      for e.  We use the remember tactic, along with generalize
+      dependent, to ensure that the goal is properly strengthened
+      before we use induction. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;intros U E F x T e u TypT TypU.<br/>
+&nbsp;&nbsp;remember (F ++ [(x, bind_typ U)] ++ E) <span class="keyword">as</span> E'.<br/>
+&nbsp;&nbsp;generalize dependent F.<br/>
+&nbsp;&nbsp;induction TypT; intros F EQ; subst; simpl <a class="idref" href="Fsub_Infrastructure.html#subst_ee">subst_ee</a>...<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The typing_var case involves a case analysis on whether the
+      variable is the same as the one being substituted for. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;Case "typing_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (x0 == x); subst.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+In the case where x0=x, we first observe that hypothesis H0
+        implies that T=U, since x can only be bound once in the
+        environment.  The conclusion then follows from hypothesis TypU
+        and weakening.  We can use the binds_get tactic, described in
+        the Environment library, with H0 to obtain the fact that
+        T=U. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "x0 = x".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds_get H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H2; subst.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+In order to apply typing_weakening, we need to rewrite the
+            environment so that it has the right shape.  (We could
+            also prove a corollary of typing_weakening.)  The
+            rewrite_env tactic, described in the Environment library,
+            is one way to perform this rewriting. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (empty ++ F ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Soundness.html#typing_weakening">typing_weakening</a>...<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+In the case where x0&lt;&gt;x, the result follows by an exhaustive
+        case analysis on exactly where x0 is bound in the environment.
+        We perform this case analysis by using the binds_cases tactic,
+        described in the Environment library. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "x0 &lt;&gt; x".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_env_strengthening">wf_env_strengthening</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_env_strengthening">wf_env_strengthening</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Informally, the typing_abs case is a straightforward application
+      of the induction hypothesis, which is called H0 here. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We use the "pick fresh and apply" tactic to apply the rule
+        typing_abs without having to calculate the appropriate finite
+        set of atoms. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh y and apply <a class="idref" href="Fsub_Definitions.html#typing_abs">typing_abs</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We cannot apply H0 directly here.  The first problem is that
+        the induction hypothesis has (subst_ee open_ee), whereas in
+        the goal we have (open_ee subst_ee).  The lemma
+        subst_ee_open_ee_var lets us swap the order of these two
+        operations. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_Infrastructure.html#subst_ee_open_ee_var">subst_ee_open_ee_var</a>...<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The second problem is how the concatenations are associated in
+        the environments.  In the goal, we currently have
+
+<br/><br/>
+<pre>([(y, bind_typ V)] ++ F ++ E),
+</pre>
+
+<br/><br/>
+        where concatenation associates to the right.  In order to
+        apply the induction hypothesis, we need
+
+<br/><br/>
+<pre>(([(y, bind_typ V)] ++ F) ++ E).
+</pre>
+
+<br/><br/>
+        We can use the rewrite_env tactic to perform this rewriting,
+        or we can rewrite directly with an appropriate lemma from the
+        Environment library. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Now we can apply the induction hypothesis. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The remaining cases in this proof are straightforward, given
+      everything that we have pointed out above. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;Case "typing_tabs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#typing_tabs">typing_tabs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_Infrastructure.html#subst_ee_open_te_var">subst_ee_open_te_var</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab244"></a><h2 class="section">Type substitution preserves typing (11)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_through_subst_te"></a>typing_through_subst_te : forall Q E F Z e T P,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> (F ++ [(Z, bind_sub Q)] ++ E) e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E P Q -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) F ++ E) (<a class="idref" href="Fsub_Infrastructure.html#subst_te">subst_te</a> Z P e) (<a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a> Z P T).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto 6 <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_env_subst_tb">wf_env_subst_tb</a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Lemmas.html#wf_typ_subst_tb">wf_typ_subst_tb</a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Soundness.html#sub_through_subst_tt">sub_through_subst_tt</a>.<br/>
+&nbsp;&nbsp;intros Q E F Z e T P Typ PsubQ.<br/>
+&nbsp;&nbsp;remember (F ++ [(Z, bind_sub Q)] ++ E) <span class="keyword">as</span> G.<br/>
+&nbsp;&nbsp;generalize dependent F.<br/>
+&nbsp;&nbsp;induction Typ; intros F EQ; subst;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl <a class="idref" href="Fsub_Infrastructure.html#subst_te">subst_te</a> <span class="keyword">in</span> *; simpl <a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a> <span class="keyword">in</span> *...<br/>
+&nbsp;&nbsp;Case "typing_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Definitions.html#typing_var">typing_var</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="Fsub_Lemmas.html#map_subst_tb_id">map_subst_tb_id</a> E Z P);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | auto | eapply fresh_mid_tail; eauto ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H0...<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh y and apply <a class="idref" href="Fsub_Definitions.html#typing_abs">typing_abs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_Infrastructure.html#subst_te_open_ee_var">subst_te_open_ee_var</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) ([(y, <a class="idref" href="Fsub_Definitions.html#bind_typ">bind_typ</a> V)] ++ F) ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+&nbsp;&nbsp;Case "typing_tabs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#typing_tabs">typing_tabs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_Infrastructure.html#subst_te_open_te_var">subst_te_open_te_var</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_Infrastructure.html#subst_tt_open_tt_var">subst_tt_open_tt_var</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) ([(Y, <a class="idref" href="Fsub_Definitions.html#bind_sub">bind_sub</a> V)] ++ F) ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+&nbsp;&nbsp;Case "typing_tapp".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_Infrastructure.html#subst_tt_open_tt">subst_tt_open_tt</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab245"></a><h1 class="section"><a name="preservation"></a> Preservation</h1>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab246"></a><h2 class="section">Inversion of typing (13)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_inv_abs"></a>typing_inv_abs : forall E S1 e1 T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> E (<a class="idref" href="Fsub_Definitions.html#exp_abs">exp_abs</a> S1 e1) T -&gt;<br/>
+&nbsp;&nbsp;forall U1 U2, <a class="idref" href="Fsub_Definitions.html#sub">sub</a> E T (<a class="idref" href="Fsub_Definitions.html#typ_arrow">typ_arrow</a> U1 U2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E U1 S1<br/>
+&nbsp;&nbsp;/\ <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> S2, <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> L, forall x, x `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> ([(x, <a class="idref" href="Fsub_Definitions.html#bind_typ">bind_typ</a> S1)] ++ E) (<a class="idref" href="Fsub_Definitions.html#open_ee">open_ee</a> e1 x) S2 /\ <a class="idref" href="Fsub_Definitions.html#sub">sub</a> E S2 U2.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;intros E S1 e1 T Typ.<br/>
+&nbsp;&nbsp;remember (<a class="idref" href="Fsub_Definitions.html#exp_abs">exp_abs</a> S1 e1) <span class="keyword">as</span> e.<br/>
+&nbsp;&nbsp;generalize dependent e1.<br/>
+&nbsp;&nbsp;generalize dependent S1.<br/>
+&nbsp;&nbsp;induction Typ; intros S1 b1 EQ U1 U2 Sub; inversion EQ; subst.<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Sub; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists T1. exists L...<br/>
+&nbsp;&nbsp;Case "typing_sub".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto <span class="keyword">using</span> (<a class="idref" href="Fsub_Soundness.html#sub_transitivity">sub_transitivity</a> T).<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_inv_tabs"></a>typing_inv_tabs : forall E S1 e1 T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> E (<a class="idref" href="Fsub_Definitions.html#exp_tabs">exp_tabs</a> S1 e1) T -&gt;<br/>
+&nbsp;&nbsp;forall U1 U2, <a class="idref" href="Fsub_Definitions.html#sub">sub</a> E T (<a class="idref" href="Fsub_Definitions.html#typ_all">typ_all</a> U1 U2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E U1 S1<br/>
+&nbsp;&nbsp;/\ <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> S2, <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> L, forall X, X `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> ([(X, <a class="idref" href="Fsub_Definitions.html#bind_sub">bind_sub</a> U1)] ++ E) (<a class="idref" href="Fsub_Definitions.html#open_te">open_te</a> e1 X) (<a class="idref" href="Fsub_Definitions.html#open_tt">open_tt</a> S2 X)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <a class="idref" href="Fsub_Definitions.html#sub">sub</a> ([(X, <a class="idref" href="Fsub_Definitions.html#bind_sub">bind_sub</a> U1)] ++ E) (<a class="idref" href="Fsub_Definitions.html#open_tt">open_tt</a> S2 X) (<a class="idref" href="Fsub_Definitions.html#open_tt">open_tt</a> U2 X).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; auto.<br/>
+&nbsp;&nbsp;intros E S1 e1 T Typ.<br/>
+&nbsp;&nbsp;remember (<a class="idref" href="Fsub_Definitions.html#exp_tabs">exp_tabs</a> S1 e1) <span class="keyword">as</span> e.<br/>
+&nbsp;&nbsp;generalize dependent e1.<br/>
+&nbsp;&nbsp;generalize dependent S1.<br/>
+&nbsp;&nbsp;induction Typ; intros S1 e0 EQ U1 U2 Sub; inversion EQ; subst.<br/>
+&nbsp;&nbsp;Case "typing_tabs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Sub; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists T1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists (L0 `union` L).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros Y Fr.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (empty ++ [(Y, bind_sub U1)] ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Soundness.html#typing_narrowing">typing_narrowing</a> S1)...<br/>
+&nbsp;&nbsp;Case "typing_sub".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto <span class="keyword">using</span> (<a class="idref" href="Fsub_Soundness.html#sub_transitivity">sub_transitivity</a> T).<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab247"></a><h2 class="section">Preservation (20)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="preservation"></a>preservation : forall E e e' T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> E e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#red">red</a> e e' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> E e' T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; eauto.<br/>
+&nbsp;&nbsp;intros E e e' T Typ. generalize dependent e'.<br/>
+&nbsp;&nbsp;induction Typ; intros e' Red; try solve [ inversion Red; subst; eauto ].<br/>
+&nbsp;&nbsp;Case "typing_app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Red; subst...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "red_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (<a class="idref" href="Fsub_Soundness.html#typing_inv_abs">typing_inv_abs</a> _ _ _ _ Typ1 T1 T2) <span class="keyword">as</span> [P1 [S2 [L P2]]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Soundness.html#sub_reflexivity">sub_reflexivity</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick fresh x.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (P2 x) <span class="keyword">as</span> [? ?]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="Fsub_Infrastructure.html#subst_ee_intro">subst_ee_intro</a> x)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (empty ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Soundness.html#typing_through_subst_ee">typing_through_subst_ee</a> T).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Definitions.html#typing_sub">typing_sub</a> S2)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (empty ++ [(x, bind_typ T)] ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Soundness.html#sub_weakening">sub_weakening</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto.<br/>
+&nbsp;&nbsp;Case "typing_tapp".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Red; subst...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "red_tabs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (<a class="idref" href="Fsub_Soundness.html#typing_inv_tabs">typing_inv_tabs</a> _ _ _ _ Typ T1 T2) <span class="keyword">as</span> [P1 [S2 [L P2]]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Soundness.html#sub_reflexivity">sub_reflexivity</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick fresh X.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (P2 X) <span class="keyword">as</span> [? ?]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="Fsub_Infrastructure.html#subst_te_intro">subst_te_intro</a> X)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="Fsub_Infrastructure.html#subst_tt_intro">subst_tt_intro</a> X)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> X T) empty ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Soundness.html#typing_through_subst_te">typing_through_subst_te</a> T1)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab248"></a><h1 class="section"><a name="progress"></a> Progress</h1>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab249"></a><h2 class="section">Canonical forms (14)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="canonical_form_abs"></a>canonical_form_abs : forall e U1 U2,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#value">value</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> empty e (<a class="idref" href="Fsub_Definitions.html#typ_arrow">typ_arrow</a> U1 U2) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> V, <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> e1, e = <a class="idref" href="Fsub_Definitions.html#exp_abs">exp_abs</a> V e1.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e U1 U2 Val Typ.<br/>
+&nbsp;&nbsp;remember empty <span class="keyword">as</span> E.<br/>
+&nbsp;&nbsp;remember (<a class="idref" href="Fsub_Definitions.html#typ_arrow">typ_arrow</a> U1 U2) <span class="keyword">as</span> T.<br/>
+&nbsp;&nbsp;revert U1 U2 HeqT HeqE.<br/>
+&nbsp;&nbsp;induction Typ; intros U1 U2 EQT EQE; subst;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try solve [ inversion Val | inversion EQT | eauto ].<br/>
+&nbsp;&nbsp;Case "typing_sub".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H; subst; eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H0.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="canonical_form_tabs"></a>canonical_form_tabs : forall e U1 U2,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#value">value</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> empty e (<a class="idref" href="Fsub_Definitions.html#typ_all">typ_all</a> U1 U2) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> V, <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> e1, e = <a class="idref" href="Fsub_Definitions.html#exp_tabs">exp_tabs</a> V e1.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e U1 U2 Val Typ.<br/>
+&nbsp;&nbsp;remember empty <span class="keyword">as</span> E.<br/>
+&nbsp;&nbsp;remember (<a class="idref" href="Fsub_Definitions.html#typ_all">typ_all</a> U1 U2) <span class="keyword">as</span> T.<br/>
+&nbsp;&nbsp;revert U1 U2 HeqT HeqT.<br/>
+&nbsp;&nbsp;induction Typ; intros U1 U2 EQT EQE; subst;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try solve [ inversion Val | inversion EQT | eauto ].<br/>
+&nbsp;&nbsp;Case "typing_sub".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H; subst; eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H0.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab250"></a><h2 class="section">Progress (16)</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="progress"></a>progress : forall e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> empty e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#value">value</a> e \/ <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> e', <a class="idref" href="Fsub_Definitions.html#red">red</a> e e'.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto.<br/>
+&nbsp;&nbsp;intros e T Typ.<br/>
+&nbsp;&nbsp;remember empty <span class="keyword">as</span> E. generalize dependent HeqE.<br/>
+&nbsp;&nbsp;assert (Typ' : <a class="idref" href="Fsub_Definitions.html#typing">typing</a> E e T)...<br/>
+&nbsp;&nbsp;induction Typ; intros EQ; subst...<br/>
+&nbsp;&nbsp;Case "typing_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H0.<br/>
+&nbsp;&nbsp;Case "typing_app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct IHTyp1 <span class="keyword">as</span> [Val1 | [e1' Rede1']]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Val1".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHTyp2 <span class="keyword">as</span> [Val2 | [e2' Rede2']]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSCase "Val2".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (<a class="idref" href="Fsub_Soundness.html#canonical_form_abs">canonical_form_abs</a> _ _ _ Val1 Typ1) <span class="keyword">as</span> [S [e3 EQ]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists (<a class="idref" href="Fsub_Definitions.html#open_ee">open_ee</a> e3 e2)...<br/>
+&nbsp;&nbsp;Case "typing_tapp".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct IHTyp <span class="keyword">as</span> [Val1 | [e1' Rede1']]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Val1".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (<a class="idref" href="Fsub_Soundness.html#canonical_form_tabs">canonical_form_tabs</a> _ _ _ Val1 Typ) <span class="keyword">as</span> [S [e3 EQ]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists (<a class="idref" href="Fsub_Definitions.html#open_te">open_te</a> e3 T)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "e1' Rede1'".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists (<a class="idref" href="Fsub_Definitions.html#exp_tapp">exp_tapp</a> e1' T)...<br/>
+<span class="keyword">Qed</span>.<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>Fsub_LetSum_Infrastructure</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Fsub_LetSum_Infrastructure</h1>
+
+<code>
+</code>
+
+<div class="doc">
+Infrastructure lemmas and tactic definitions for Fsub.
+
+<br/><br/>
+    Authors: Brian Aydemir and Arthur Charguéraud, with help from
+    Aaron Bohannon, Jeffrey Vaughan, and Dimitrios Vytiniotis.
+
+<br/><br/>
+    This file contains a number of definitions, tactics, and lemmas
+    that are based only on the syntax of the language at hand.  While
+    the exact statements of everything here would change for a
+    different language, the general structure of this file (i.e., the
+    sequence of definitions, tactics, and lemmas) would remain the
+    same.
+
+<br/><br/>
+    Table of contents:
+
+<ul>
+<li> <a href="#fv">Free variables</a>
+
+</li>
+<li> <a href="#subst">Substitution</a>
+
+</li>
+<li> <a href="#pick_fresh">The "pick fresh" tactic</a>
+
+</li>
+<li> <a href="#apply_fresh">The "pick fresh and apply" tactic</a>
+
+</li>
+<li> <a href="#properties">Properties of opening and substitution</a>
+
+</li>
+<li> <a href="#lc">Local closure is preserved under substitution</a>
+
+</li>
+<li> <a href="#auto">Automation</a> 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Only in the version with <code>exp_let</code> and/or <code>typ_sum</code>:
+
+<ul>
+<li> <a href="#body">Properties of body_e</a> 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="Fsub_LetSum_Definitions.html">Fsub_LetSum_Definitions</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab261"></a><h1 class="section"><a name="fv"></a> Free variables</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+In this section, we define free variable functions.  The functions
+    <code>fv_tt</code> and <code>fv_te</code> calculate the set of atoms used as free type
+    variables in a type or expression, respectively.  The function
+    <code>fv_ee</code> calculates the set of atoms used as free expression
+    variables in an expression.  Cases involving binders are
+    straightforward since bound variables are indices, not names, in
+    locally nameless representation. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="fv_tt"></a>fv_tt (T : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>) {struct T} : atoms :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> T <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_top">typ_top</a> =&gt; {}<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_bvar">typ_bvar</a> J =&gt; {}<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X =&gt; singleton X<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> T1 T2 =&gt; (fv_tt T1) `union` (fv_tt T2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> T1 T2 =&gt; (fv_tt T1) `union` (fv_tt T2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> T1 T2 =&gt; (fv_tt T1) `union` (fv_tt T2)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="fv_te"></a>fv_te (e : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a>) {struct e} : atoms :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> e <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i =&gt; {}<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x =&gt; {}<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> V e1  =&gt; (<a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_tt">fv_tt</a> V) `union` (fv_te e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2 =&gt; (fv_te e1) `union` (fv_te e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> V e1 =&gt; (<a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_tt">fv_tt</a> V) `union` (fv_te e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1 V =&gt; (<a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_tt">fv_tt</a> V) `union` (fv_te e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2 =&gt; (fv_te e1) `union` (fv_te e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1 =&gt; (fv_te e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e1 =&gt; (fv_te e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3 =&gt; (fv_te e1) `union` (fv_te e2) `union` (fv_te e3)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="fv_ee"></a>fv_ee (e : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a>) {struct e} : atoms :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> e <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i =&gt; {}<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x =&gt; singleton x<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> V e1 =&gt; (fv_ee e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2 =&gt; (fv_ee e1) `union` (fv_ee e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> V e1 =&gt; (fv_ee e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1 V =&gt; (fv_ee e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2 =&gt; (fv_ee e1) `union` (fv_ee e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1 =&gt; (fv_ee e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e1 =&gt; (fv_ee e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3 =&gt; (fv_ee e1) `union` (fv_ee e2) `union` (fv_ee e3)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab262"></a><h1 class="section"><a name="subst"></a> Substitution</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+In this section, we define substitution for expression and type
+    variables appearing in types, expressions, and environments.
+    Substitution differs from opening because opening replaces indices
+    whereas substitution replaces free variables.  The definitions
+    below are relatively simple for two reasons.
+
+<ul>
+<li> We are using locally nameless representation, where bound
+        variables are represented using indices.  Thus, there is no
+        need to rename variables to avoid capture.
+
+</li>
+<li> The definitions below assume that the term being substituted
+        in, i.e., the second argument to each function, is locally
+        closed.  Thus, there is no need to shift indices when passing
+        under a binder. 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="subst_tt"></a>subst_tt (Z : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (U : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>) (T : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>) {struct T} : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> T <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_top">typ_top</a> =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_top">typ_top</a><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_bvar">typ_bvar</a> J =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_bvar">typ_bvar</a> J<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X =&gt; <span class="keyword">if</span> X == Z <span class="keyword">then</span> U <span class="keyword">else</span> T<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> T1 T2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> (subst_tt Z U T1) (subst_tt Z U T2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> T1 T2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> (subst_tt Z U T1) (subst_tt Z U T2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> T1 T2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> (subst_tt Z U T1) (subst_tt Z U T2)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="subst_te"></a>subst_te (Z : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (U : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>) (e : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a>) {struct e} : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> e <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> V e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a>  (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> Z U V)  (subst_te Z U e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a>  (subst_te Z U e1) (subst_te Z U e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> V e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> Z U V)  (subst_te Z U e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1 V =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> (subst_te Z U e1) (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> Z U V)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> (subst_te Z U e1) (subst_te Z U e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> (subst_te Z U e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> (subst_te Z U e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> (subst_te Z U e1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(subst_te Z U e2) (subst_te Z U e3)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="subst_ee"></a>subst_ee (z : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (u : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a>) (e : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a>) {struct e} : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> e <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x =&gt; <span class="keyword">if</span> x == z <span class="keyword">then</span> u <span class="keyword">else</span> e<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> V e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> V (subst_ee z u e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> (subst_ee z u e1) (subst_ee z u e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> V e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> V (subst_ee z u e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1 V =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> (subst_ee z u e1) V<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> (subst_ee z u e1) (subst_ee z u e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> (subst_ee z u e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> (subst_ee z u e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> (subst_ee z u e1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(subst_ee z u e2) (subst_ee z u e3)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Definition</span> <a name="subst_tb"></a>subst_tb (Z : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (P : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>) (b : <a class="idref" href="Fsub_LetSum_Definitions.html#binding">binding</a>) : <a class="idref" href="Fsub_LetSum_Definitions.html#binding">binding</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> b <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#bind_sub">bind_sub</a> T =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#bind_sub">bind_sub</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> Z P T)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#bind_typ">bind_typ</a> T =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#bind_typ">bind_typ</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> Z P T)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab263"></a><h1 class="section"><a name="pick_fresh"></a> The "<code>pick fresh</code>" tactic</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The "<code>pick fresh</code>" tactic introduces a fresh atom into the context.
+    We define it in two steps.
+
+<br/><br/>
+    The first step is to define an auxiliary tactic <code>gather_atoms</code>,
+    meant to be used in the definition of other tactics, which returns
+    a set of atoms in the current context.  The definition of
+    <code>gather_atoms</code> follows a pattern based on repeated calls to
+    <code>gather_atoms_with</code>.  The one argument to this tactic is a
+    function that takes an object of some particular type and returns
+    a set of atoms that appear in that argument.  It is not necessary
+    to understand exactly how <code>gather_atoms_with</code> works.  If we add a
+    new inductive datatype, say for kinds, to our language, then we
+    would need to modify <code>gather_atoms</code>.  On the other hand, if we
+    merely add a new type, say products, then there is no need to
+    modify <code>gather_atoms</code>; the required changes would be made in
+    <code>fv_tt</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> gather_atoms :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> A := gather_atoms_with (<span class="keyword">fun</span> x : atoms =&gt; x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> B := gather_atoms_with (<span class="keyword">fun</span> x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a> =&gt; singleton x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> C := gather_atoms_with (<span class="keyword">fun</span> x : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> =&gt; <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_te">fv_te</a> x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> D := gather_atoms_with (<span class="keyword">fun</span> x : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> =&gt; <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_ee">fv_ee</a> x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> E := gather_atoms_with (<span class="keyword">fun</span> x : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> =&gt; <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_tt">fv_tt</a> x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> F := gather_atoms_with (<span class="keyword">fun</span> x : env =&gt; <a class="idref" href="Environment.html#dom">dom</a> x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;constr:(A `union` B `union` C `union` D `union` E `union` F).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The second step in defining "<code>pick fresh</code>" is to define the tactic
+    itself.  It is based on the <code>(pick fresh ... for ...)</code> tactic
+    defined in the <code>Atom</code> library.  Here, we use <code>gather_atoms</code> to
+    construct the set <code>L</code> rather than leaving it to the user to
+    provide.  Thus, invoking <code>(pick fresh x)</code> introduces a new atom
+    <code>x</code> into the current context that is fresh for "everything" in the
+    context. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "pick" "fresh" ident(x) :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> L := gather_atoms <span class="keyword">in</span> (pick fresh x for L).<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab264"></a><h1 class="section"><a name="apply_fresh"></a> The "<code>pick fresh and apply</code>" tactic</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+This tactic is implementation specific only because of its
+    reliance on <code>gather_atoms</code>, which is itself implementation
+    specific.  The definition below may be copied between developments
+    without any changes, assuming that the other other developments
+    define an appropriate <code>gather_atoms</code> tactic.  For documentation on
+    the tactic on which the one below is based, see the
+    <code>Metatheory</code> library. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"pick" "fresh" ident(atom_name) "and" "apply" constr(lemma) :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> L := gather_atoms <span class="keyword">in</span><br/>
+&nbsp;&nbsp;pick fresh atom_name excluding L and apply lemma.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab265"></a><h1 class="section"><a name="properties"></a> Properties of opening and substitution</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemmas provide useful structural properties of
+    substitution and opening.  While the exact statements are language
+    specific, we have found that similar properties are needed in a
+    wide range of languages.
+
+<br/><br/>
+    Below, we indicate which lemmas depend on which other lemmas.
+    Since <code>te</code> functions depend on their <code>tt</code> counterparts, a similar
+    dependency can be found in the lemmas.
+
+<br/><br/>
+    The lemmas are split into three sections, one each for the <code>tt</code>,
+    <code>te</code>, and <code>ee</code> functions.  The most important lemmas are the
+    following:
+
+<ul>
+<li> Substitution and opening commute with each other, e.g.,
+        <code>subst_tt_open_tt_var</code>.
+
+</li>
+<li> Opening a term is equivalent to opening the term with a fresh
+        name and then substituting for that name, e.g.,
+        <code>subst_tt_intro</code>.
+
+</li>
+</ul>
+
+<br/><br/>
+    We keep the sections as uniform in structure as possible.  In
+    particular, we state explicitly strengthened induction hypotheses
+    even when there are more concise ways of proving the lemmas of
+    interest. 
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab266"></a><h2 class="section">Properties of type substitution in types</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The next lemma is the strengthened induction hypothesis for the
+    lemma that follows, which states that opening a locally closed
+    term is the identity.  This lemma is not otherwise independently
+    useful. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_tt_rec_type_aux"></a>open_tt_rec_type_aux : forall T j V i U,<br/>
+&nbsp;&nbsp;i &lt;&gt; j -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> j V T = <a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> i U (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> j V T) -&gt;<br/>
+&nbsp;&nbsp;T = <a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> i U T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto*.<br/>
+&nbsp;&nbsp;induction T; intros j V i U Neq H; simpl <span class="keyword">in</span> *; inversion H; f_equal...<br/>
+&nbsp;&nbsp;Case "typ_bvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (j === n)... destruct (i === n)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Opening a locally closed term is the identity.  This lemma depends
+    on the immediately preceding lemma. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_tt_rec_type"></a>open_tt_rec_type : forall T U k,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> T -&gt;<br/>
+&nbsp;&nbsp;T = <a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> k U T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros T U k Htyp. revert k.<br/>
+&nbsp;&nbsp;induction Htyp; intros k; simpl; f_equal...<br/>
+&nbsp;&nbsp;Case "typ_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold open_tt <span class="keyword">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh X.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_LetSum_Infrastructure.html#open_tt_rec_type_aux">open_tt_rec_type_aux</a> T2 0 (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X))...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+If a name is fresh for a term, then substituting for it is the
+    identity. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_tt_fresh"></a>subst_tt_fresh : forall Z U T,<br/>
+&nbsp;&nbsp;&nbsp;Z `notin` <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_tt">fv_tt</a> T -&gt;<br/>
+&nbsp;&nbsp;&nbsp;T = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> Z U T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;induction T; simpl; intro H; f_equal...<br/>
+&nbsp;&nbsp;Case "typ_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (a == Z)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;absurd_hyp H; fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Substitution commutes with opening under certain conditions.  This
+    lemma depends on the fact that opening a locally closed term is
+    the identity. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_tt_open_tt_rec"></a>subst_tt_open_tt_rec : forall T1 T2 X P k,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> P -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X P (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> k T2 T1) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> k (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X P T2) (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X P T1).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros T1 T2 X P k WP. revert k.<br/>
+&nbsp;&nbsp;induction T1; intros k; simpl; f_equal...<br/>
+&nbsp;&nbsp;Case "typ_bvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (k === n); subst...<br/>
+&nbsp;&nbsp;Case "typ_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (a == X); subst... apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_tt_rec_type">open_tt_rec_type</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The next lemma is a direct corollary of the immediately preceding
+    lemma---the index is specialized to zero. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_tt_open_tt"></a>subst_tt_open_tt : forall T1 T2 (X:<a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) P,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> P -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X P (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> T1 T2) = <a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X P T1) (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X P T2).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;unfold open_tt.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_open_tt_rec">subst_tt_open_tt_rec</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The next lemma is a direct corollary of the immediately preceding
+    lemma---here, we're opening the term with a variable.  In
+    practice, this lemma seems to be needed as a left-to-right rewrite
+    rule, when stated in its current form. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_tt_open_tt_var"></a>subst_tt_open_tt_var : forall (X Y:<a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) P T,<br/>
+&nbsp;&nbsp;Y &lt;&gt; X -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> P -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X P T) Y = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X P (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> T Y).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros X Y P T Neq Wu.<br/>
+&nbsp;&nbsp;unfold open_tt.<br/>
+&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_open_tt_rec">subst_tt_open_tt_rec</a>...<br/>
+&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;destruct (Y == X)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The next lemma states that opening a term is equivalent to first
+    opening the term with a fresh name and then substituting for the
+    name.  This is actually the strengthened induction hypothesis for
+    the version we use in practice. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_tt_intro_rec"></a>subst_tt_intro_rec : forall X T2 U k,<br/>
+&nbsp;&nbsp;X `notin` <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_tt">fv_tt</a> T2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> k U T2 = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X U (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> k (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X) T2).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;induction T2; intros U k Fr; simpl <span class="keyword">in</span> *; f_equal...<br/>
+&nbsp;&nbsp;Case "typ_bvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (k === n)... simpl. destruct (X == X)...<br/>
+&nbsp;&nbsp;Case "typ_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (a == X)... absurd_hyp Fr; fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The next lemma is a direct corollary of the immediately preceding
+    lemma---the index is specialized to zero.  
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_tt_intro"></a>subst_tt_intro : forall X T2 U,<br/>
+&nbsp;&nbsp;X `notin` <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_tt">fv_tt</a> T2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> T2 U = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X U (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> T2 X).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;unfold open_tt.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_intro_rec">subst_tt_intro_rec</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab267"></a><h2 class="section">Properties of type substitution in expressions</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+This section follows the structure of the previous section.  The
+    one notable difference is that we require two auxiliary lemmas to
+    show that substituting a type in a locally-closed expression is
+    the identity. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_te_rec_expr_aux"></a>open_te_rec_expr_aux : forall e j u i P ,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> j u e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> i P (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> j u e) -&gt;<br/>
+&nbsp;&nbsp;e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> i P e.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto*.<br/>
+&nbsp;&nbsp;induction e; intros j u i P H; simpl <span class="keyword">in</span> *; inversion H; f_equal...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_te_rec_type_aux"></a>open_te_rec_type_aux : forall e j Q i P,<br/>
+&nbsp;&nbsp;i &lt;&gt; j -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> j Q e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> i P (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> j Q e) -&gt;<br/>
+&nbsp;&nbsp;e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> i P e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction e; intros j Q i P Neq Heq; simpl <span class="keyword">in</span> *; inversion Heq;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;f_equal; eauto <span class="keyword">using</span> <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_tt_rec_type_aux">open_tt_rec_type_aux</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_te_rec_expr"></a>open_te_rec_expr : forall e U k,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> e -&gt;<br/>
+&nbsp;&nbsp;e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> k U e.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros e U k WF. revert k.<br/>
+&nbsp;&nbsp;induction WF; intros k; simpl; f_equal; auto <span class="keyword">using</span> <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_tt_rec_type">open_tt_rec_type</a>;<br/>
+&nbsp;&nbsp;try solve [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold open_ee <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh x;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_te_rec_expr_aux">open_te_rec_expr_aux</a> <span class="keyword">with</span> (j := 0) (u := <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto*<br/>
+&nbsp;&nbsp;| unfold open_te <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh X;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_te_rec_type_aux">open_te_rec_type_aux</a> <span class="keyword">with</span> (j := 0) (Q := <a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto*<br/>
+&nbsp;&nbsp;].<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_fresh"></a>subst_te_fresh : forall X U e,<br/>
+&nbsp;&nbsp;X `notin` <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_te">fv_te</a> e -&gt;<br/>
+&nbsp;&nbsp;e = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> X U e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction e; simpl; intros; f_equal; auto <span class="keyword">using</span> <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_fresh">subst_tt_fresh</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_open_te_rec"></a>subst_te_open_te_rec : forall e T X U k,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> U -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> X U (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> k T e) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> k (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X U T) (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> X U e).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e T X U k WU. revert k.<br/>
+&nbsp;&nbsp;induction e; intros k; simpl; f_equal; auto <span class="keyword">using</span> <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_open_tt_rec">subst_tt_open_tt_rec</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_open_te"></a>subst_te_open_te : forall e T X U,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> U -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> X U (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> e T) = <a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> X U e) (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> X U T).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;unfold open_te.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te_open_te_rec">subst_te_open_te_rec</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_open_te_var"></a>subst_te_open_te_var : forall (X Y:<a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) U e,<br/>
+&nbsp;&nbsp;Y &lt;&gt; X -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> U -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> X U e) Y = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> X U (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> e Y).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros X Y U e Neq WU.<br/>
+&nbsp;&nbsp;unfold open_te.<br/>
+&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te_open_te_rec">subst_te_open_te_rec</a>...<br/>
+&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;destruct (Y == X)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_intro_rec"></a>subst_te_intro_rec : forall X e U k,<br/>
+&nbsp;&nbsp;X `notin` <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_te">fv_te</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> k U e = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> X U (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> k (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X) e).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction e; intros U k Fr; simpl <span class="keyword">in</span> *; f_equal;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto <span class="keyword">using</span> <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_intro_rec">subst_tt_intro_rec</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_intro"></a>subst_te_intro : forall X e U,<br/>
+&nbsp;&nbsp;X `notin` <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_te">fv_te</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> e U = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> X U (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> e X).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;unfold open_te.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te_intro_rec">subst_te_intro_rec</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab268"></a><h2 class="section">Properties of expression substitution in expressions</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+This section follows the structure of the previous two sections. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_ee_rec_expr_aux"></a>open_ee_rec_expr_aux : forall e j v u i,<br/>
+&nbsp;&nbsp;i &lt;&gt; j -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> j v e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> i u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> j v e) -&gt;<br/>
+&nbsp;&nbsp;e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> i u e.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto*.<br/>
+&nbsp;&nbsp;induction e; intros j v u i Neq H; simpl <span class="keyword">in</span> *; inversion H; f_equal...<br/>
+&nbsp;&nbsp;Case "exp_bvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (j===n)... destruct (i===n)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_ee_rec_type_aux"></a>open_ee_rec_type_aux : forall e j V u i,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> j V e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> i u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> j V e) -&gt;<br/>
+&nbsp;&nbsp;e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> i u e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction e; intros j V u i H; simpl; inversion H; f_equal; eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_ee_rec_expr"></a>open_ee_rec_expr : forall u e k,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> e -&gt;<br/>
+&nbsp;&nbsp;e = <a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> k u e.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros u e k Hexpr. revert k.<br/>
+&nbsp;&nbsp;induction Hexpr; intro k; simpl; f_equal; auto*;<br/>
+&nbsp;&nbsp;try solve [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold open_ee <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh x;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_ee_rec_expr_aux">open_ee_rec_expr_aux</a> <span class="keyword">with</span> (j := 0) (v := <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto*<br/>
+&nbsp;&nbsp;| unfold open_te <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh X;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_ee_rec_type_aux">open_ee_rec_type_aux</a> <span class="keyword">with</span> (j := 0) (V := <a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto*<br/>
+&nbsp;&nbsp;].<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_fresh"></a>subst_ee_fresh : forall (x: <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) u e,<br/>
+&nbsp;&nbsp;x `notin` <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_ee">fv_ee</a> e -&gt;<br/>
+&nbsp;&nbsp;e = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u e.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros x u e; induction e; simpl; intro H; f_equal...<br/>
+&nbsp;&nbsp;Case "exp_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (a==x)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;absurd_hyp H; fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_open_ee_rec"></a>subst_ee_open_ee_rec : forall e1 e2 x u k,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> k e2 e1) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> k (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u e2) (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u e1).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros e1 e2 x u k WP. revert k.<br/>
+&nbsp;&nbsp;induction e1; intros k; simpl; f_equal...<br/>
+&nbsp;&nbsp;Case "exp_bvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (k === n); subst...<br/>
+&nbsp;&nbsp;Case "exp_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (a == x); subst... apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_ee_rec_expr">open_ee_rec_expr</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_open_ee"></a>subst_ee_open_ee : forall e1 e2 x u,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e1 e2) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u e1) (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u e2).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;unfold open_ee.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_open_ee_rec">subst_ee_open_ee_rec</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_open_ee_var"></a>subst_ee_open_ee_var : forall (x y:<a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) u e,<br/>
+&nbsp;&nbsp;y &lt;&gt; x -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u e) y = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e y).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros x y u e Neq Wu.<br/>
+&nbsp;&nbsp;unfold open_ee.<br/>
+&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_open_ee_rec">subst_ee_open_ee_rec</a>...<br/>
+&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;destruct (y == x)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_open_ee_rec"></a>subst_te_open_ee_rec : forall e1 e2 Z P k,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> Z P (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> k e2 e1) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> k (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> Z P e2) (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> Z P e1).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;induction e1; intros e2 Z P k; simpl; f_equal...<br/>
+&nbsp;&nbsp;Case "exp_bvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (k === n)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_open_ee"></a>subst_te_open_ee : forall e1 e2 Z P,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> Z P (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e1 e2) = <a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> Z P e1) (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> Z P e2).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;unfold open_ee.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te_open_ee_rec">subst_te_open_ee_rec</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_open_ee_var"></a>subst_te_open_ee_var : forall Z (x:<a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) P e,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> Z P e) x = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> Z P (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e x).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te_open_ee">subst_te_open_ee</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_open_te_rec"></a>subst_ee_open_te_rec : forall e P z u k,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> z u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> k P e) = <a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> k P (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> z u e).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;induction e; intros P z u k H; simpl; f_equal...<br/>
+&nbsp;&nbsp;Case "exp_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (a == z)... apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_te_rec_expr">open_te_rec_expr</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_open_te"></a>subst_ee_open_te : forall e P z u,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> z u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> e P) = <a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> z u e) P.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;unfold open_te.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_open_te_rec">subst_ee_open_te_rec</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_open_te_var"></a>subst_ee_open_te_var : forall z (X:<a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) u e,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> z u e) X = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> z u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> e X).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros z X u e H.<br/>
+&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_open_te">subst_ee_open_te</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_intro_rec"></a>subst_ee_intro_rec : forall x e u k,<br/>
+&nbsp;&nbsp;x `notin` <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_ee">fv_ee</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> k u e = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> k (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x) e).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;induction e; intros u k Fr; simpl <span class="keyword">in</span> *; f_equal...<br/>
+&nbsp;&nbsp;Case "exp_bvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (k === n)... simpl. destruct (x == x)...<br/>
+&nbsp;&nbsp;Case "exp_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (a == x)... absurd_hyp Fr; fsetdec.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_intro"></a>subst_ee_intro : forall x e u,<br/>
+&nbsp;&nbsp;x `notin` <a class="idref" href="Fsub_LetSum_Infrastructure.html#fv_ee">fv_ee</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e u = <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> x u (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e x).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;unfold open_ee.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_intro_rec">subst_ee_intro_rec</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab269"></a><h1 class="section"><a name="lc"></a> Local closure is preserved under substitution</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+While these lemmas may be considered properties of substitution, we
+    separate them out due to the lemmas that they depend on. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemma depends on <code>subst_tt_open_tt_var</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_tt_type"></a>subst_tt_type : forall Z P T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> P -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> Z P T).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;intros Z P T HT HP.<br/>
+&nbsp;&nbsp;induction HT; simpl...<br/>
+&nbsp;&nbsp;Case "type_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (X == Z)...<br/>
+&nbsp;&nbsp;Case "type_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_LetSum_Definitions.html#type_all">type_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_open_tt_var">subst_tt_open_tt_var</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemma depends on <code>subst_tt_type</code> and
+    <code>subst_te_open_ee_var</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_te_expr"></a>subst_te_expr : forall Z P e,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> P -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te">subst_te</a> Z P e).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto <span class="keyword">using</span> subst_tt_type.<br/>
+&nbsp;&nbsp;intros Z P e He Hp.<br/>
+&nbsp;&nbsp;induction He; simpl; auto <span class="keyword">using</span> <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_type">subst_tt_type</a>;<br/>
+&nbsp;&nbsp;try solve [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;econstructor;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try instantiate (1 := L `union` singleton Z);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te_open_ee_var">subst_te_open_ee_var</a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te_open_te_var">subst_te_open_te_var</a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eauto <span class="keyword">using</span> <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_type">subst_tt_type</a><br/>
+&nbsp;&nbsp;].<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemma depends on <code>subst_ee_open_ee_var</code> and
+    <code>subst_ee_open_te_var</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_ee_expr"></a>subst_ee_expr : forall z e1 e2,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> e1 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> e2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee">subst_ee</a> z e2 e1).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;intros z e1 e2 He1 He2.<br/>
+&nbsp;&nbsp;induction He1; simpl; auto;<br/>
+&nbsp;&nbsp;try solve [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;econstructor;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try instantiate (1 := L `union` singleton z);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_open_ee_var">subst_ee_open_ee_var</a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try rewrite <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_open_te_var">subst_ee_open_te_var</a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto<br/>
+&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;Case "expr_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (x == z)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab270"></a><h1 class="section"><a name="body"></a> Properties of <code>body_e</code></h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The two kinds of facts we need about <code>body_e</code> are the following:
+
+<ul>
+<li> How to use it to derive that terms are locally closed.
+
+</li>
+<li> How to derive it from the facts that terms are locally closed.
+
+</li>
+</ul>
+
+<br/><br/>
+    Since we use it only in the context of <code>exp_let</code> and <code>exp_sum</code>
+    (see the definition of reduction), those two constructors are the
+    only ones we consider below. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="expr_let_from_body"></a>expr_let_from_body : forall e1 e2,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> e1 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e1 e2 H [J1 J2].<br/>
+&nbsp;&nbsp;pick fresh y and apply <a class="idref" href="Fsub_LetSum_Definitions.html#expr_let">expr_let</a>; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="body_from_expr_let"></a>body_from_expr_let : forall e1 e2,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e2.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e1 e2 H.<br/>
+&nbsp;&nbsp;unfold body_e.<br/>
+&nbsp;&nbsp;inversion H; eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="expr_case_from_body"></a>expr_case_from_body : forall e1 e2 e3,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> e1 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e3 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e1 e2 e3 H [J1 J2] [K1 K2].<br/>
+&nbsp;&nbsp;pick fresh y and apply <a class="idref" href="Fsub_LetSum_Definitions.html#expr_case">expr_case</a>; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="body_inl_from_expr_case"></a>body_inl_from_expr_case : forall e1 e2 e3,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e2.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e1 e2 e3 H.<br/>
+&nbsp;&nbsp;unfold body_e.<br/>
+&nbsp;&nbsp;inversion H; eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="body_inr_from_expr_case"></a>body_inr_from_expr_case : forall e1 e2 e3,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e3.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e1 e2 e3 H.<br/>
+&nbsp;&nbsp;unfold body_e.<br/>
+&nbsp;&nbsp;inversion H; eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_ee_body_e"></a>open_ee_body_e : forall e1 e2,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e1 -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> e2 -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e1 e2).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e1 e2 [L H] J.<br/>
+&nbsp;&nbsp;pick fresh x.<br/>
+&nbsp;&nbsp;rewrite (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_intro">subst_ee_intro</a> x); auto <span class="keyword">using</span> <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_expr">subst_ee_expr</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab271"></a><h1 class="section"><a name="auto"></a> Automation</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We add as hints the fact that local closure is preserved under
+    substitution.  This is part of our strategy for automatically
+    discharging local-closure proof obligations. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt_type">subst_tt_type</a> <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_te_expr">subst_te_expr</a> <a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_ee_expr">subst_ee_expr</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We also add as hints the lemmas concerning <code>body_e</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_LetSum_Infrastructure.html#expr_let_from_body">expr_let_from_body</a> <a class="idref" href="Fsub_LetSum_Infrastructure.html#body_from_expr_let">body_from_expr_let</a>.<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_LetSum_Infrastructure.html#expr_case_from_body">expr_case_from_body</a>.<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_LetSum_Infrastructure.html#body_inl_from_expr_case">body_inl_from_expr_case</a> <a class="idref" href="Fsub_LetSum_Infrastructure.html#body_inr_from_expr_case">body_inr_from_expr_case</a>.<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_LetSum_Infrastructure.html#open_ee_body_e">open_ee_body_e</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+When reasoning about the <code>binds</code> relation and <code>map</code>, we
+    occasionally encounter situations where the binding is
+    over-simplified.  The following hint undoes that simplification,
+    thus enabling <code><span class="keyword">Hint</span></code>s from the <code>Environment</code> library. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Extern 1 (<a class="idref" href="Environment.html#binds">binds</a> _ (?F (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tt">subst_tt</a> ?X ?U ?T)) _) =&gt;<br/>
+&nbsp;&nbsp;unsimpl (<a class="idref" href="Fsub_LetSum_Infrastructure.html#subst_tb">subst_tb</a> X U (F T)).<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

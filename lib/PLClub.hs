@@ -83,6 +83,12 @@ application = hakyllWith config $ do
                 >>= loadAndApplyTemplate "templates/default.html" meetingsCtx
                 >>= relativizeUrls
 
+    match "old_site/**" $ do
+      route   $ routeTail <!> htaccessHackRoute
+      compile $ copyFileCompiler
+        
+        
+
     match "index.html" $ do
         rulesExtraDependencies [tagsDependency ptags] $ do
             route idRoute

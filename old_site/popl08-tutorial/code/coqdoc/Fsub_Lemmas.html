@@ -1,0 +1,551 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>Fsub_Lemmas</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Fsub_Lemmas</h1>
+
+<code>
+</code>
+
+<div class="doc">
+Administrative lemmas for Fsub.
+
+<br/><br/>
+    Authors: Brian Aydemir and Arthur Charguéraud, with help from
+    Aaron Bohannon, Jeffrey Vaughan, and Dimitrios Vytiniotis.
+
+<br/><br/>
+    This file contains a number of administrative lemmas that we
+    require for proving type-safety.  The lemmas mainly concern the
+    relations <code>wf_typ</code> and <code>wf_env</code>.
+
+<br/><br/>
+    This file also contains regularity lemmas, which show that various
+    relations hold only for locally closed terms.  In addition to
+    being necessary to complete the proof of type-safety, these lemmas
+    help demonstrate that our definitions are correct; they would be
+    worth proving even if they are unneeded for any "real" proofs.
+
+<br/><br/>
+    Table of contents:
+
+<ul>
+<li> <a href="#wft">Properties of wf_typ</a>
+
+</li>
+<li> <a href="#oktwft">Properties of wf_env and wf_typ</a>
+
+</li>
+<li> <a href="#okt">Properties of wf_env</a>
+
+</li>
+<li> <a href="#subst">Properties of substitution</a>
+
+</li>
+<li> <a href="#regularity">Regularity lemmas</a>
+
+</li>
+<li> <a href="#auto">Automation</a> 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="Fsub_Infrastructure.html">Fsub_Infrastructure</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab228"></a><h1 class="section"><a name="wft"></a> Properties of <code>wf_typ</code></h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+If a type is well-formed in an environment, then it is locally
+    closed. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="type_from_wf_typ"></a>type_from_wf_typ : forall E T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E T -&gt; <a class="idref" href="Fsub_Definitions.html#type">type</a> T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E T H; induction H; eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The remaining properties are analogous to the properties that we
+    need to show for the subtyping and typing relations. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_typ_weakening"></a>wf_typ_weakening : forall T E F G,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> (G ++ E) T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (G ++ F ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> (G ++ F ++ E) T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; eauto.<br/>
+&nbsp;&nbsp;intros T E F G Hwf_typ Hk.<br/>
+&nbsp;&nbsp;remember (G ++ E) <span class="keyword">as</span> F.<br/>
+&nbsp;&nbsp;generalize dependent G.<br/>
+&nbsp;&nbsp;induction Hwf_typ; intros G Hok Heq; subst...<br/>
+&nbsp;&nbsp;Case "type_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#wf_typ_all">wf_typ_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_typ_weaken_head"></a>wf_typ_weaken_head : forall T E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> (F ++ E) T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;rewrite_env (empty ++ F++ E).<br/>
+&nbsp;&nbsp;auto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_weakening">wf_typ_weakening</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_typ_narrowing"></a>wf_typ_narrowing : forall V U T E F X,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> (F ++ [(X, bind_sub V)] ++ E) T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ [(X, bind_sub U)] ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> (F ++ [(X, bind_sub U)] ++ E) T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; eauto.<br/>
+&nbsp;&nbsp;intros V U T E F X Hwf_typ Hok.<br/>
+&nbsp;&nbsp;remember (F ++ [(X, bind_sub V)] ++ E) <span class="keyword">as</span> G.<br/>
+&nbsp;&nbsp;generalize dependent F.<br/>
+&nbsp;&nbsp;induction Hwf_typ; intros F Hok Heq; subst...<br/>
+&nbsp;&nbsp;Case "wf_typ_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H...<br/>
+&nbsp;&nbsp;Case "typ_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#wf_typ_all">wf_typ_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_typ_strengthening"></a>wf_typ_strengthening : forall E F x U T,<br/>
+&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> (F ++ [(x, bind_typ U)] ++ E) T -&gt;<br/>
+&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> (F ++ E) T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; eauto.<br/>
+&nbsp;&nbsp;intros E F x U T H.<br/>
+&nbsp;&nbsp;remember (F ++ [(x, bind_typ U)] ++ E) <span class="keyword">as</span> G.<br/>
+&nbsp;&nbsp;generalize dependent F.<br/>
+&nbsp;&nbsp;induction H; intros F Heq; subst...<br/>
+&nbsp;&nbsp;Case "wf_typ_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H...<br/>
+&nbsp;&nbsp;Case "wf_typ_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#wf_typ_all">wf_typ_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#concat_assoc">concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H1...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_typ_subst_tb"></a>wf_typ_subst_tb : forall F Q E Z P T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> (F ++ [(Z, bind_sub Q)] ++ E) T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E P -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) F ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) F ++ E) (<a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a> Z P T).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_weaken_head">wf_typ_weaken_head</a>, <a class="idref" href="Fsub_Lemmas.html#type_from_wf_typ">type_from_wf_typ</a>.<br/>
+&nbsp;&nbsp;intros F Q E Z P T WT WP.<br/>
+&nbsp;&nbsp;remember (F ++ [(Z, bind_sub Q)] ++ E) <span class="keyword">as</span> G.<br/>
+&nbsp;&nbsp;generalize dependent F.<br/>
+&nbsp;&nbsp;induction WT; intros F EQ Ok; subst; simpl <a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a>...<br/>
+&nbsp;&nbsp;Case "wf_typ_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (X == Z); subst...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "X &lt;&gt; Z".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds_cases H...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Definitions.html#wf_typ_var">wf_typ_var</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tt">subst_tt</a> Z P U))...<br/>
+&nbsp;&nbsp;Case "wf_typ_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#wf_typ_all">wf_typ_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Fsub_Infrastructure.html#subst_tt_open_tt_var">subst_tt_open_tt_var</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) ([(Y, <a class="idref" href="Fsub_Definitions.html#bind_sub">bind_sub</a> T1)] ++ F) ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_typ_open"></a>wf_typ_open : forall E U T1 T2,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> E -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E (<a class="idref" href="Fsub_Definitions.html#typ_all">typ_all</a> T1 T2) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E U -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E (<a class="idref" href="Fsub_Definitions.html#open_tt">open_tt</a> T2 U).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; eauto.<br/>
+&nbsp;&nbsp;intros E U T1 T2 Ok WA WU.<br/>
+&nbsp;&nbsp;inversion WA; subst.<br/>
+&nbsp;&nbsp;pick fresh X.<br/>
+&nbsp;&nbsp;rewrite (<a class="idref" href="Fsub_Infrastructure.html#subst_tt_intro">subst_tt_intro</a> X)...<br/>
+&nbsp;&nbsp;rewrite_env (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> X U) empty ++ E).<br/>
+&nbsp;&nbsp;eapply <a class="idref" href="Fsub_Lemmas.html#wf_typ_subst_tb">wf_typ_subst_tb</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab229"></a><h1 class="section"><a name="oktwft"></a> Properties of <code>wf_env</code> and <code>wf_typ</code></h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="ok_from_wf_env"></a>ok_from_wf_env : forall E,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> E -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> E.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E H; induction H; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We add <code>ok_from_wf_env</code> as a hint here since it helps blur the
+    distinction between <code>wf_env</code> and <code>ok</code> in proofs.  The lemmas in
+    the <code>Environment</code> library use <code>ok</code>, whereas here we naturally have
+    (or can easily show) the stronger <code>wf_env</code>.  Thus,
+    <code>ok_from_wf_env</code> serves as a bridge that allows us to use the
+    environments library. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_Lemmas.html#ok_from_wf_env">ok_from_wf_env</a>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_typ_from_binds_typ"></a>wf_typ_from_binds_typ : forall x U E,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> E -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x (<a class="idref" href="Fsub_Definitions.html#bind_typ">bind_typ</a> U) E -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E U.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_weaken_head">wf_typ_weaken_head</a>.<br/>
+&nbsp;&nbsp;induction 1; intros J; binds_cases J...<br/>
+&nbsp;&nbsp;inversion H4; subst...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_typ_from_wf_env_typ"></a>wf_typ_from_wf_env_typ : forall x T E,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> ([(x, <a class="idref" href="Fsub_Definitions.html#bind_typ">bind_typ</a> T)] ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x T E H. inversion H; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_typ_from_wf_env_sub"></a>wf_typ_from_wf_env_sub : forall x T E,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> ([(x, <a class="idref" href="Fsub_Definitions.html#bind_sub">bind_sub</a> T)] ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x T E H. inversion H; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab230"></a><h1 class="section"><a name="okt"></a> Properties of <code>wf_env</code></h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+These properties are analogous to the properties that we need to
+    show for the subtyping and typing relations. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_env_narrowing"></a>wf_env_narrowing : forall V E F U X,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> (F ++ [(X, bind_sub V)] ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E U -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> (F ++ [(X, bind_sub U)] ++ E).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto 6 <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_narrowing">wf_typ_narrowing</a>.<br/>
+&nbsp;&nbsp;induction F; intros U X Wf_env Wf;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Wf_env; subst; simpl_env <span class="keyword">in</span> *...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_env_strengthening"></a>wf_env_strengthening : forall x T E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> (F ++ [(x, bind_typ T)] ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> (F ++ E).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_strengthening">wf_typ_strengthening</a>.<br/>
+&nbsp;&nbsp;induction F; intros Wf_env; inversion Wf_env; subst; simpl_env <span class="keyword">in</span> *...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="wf_env_subst_tb"></a>wf_env_subst_tb : forall Q Z P E F,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> (F ++ [(Z, bind_sub Q)] ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E P -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> (<a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) F ++ E).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto 6 <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_subst_tb">wf_typ_subst_tb</a>.<br/>
+&nbsp;&nbsp;induction F; intros Wf_env WP; simpl_env;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Wf_env; simpl_env <span class="keyword">in</span> *; simpl <a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a>...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab231"></a><h1 class="section"><a name="subst"></a> Environment is unchanged by substitution for a fresh name</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="notin_fv_tt_open"></a>notin_fv_tt_open : forall (Y X : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) T,<br/>
+&nbsp;&nbsp;X `notin` <a class="idref" href="Fsub_Infrastructure.html#fv_tt">fv_tt</a> (<a class="idref" href="Fsub_Definitions.html#open_tt">open_tt</a> T Y) -&gt;<br/>
+&nbsp;&nbsp;X `notin` <a class="idref" href="Fsub_Infrastructure.html#fv_tt">fv_tt</a> T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;intros Y X T. unfold open_tt.<br/>
+&nbsp;generalize 0.<br/>
+&nbsp;induction T; simpl; intros k Fr; notin_simpl; try apply notin_union; eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="notin_fv_wf"></a>notin_fv_wf : forall E (X : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E T -&gt;<br/>
+&nbsp;&nbsp;X `notin` <a class="idref" href="Environment.html#dom">dom</a> E -&gt;<br/>
+&nbsp;&nbsp;X `notin` <a class="idref" href="Fsub_Infrastructure.html#fv_tt">fv_tt</a> T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;intros E X T Wf_typ.<br/>
+&nbsp;&nbsp;induction Wf_typ; intros Fr; simpl...<br/>
+&nbsp;&nbsp;Case "wf_typ_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (X0 `<span class="keyword">in</span>` (<a class="idref" href="Environment.html#dom">dom</a> E))...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Environment.html#binds_In">binds_In</a>; eauto.<br/>
+&nbsp;&nbsp;Case "wf_typ_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply notin_union...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Lemmas.html#notin_fv_tt_open">notin_fv_tt_open</a> Y)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="map_subst_tb_id"></a>map_subst_tb_id : forall G Z P,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> G -&gt;<br/>
+&nbsp;&nbsp;Z `notin` <a class="idref" href="Environment.html#dom">dom</a> G -&gt;<br/>
+&nbsp;&nbsp;G = <a class="idref" href="Environment.html#map">map</a> (<a class="idref" href="Fsub_Infrastructure.html#subst_tb">subst_tb</a> Z P) G.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;intros G Z P H.<br/>
+&nbsp;&nbsp;induction H; simpl; intros Fr; simpl_env...<br/>
+&nbsp;&nbsp;rewrite &lt;- IHwf_env...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Fsub_Infrastructure.html#subst_tt_fresh">subst_tt_fresh</a>... eapply <a class="idref" href="Fsub_Lemmas.html#notin_fv_wf">notin_fv_wf</a>; eauto.<br/>
+&nbsp;&nbsp;rewrite &lt;- IHwf_env...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Fsub_Infrastructure.html#subst_tt_fresh">subst_tt_fresh</a>... eapply <a class="idref" href="Fsub_Lemmas.html#notin_fv_wf">notin_fv_wf</a>; eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab232"></a><h1 class="section"><a name="regularity"></a> Regularity of relations</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="sub_regular"></a>sub_regular : forall E S T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#sub">sub</a> E S T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> E /\ <a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E S /\ <a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; auto*.<br/>
+&nbsp;&nbsp;intros E S T H.<br/>
+&nbsp;&nbsp;induction H...<br/>
+&nbsp;&nbsp;Case "sub_trans_tvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eauto*.<br/>
+&nbsp;&nbsp;Case "sub_all".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat split...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Second of original three conjuncts".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#wf_typ_all">wf_typ_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (H1 Y)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (empty ++ [(Y, bind_sub S1)] ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="Fsub_Lemmas.html#wf_typ_narrowing">wf_typ_narrowing</a> T1)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Third of original three conjuncts".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y and apply <a class="idref" href="Fsub_Definitions.html#wf_typ_all">wf_typ_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (H1 Y)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_regular"></a>typing_regular : forall E e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#typing">typing</a> E e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> E /\ <a class="idref" href="Fsub_Definitions.html#expr">expr</a> e /\ <a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> E T.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> simpl_env; auto*.<br/>
+&nbsp;&nbsp;intros E e T H; induction H...<br/>
+&nbsp;&nbsp;Case "typing_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat split...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_from_binds_typ">wf_typ_from_binds_typ</a>.<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh y.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (H0 y) <span class="keyword">as</span> [Hok [J K]]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat split. inversion Hok...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Second of original three conjuncts".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick fresh x and apply <a class="idref" href="Fsub_Definitions.html#expr_abs">expr_abs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#type_from_wf_typ">type_from_wf_typ</a>, <a class="idref" href="Fsub_Lemmas.html#wf_typ_from_wf_env_typ">wf_typ_from_wf_env_typ</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (H0 x)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Third of original three conjuncts".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Definitions.html#wf_typ_arrow">wf_typ_arrow</a>; eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#wf_typ_from_wf_env_typ">wf_typ_from_wf_env_typ</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite_env (empty ++ E).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Fsub_Lemmas.html#wf_typ_strengthening">wf_typ_strengthening</a>; simpl_env; eauto.<br/>
+&nbsp;&nbsp;Case "typing_app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat split...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct IHtyping1 <span class="keyword">as</span> [_ [_ K]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion K...<br/>
+&nbsp;&nbsp;Case "typing_tabs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Y.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (H0 Y) <span class="keyword">as</span> [Hok [J K]]...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Hok; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat split...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Second of original three conjuncts".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick fresh X and apply <a class="idref" href="Fsub_Definitions.html#expr_tabs">expr_tabs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#type_from_wf_typ">type_from_wf_typ</a>, <a class="idref" href="Fsub_Lemmas.html#wf_typ_from_wf_env_sub">wf_typ_from_wf_env_sub</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (H0 X)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Third of original three conjuncts".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick fresh Z and apply <a class="idref" href="Fsub_Definitions.html#wf_typ_all">wf_typ_all</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (H0 Z)...<br/>
+&nbsp;&nbsp;Case "typing_tapp".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (<a class="idref" href="Fsub_Lemmas.html#sub_regular">sub_regular</a> _ _ _ H0) <span class="keyword">as</span> [R1 [R2 R3]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat split...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Second of original three conjuncts".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Fsub_Definitions.html#expr_tapp">expr_tapp</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto <span class="keyword">using</span> <a class="idref" href="Fsub_Lemmas.html#type_from_wf_typ">type_from_wf_typ</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "Third of original three conjuncts".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHtyping <span class="keyword">as</span> [R1' [R2' R3']].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Fsub_Lemmas.html#wf_typ_open">wf_typ_open</a>; eauto.<br/>
+&nbsp;&nbsp;Case "typing_sub".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat split...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (<a class="idref" href="Fsub_Lemmas.html#sub_regular">sub_regular</a> _ _ _ H0)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="value_regular"></a>value_regular : forall e,<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#value">value</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#expr">expr</a> e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e H. induction H; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="red_regular"></a>red_regular : forall e e',<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#red">red</a> e e' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Fsub_Definitions.html#expr">expr</a> e /\ <a class="idref" href="Fsub_Definitions.html#expr">expr</a> e'.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto*.<br/>
+&nbsp;&nbsp;intros e e' H.<br/>
+&nbsp;&nbsp;induction H; assert(J := <a class="idref" href="Fsub_Lemmas.html#value_regular">value_regular</a>); split...<br/>
+&nbsp;&nbsp;Case "red_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H. pick fresh y. rewrite (<a class="idref" href="Fsub_Infrastructure.html#subst_ee_intro">subst_ee_intro</a> y)...<br/>
+&nbsp;&nbsp;Case "red_tabs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H. pick fresh Y. rewrite (<a class="idref" href="Fsub_Infrastructure.html#subst_te_intro">subst_te_intro</a> Y)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab233"></a><h1 class="section"><a name="auto"></a> Automation</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The lemma <code>ok_from_wf_env</code> was already added above as a hint since it
+    helps blur the distinction between <code>wf_env</code> and <code>ok</code> in proofs.
+
+<br/><br/>
+    As currently stated, the regularity lemmas are ill-suited to be
+    used with <code>auto</code> and <code>eauto</code> since they end in conjunctions.  Even
+    if we were, for example, to split <code>sub_regularity</code> into three
+    separate lemmas, the resulting lemmas would be usable only by
+    <code>eauto</code> and there is no guarantee that <code>eauto</code> would be able to
+    find proofs effectively.  Thus, the hints below apply the
+    regularity lemmas and <code>type_from_wf_typ</code> to discharge goals about
+    local closure and well-formedness, but in such a way as to
+    minimize proof search.
+
+<br/><br/>
+    The first hint introduces an <code>wf_env</code> fact into the context.  It
+    works well when combined with the lemmas relating <code>wf_env</code> and
+    <code>wf_typ</code>.  We choose to use those lemmas explicitly via <code>(auto
+    <span class="keyword">using</span> ...)</code> tactics rather than add them as hints.  When used this
+    way, the explicitness makes the proof more informative rather than
+    more cluttered (with useless details).
+
+<br/><br/>
+    The other three hints try outright to solve their respective
+    goals. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Extern 1 (<a class="idref" href="Fsub_Definitions.html#wf_env">wf_env</a> ?E) =&gt;<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#sub">sub</a> _ _ _ |- _ =&gt; apply (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj1">proj1</a> (<a class="idref" href="Fsub_Lemmas.html#sub_regular">sub_regular</a> _ _ _ H))<br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#typing">typing</a> _ _ _ |- _ =&gt; apply (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj1">proj1</a> (<a class="idref" href="Fsub_Lemmas.html#typing_regular">typing_regular</a> _ _ _ H))<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Hint</span> Extern 1 (<a class="idref" href="Fsub_Definitions.html#wf_typ">wf_typ</a> ?E ?T) =&gt;<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#typing">typing</a> E _ T |- _ =&gt; apply (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj2">proj2</a> (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj2">proj2</a> (<a class="idref" href="Fsub_Lemmas.html#typing_regular">typing_regular</a> _ _ _ H)))<br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#sub">sub</a> E T _ |- _ =&gt; apply (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj1">proj1</a> (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj2">proj2</a> (<a class="idref" href="Fsub_Lemmas.html#sub_regular">sub_regular</a> _ _ _ H)))<br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#sub">sub</a> E _ T |- _ =&gt; apply (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj2">proj2</a> (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj2">proj2</a> (<a class="idref" href="Fsub_Lemmas.html#sub_regular">sub_regular</a> _ _ _ H)))<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Hint</span> Extern 1 (<a class="idref" href="Fsub_Definitions.html#type">type</a> ?T) =&gt;<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> go E := apply (<a class="idref" href="Fsub_Lemmas.html#type_from_wf_typ">type_from_wf_typ</a> E); auto <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#typing">typing</a> ?E _ T |- _ =&gt; go E<br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#sub">sub</a> ?E T _ |- _ =&gt; go E<br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#sub">sub</a> ?E _ T |- _ =&gt; go E<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Hint</span> Extern 1 (<a class="idref" href="Fsub_Definitions.html#expr">expr</a> ?e) =&gt;<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#typing">typing</a> _ ?e _ |- _ =&gt; apply (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj1">proj1</a> (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj2">proj2</a> (<a class="idref" href="Fsub_Lemmas.html#typing_regular">typing_regular</a> _ _ _ H)))<br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#red">red</a> ?e _ |- _ =&gt; apply (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj1">proj1</a> (<a class="idref" href="Fsub_Lemmas.html#red_regular">red_regular</a> _ _ H))<br/>
+&nbsp;&nbsp;| H: <a class="idref" href="Fsub_Definitions.html#red">red</a> _ ?e |- _ =&gt; apply (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#proj2">proj2</a> (<a class="idref" href="Fsub_Lemmas.html#red_regular">red_regular</a> _ _ H))<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

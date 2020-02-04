@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC
+          "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+  <meta http-equiv="imagetoolbar" content="no" />
+  <meta name="MSSmartTagsPreventParsing" content="TRUE" />
+  <meta name="googlebot" content="noodp" />
+
+  <title>Coq for POPL folk</title>
+
+  <style type="text/css" media="all">
+    @import "css/_defaults.css";
+    @import "css/mediumLayout.css";
+    @import "css/ltbluetoolbarLayout.css";
+  </style>
+  <!--[if IE]>
+  <link rel="stylesheet" type="text/css" href="css/ie.css" media="all" />
+  <![endif]-->
+  <link rel="stylesheet" type="text/css" href="css/mediumPrint.css" media="print" />
+</head>
+
+<body class="three-column">
+
+  <div id="container">
+    <div id="header" class="clearfix">
+      <!-- change image to school or deptartment logo -->
+      <div class="navigation-logo">
+        <!--
+        <img src="shield.color.gif" alt="School or Penn Logo" />
+        -->
+        <div style="height: 1em"></div>
+      </div>
+      <div class="top-navigation clearfix">
+        <!-- These are the links at the top of the page -->
+        <ul class="clearfix">
+          <li class="first"><a href="http://www.cs.ucsd.edu/popl/08/" title="POPL 2008">POPL 2008</a></li>
+          <li><a href="http://alliance.seas.upenn.edu/~plclub/cgi-bin/poplmark/" title="POPLmark">POPLmark</a></li>
+          <li><a href="http://coq.inria.fr/" title="Coq home page">Coq</a></li>
+        </ul>
+        <!-- Replace the image with an image of the department name -->
+        <!--
+        <div class="department-logo">
+          <a href="#" title="Department Name"><img src="../../images/dept_blue_text.jpg" alt="Department Name"/></a>
+        </div>
+        -->
+      </div>
+    </div>
+    <div id="wrapper">
+      <!-- This is the navigation bar on the left side of the page -->
+      <div id="navigation">
+        <ul>
+          <li>Co-located with <a href="http://www.cs.ucsd.edu/popl/08/">POPL 2008</a> </li>
+          <li>Sponsored by ACM <a href="http://www.sigplan.org/">SIGPLAN</a></li>
+        </ul>
+
+        <!--
+        <div class="highlights">
+          <h2>Highlights</h2>
+          <ul>
+            <li><a href="#" title="link 1">link 1</a></li>
+            <li><a href="#" title="link 2">link 2</a></li>
+            <li><a href="#" title="link 3">link 3</a></li>
+            <li><a href="#" title="link 4">link 4</a></li>
+          </ul>
+        </div>
+        -->
+
+        <!--
+        <div class="facts">
+          <h2>Facts</h2>
+          <p>
+          Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Vestibulum ultrices, turpis ac sodales ornare, ante est malesuada eros, eu condimentum arcu elit eu nisi.
+          </p>
+        </div>
+        -->
+
+      </div>
+      <div id="content">
+        <div id="mainContent">
+          <!-- Edit main content here -->
+
+          <h1>Using Proof Assistants for Programming Language Research
+            <i>or,<br />How to write your next POPL paper in Coq</i></h1>
+
+          <h2>San Francisco, CA</h2>
+
+          <h2>January 8th, 2008</h2>
+
+          <p>A tutorial on the use of the Coq proof assistant in formalizing
+          programming language metatheory.</p>
+
+          <div style="height: 1em"></div>
+
+          <p>This tutorial will be tailored to people who are familiar with
+          syntactic proofs of programming language metatheory, such as type
+          soundness, but have never used a proof assistant to create and
+          check such proofs. At the end of the session, participants will
+          have a reading knowledge of Coq and a running start on using Coq
+          in their own work.</p>
+
+          <p>This tutorial will be hands-on; participants are strongly
+          encouraged to bring a laptop
+          running <a href="http://coq.inria.fr/">Coq 8.1</a> (or a
+          later release) and
+          either <a href="http://proofgeneral.inf.ed.ac.uk/">Proof
+          General</a> or CoqIDE.  The POPLmark wiki has
+          <a href="http://alliance.seas.upenn.edu/~plclub/cgi-bin/poplmark/index.php?title=Installing_Coq">instructions
+          for installing Coq and Proof General</a>.</p>
+
+          <p><a
+          href="http://www.regmaster.com/conf/popl2008.html">Registration
+          for the tutorial is online</a>, through the <a
+          href="http://www.cs.ucsd.edu/popl/08/">POPL 2008 website</a>.</p>
+
+          <div style="height: 1em"></div>
+
+          <h2>Topics</h2>
+
+          <ul>
+            <li>Defining language semantics in Coq
+              <ul>
+                <li>Abstract syntax</li>
+                <li>Inductively-defined relations</li>
+                <li>Derivations</li>
+              </ul>
+            </li>
+            <li>Proving simple results
+              <ul>
+                <li>Fundamental tactics</li>
+                <li>Automation</li>
+                <li>Forward and backward reasoning</li>
+              </ul>
+            </li>
+            <li>Scaling up to POPLmark
+              <ul>
+                <li>Semantic functions and conversion</li>
+                <li>Sets and environments</li>
+              </ul>
+            </li>
+            <li>Representing binding
+              <ul>
+                <li>Locally nameless representation</li>
+                <li>Freshness through cofinite quantification</li>
+                <li>Syntactic type soundness</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h2>Materials</h2>
+
+          <p>The <a href="code/index.html">Coq code and
+          documentation</a> for this tutorial is available online.  If
+          you are attending the tutorial, we encourage you to download
+          these materials and compile them beforehand.  If you are
+          not attending, these materials are self contained; you are
+          welcome and encouraged to step through them on your own.</p>
+
+          <h2>Schedule</h2>
+
+          <p>Location: Stanford Ballroom East</p>
+
+          <p>08:00 - 08:30: Breakfast<br />
+             08:30 - 09:00: Set-up, help with installation<br />
+             09:00 - 10:00: Session I<br />
+             10:00 - 10:30: Break<br />
+             10:30 - 12:00: Session II<br />
+             12:00 - 13:30: Lunch<br />
+             13:30 - 15:30: Session III<br />
+             15:30 - 16:00: Break<br />
+             16:00 - 17:00: Session IV<br /></p>
+
+        </div>
+
+        <div id="rightColumn">
+          <img src="shield.color.gif" alt="Penn logo" />
+          <div id="spotlight">
+            <h2>Organized and presented by</h2>
+
+            <p>The University of Pennsylvania <a
+            href="http://www.cis.upenn.edu/~plclub/" title="Penn PL Club home page">PL Club</a></p>
+
+            <ul>
+              <li>Brian Aydemir</li>
+              <li>Aaron Bohannon</li>
+              <li>Benjamin Pierce</li>
+              <li>Jeffrey Vaughan</li>
+              <li>Dimitrios Vytiniotis</li>
+              <li>Stephanie Weirich</li>
+              <li>Steve Zdancewic</li>
+            </ul>
+
+          </div>
+        </div>
+
+        <div id="footer" class="top-sep">
+          <p>Supported by NSF grant CNS-0551589, CRI: Machine Assistance for
+          Programming Language Research<br /> Last updated: Sept. 27,
+          2007</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

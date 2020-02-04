@@ -1,0 +1,1997 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>STLC_Solutions</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library STLC_Solutions</h1>
+
+<code>
+<br/>
+</code>
+
+<div class="doc">
+The simply-typed lambda calculus in Coq. 
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+An interactive tutorial on developing programming language
+    metatheory.  This file uses the simply-typed lambda calculus
+    (STLC) to demonstrate the locally nameless representation of
+    lambda terms and cofinite quantification in judgments.
+
+<br/><br/>
+    This tutorial concentrates on "how" to formalize STLC; for more
+    details about "why" we use this style of development see:
+    "Engineering Formal Metatheory", Aydemir, Charguéraud, Pierce,
+    Pollack, Weirich. POPL 2008.
+
+<br/><br/>
+    Tutorial authors: Brian Aydemir and Stephanie Weirich, with help
+    from Aaron Bohannon, Nate Foster, Benjamin Pierce, Jeffrey
+    Vaughan, Dimitrios Vytiniotis, and Steve Zdancewic.  Adapted from
+    code by Arthur Charguéraud.
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab177"></a><h1 class="section">Contents</h1>
+
+
+<ul>
+<li> Syntax of STLC
+
+</li>
+<li> Substitution
+
+</li>
+<li> Free variables
+
+</li>
+<li> Open
+
+</li>
+<li> Local closure
+
+</li>
+<li> Properties about basic operations
+
+</li>
+<li> Cofinite quantification
+
+</li>
+<li> Tactic support
+
+</li>
+<li> Typing environments
+
+</li>
+<li> Typing relation
+
+</li>
+<li> Weakening
+
+</li>
+<li> Substitution
+
+</li>
+<li> Values and evaluation
+
+</li>
+<li> Preservation
+
+</li>
+<li> Progress
+
+</li>
+<li> Additional properties
+
+</li>
+</ul>
+
+<br/><br/>
+  Solutions to exercises are in <code>STLC_Solutions.v</code>.
+
+</div>
+<code>
+<br/>
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="Metatheory.html">Metatheory</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab178"></a><h1 class="section">Syntax of STLC</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+We use a locally nameless representation for the simply-typed
+    lambda calculus, where bound variables are represented as natural
+    numbers (de Bruijn indices) and free variables are represented as
+    <code>atom</code>s.  The type <code>atom</code>, defined in the <code>Atom</code> library,
+    represents names: equality is decidable on atoms (eq_atom_dec), 
+    and it is possible to generate an atom fresh for any given 
+    finite set of atoms (atom_fresh_for_set).
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="typ"></a>typ : <span class="keyword">Set</span> :=<br/>
+&nbsp;&nbsp;| <a name="typ_base"></a>typ_base  : typ<br/>
+&nbsp;&nbsp;| <a name="typ_arrow"></a>typ_arrow : typ -&gt; typ -&gt; typ.<br/>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="exp"></a>exp : <span class="keyword">Set</span> :=<br/>
+&nbsp;&nbsp;| <a name="bvar"></a>bvar : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a>  -&gt; exp    <br/>
+&nbsp;&nbsp;| <a name="fvar"></a>fvar : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a> -&gt; exp   <br/>
+&nbsp;&nbsp;| <a name="abs"></a>abs  : exp  -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="app"></a>app  : exp  -&gt; exp -&gt; exp.<br/>
+
+<br/>
+Coercion bvar : nat &gt;-&gt; exp.<br/>
+Coercion fvar : atom &gt;-&gt; exp.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We declare the constructors for indices and variables to be
+    coercions. That way, if Coq sees a <code>nat</code> where it expects an
+    <code>exp</code>, it will implicitly insert an application of <code>bvar</code>; and
+    similarly for <code>atom</code>s.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+For example, we can encode the expression (\x. Y x) as below. 
+</div>
+<code>
+</code>
+
+<div class="doc">
+Because "Y" is free variable in this term, we need to assume an
+    atom for this name.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Parameter</span> <a name="Y"></a>Y : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>.<br/>
+<span class="keyword">Definition</span> <a name="demo_rep1"></a>demo_rep1 := <a class="idref" href="STLC_Solutions.html#abs">abs</a> (<a class="idref" href="STLC_Solutions.html#app">app</a> <a class="idref" href="STLC_Solutions.html#Y">Y</a> 0).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Note that because of the coercions we may write
+    <code>abs (app Y 0)</code> instead of <code>abs (app (fvar Y) (bvar 0))</code>. 
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Another example: the encoding of (\x. \y. (y x)) 
+</div>
+<code>
+<span class="keyword">Definition</span> <a name="demo_rep2"></a>demo_rep2 := <a class="idref" href="STLC_Solutions.html#abs">abs</a> (<a class="idref" href="STLC_Solutions.html#abs">abs</a> (<a class="idref" href="STLC_Solutions.html#app">app</a> 0 1)).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab179"></a><h3 class="section">Exercise <code>two</code></h3>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Convert the following lambda calculus term to locally nameless
+representation.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+"two"    \s. \z. s(s z) 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="two"></a>two := <a class="idref" href="STLC_Solutions.html#abs">abs</a> (<a class="idref" href="STLC_Solutions.html#abs">abs</a> (<a class="idref" href="STLC_Solutions.html#app">app</a> 1 (<a class="idref" href="STLC_Solutions.html#app">app</a> 1 0))).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+There are two important advantages of the locally nameless
+    representation:
+
+<ul>
+<li> Alpha-equivalent terms have a unique representation, 
+       we're always working up to alpha-equivalence.
+
+</li>
+<li> Operations such as free variable substitution and free
+       variable calculation have simple recursive definitions
+      (and therefore are simple to reason about).
+
+</li>
+</ul>
+
+<br/><br/>
+    Weighed against these advantages are two drawbacks:
+
+<ul>
+<li> The <code>exp</code> datatype admits terms, such as <code>abs 3</code>, where
+       indices are unbound. 
+       A term is called "locally closed" when it contains 
+       no unbound indices. 
+
+</li>
+<li> We must define *both* bound variable &amp; free variable 
+       substitution and reason about how these operations 
+       interact with eachother.
+
+</li>
+</ul>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab180"></a><h1 class="section">Substitution</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+Substitution replaces a free variable with a term.  The definition
+    below is simple for two reasons:
+
+<ul>
+<li> Because bound variables are represented using indices, there
+        is no need to worry about variable capture.
+
+</li>
+<li> We assume that the term being substituted in is locally
+        closed.  Thus, there is no need to shift indices when
+        passing under a binder.
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="subst"></a>subst (z : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (u : <a class="idref" href="STLC_Solutions.html#exp">exp</a>) (e : <a class="idref" href="STLC_Solutions.html#exp">exp</a>) {struct e} : <a class="idref" href="STLC_Solutions.html#exp">exp</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> e <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#bvar">bvar</a> i =&gt; <a class="idref" href="STLC_Solutions.html#bvar">bvar</a> i<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#fvar">fvar</a> x =&gt; <span class="keyword">if</span> x == z <span class="keyword">then</span> u <span class="keyword">else</span> (<a class="idref" href="STLC_Solutions.html#fvar">fvar</a> x)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#abs">abs</a> e1 =&gt; <a class="idref" href="STLC_Solutions.html#abs">abs</a> (subst z u e1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#app">app</a> e1 e2 =&gt; <a class="idref" href="STLC_Solutions.html#app">app</a> (subst z u e1) (subst z u e2)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+</code>
+
+<div class="doc">
+The Fixpoint keyword defines a Coq function. As all functions in 
+    Coq must be total, the annotation <code>{struct e}</code> indicates the termination 
+    metric---all recursive calls in this definition are made to
+    arguments that are structurally smaller than <code>e</code>.
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+We define a notation for free variable substitution that mimics
+    standard mathematical notation. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> "[ z ~&gt; u ] e" := (<a class="idref" href="STLC_Solutions.html#subst">subst</a> z u e) (at level 68).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+To demonstrate how free variable substitution works, we
+    need to reason about decidable equality.
+
+</div>
+<code>
+<span class="keyword">Parameter</span> <a name="Z"></a>Z : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>.<br/>
+Check (<a class="idref" href="STLC_Solutions.html#Y">Y</a> == <a class="idref" href="STLC_Solutions.html#Z">Z</a>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The decidable atom equality function returns a sum. If the
+    two atoms are equal, the left branch of the sum is returned,
+    carrying a proof of the proposition that the atoms are equal.
+    If they are not equal, the right branch includes a proof of
+    the disequality.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The demo below uses three new tactics:
+
+<ul>
+<li> The tactic <code>simpl</code> reduces a Coq expression to its normal
+      form.
+
+</li>
+<li> The tactic <code>Case</code> marks cases in the proof script.
+      It takes any string as its argument, and puts that string in
+      the hypothesis list until the case is finished.
+
+</li>
+<li> The tactic <code>destruct (Y==Y)</code> considers the two possible 
+      results of the equality test.
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="demo_subst1"></a>demo_subst1:  [Y ~&gt; Z] (<a class="idref" href="STLC_Solutions.html#abs">abs</a> (<a class="idref" href="STLC_Solutions.html#app">app</a> 0 <a class="idref" href="STLC_Solutions.html#Y">Y</a>)) = (<a class="idref" href="STLC_Solutions.html#abs">abs</a> (<a class="idref" href="STLC_Solutions.html#app">app</a> 0 <a class="idref" href="STLC_Solutions.html#Z">Z</a>)).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;destruct (<a class="idref" href="STLC_Solutions.html#Y">Y</a>==<a class="idref" href="STLC_Solutions.html#Y">Y</a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Case "left".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Case "right".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct n. auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab181"></a><h1 class="section">Free variables</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+The function <code>fv</code>, defined below, calculates the set of free
+    variables in an expression.  Because we are using locally nameless
+    representation, where bound variables are represented as indices,
+    any name we see is a free variable of a term.  In particular, this
+    makes the <code>abs</code> case simple.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="fv"></a>fv (e : <a class="idref" href="STLC_Solutions.html#exp">exp</a>) {struct e} : atoms :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> e <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#bvar">bvar</a> i =&gt; {}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#fvar">fvar</a> x =&gt; singleton x<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#abs">abs</a> e1 =&gt; fv e1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#app">app</a> e1 e2 =&gt; (fv e1) `union` (fv e2)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The type <code>atoms</code> represents a finite set of elements of type <code>atom</code>,
+    and the notations for the empty set and infix union are defined in
+    the Metatheory library.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab182"></a><h3 class="section">EXERCISE <code>subst_fresh</code></h3>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+To show the ease of reasoning with these definitions, we will
+    prove a standard result from lambda calculus: if a variable does
+    not appear free in a term, then substituting for it has no
+    effect.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_fresh"></a>subst_fresh : forall (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) e u,<br/>
+&nbsp;&nbsp;x `notin` <a class="idref" href="STLC_Solutions.html#fv">fv</a> e -&gt; [x ~&gt; u] e = e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x e u H.<br/>
+&nbsp;&nbsp;induction e.<br/>
+&nbsp;&nbsp;Case "bvar".<br/>
+&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;Case "fvar".<br/>
+&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;destruct (a == x).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "a=x".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. simpl <a class="idref" href="STLC_Solutions.html#fv">fv</a> <span class="keyword">in</span> H. fsetdec.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "a&lt;&gt;x".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;Case "abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;f_equal.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;Case "app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl <span class="keyword">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;f_equal.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab183"></a><h1 class="section">Opening</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+Opening replaces an index with a term. It corresponds to informal
+    substitution for a bound variable, such as in the rule for beta
+    reduction. Note that only "dangling" indices (those that do not
+    refer to any abstraction) can be opened. Opening has no effect for
+    terms that are locally closed.
+
+<br/><br/>
+    Natural numbers are just an inductive datatype with two
+    constructors: O and S, defined in Coq.Init.Datatypes.
+    The notation <code>k === i</code> is the decidable equality function for
+    natural numbers (cf. Coq.Peano_dec.eq_nat_dec).
+    This notation is defined in the <code>Metatheory</code> library.
+
+<br/><br/>
+    We make several simplifying assumptions in defining <code>open_rec</code>.
+
+<br/><br/>
+    First, we assume that the argument <code>u</code> is locally closed.  This
+    assumption simplifies the implementation since we do not need to
+    shift indices in <code>u</code> when passing under a binder.  Second, we
+    assume that this function is initially called with index zero and
+    that zero is the only unbound index in the term.  This eliminates
+    the need to possibly subtract one in the case of indices.
+
+<br/><br/>
+    There is no need to worry about variable capture because bound
+    variables are indices.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="open_rec"></a>open_rec (k : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a>) (u : <a class="idref" href="STLC_Solutions.html#exp">exp</a>) (e : <a class="idref" href="STLC_Solutions.html#exp">exp</a>) {struct e} : <a class="idref" href="STLC_Solutions.html#exp">exp</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> e <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#bvar">bvar</a> i =&gt; <span class="keyword">if</span> k === i <span class="keyword">then</span> u <span class="keyword">else</span> (<a class="idref" href="STLC_Solutions.html#bvar">bvar</a> i)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#fvar">fvar</a> x =&gt; <a class="idref" href="STLC_Solutions.html#fvar">fvar</a> x<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#abs">abs</a> e1 =&gt; <a class="idref" href="STLC_Solutions.html#abs">abs</a> (open_rec (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> k) u e1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="STLC_Solutions.html#app">app</a> e1 e2 =&gt; <a class="idref" href="STLC_Solutions.html#app">app</a> (open_rec k u e1) (open_rec k u e2)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We also define a notation for <code>open_rec</code>.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> "{ k ~&gt; u } t" := (<a class="idref" href="STLC_Solutions.html#open_rec">open_rec</a> k u t) (at level 67).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Many common applications of opening replace index zero with an
+    expression or variable.  The following definition provides a
+    convenient shorthand for such uses.  Note that the order of
+    arguments is switched relative to the definition above.  For
+    example, <code>(open e x)</code> can be read as "substitute the variable <code>x</code>
+    for index <code>0</code> in <code>e</code>" and "open <code>e</code> with the variable <code>x</code>."
+    Recall that the coercions above let us write <code>x</code> in place of
+    <code>(fvar x)</code>.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="open"></a>open e u := <a class="idref" href="STLC_Solutions.html#open_rec">open_rec</a> 0 u e.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+This next demo shows the operation of 'open'.  For example, the
+   locally nameless representation of the term (\y. (\x. (y x)) y)
+   is <code>abs (app (abs (app 1 0)) 0)</code>. To look at the body
+   without the outer abstraction, we need to replace the indices that
+   refer to that abstraction with a name.
+   Therefore, we show that we can open the body of the abs above
+   with Y to produce <code>app (abs (app Y 0)) Y)</code>.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="demo_open"></a>demo_open :<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#open">open</a> (<a class="idref" href="STLC_Solutions.html#app">app</a> (<a class="idref" href="STLC_Solutions.html#abs">abs</a> (<a class="idref" href="STLC_Solutions.html#app">app</a> 1  0))  0) <a class="idref" href="STLC_Solutions.html#Y">Y</a> =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="STLC_Solutions.html#app">app</a> (<a class="idref" href="STLC_Solutions.html#abs">abs</a> (<a class="idref" href="STLC_Solutions.html#app">app</a> <a class="idref" href="STLC_Solutions.html#Y">Y</a> 0)) <a class="idref" href="STLC_Solutions.html#Y">Y</a>).<br/>
+
+<br/>
+<span class="keyword">Proof</span>.<br/>
+unfold open.<br/>
+unfold open_rec.<br/>
+simpl.<br/>
+auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab184"></a><h1 class="section">Local closure</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+Recall that <code>exp</code> admits terms that contain unbound indices. 
+    We say that a term is locally closed, 
+    when no indices appearing in it are unbound.  The proposition 
+    <code>lc e</code> holds when an expression <code>e</code> is locally closed.
+
+<br/><br/>
+    The inductive definition below formalizes local closure such that
+    the resulting induction principle serves as the structural
+    induction principle over (locally closed) expressions.  In
+    particular, unlike induction for type exp, there is no cases
+    for bound variables.  Thus, the induction principle corresponds more
+    closely to informal practice than the one arising from the
+    definition of pre-terms.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="lc"></a>lc : <a class="idref" href="STLC_Solutions.html#exp">exp</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="lc_var"></a>lc_var : forall x,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lc (<a class="idref" href="STLC_Solutions.html#fvar">fvar</a> x)<br/>
+&nbsp;&nbsp;| <a name="lc_abs"></a>lc_abs : forall L e,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x:<a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt; lc (<a class="idref" href="STLC_Solutions.html#open">open</a> e x)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lc (<a class="idref" href="STLC_Solutions.html#abs">abs</a> e)<br/>
+&nbsp;&nbsp;| <a name="lc_app"></a>lc_app : forall e1 e2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lc e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lc e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lc (<a class="idref" href="STLC_Solutions.html#app">app</a> e1 e2).<br/>
+
+<br/>
+<span class="keyword">Hint</span> Constructors lc.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+Properties about basic operations 
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+The first property we would like to show is the analogue to subst_fresh:
+    that index substitution has no effect for closed terms.
+
+<br/><br/>
+    Here is an initial attempt at the proof.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_rec_lc_0"></a>open_rec_lc_0 : forall k u e,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> e -&gt;<br/>
+&nbsp;&nbsp;e = {k ~&gt; u} e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros k u e LC.<br/>
+&nbsp;&nbsp;induction LC.<br/>
+&nbsp;&nbsp;Case "lc_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl. auto.<br/>
+&nbsp;&nbsp;Case "lc_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;f_equal.<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+At this point there are two problems. Our goal is about substitution 
+    for index <code>S k</code> in term <code>e</code>, while our induction hypothesis IHLC only 
+    tells use about index <code>k</code> in term <code>open e x</code>.
+
+<br/><br/>
+    To solve the first problem, we generalize our IH over all k.
+    That way, when k is incremented in the abs case, it will still apply.
+    Below, we use the tactic <code>generalize dependent</code> to generalize over
+    <code>k</code> before using induction.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_rec_lc_1"></a>open_rec_lc_1 : forall k u e,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> e -&gt;<br/>
+&nbsp;&nbsp;e = {k ~&gt; u} e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros k u e LC.<br/>
+&nbsp;&nbsp;generalize dependent k.<br/>
+&nbsp;&nbsp;induction LC.<br/>
+&nbsp;&nbsp;Case "lc_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl. auto.<br/>
+&nbsp;&nbsp;Case "lc_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intro k.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;f_equal.<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+At this point we are still stuck because the IH concerns
+   <code>open e x</code> instead of <code>e</code>. The result that
+   we need is that if an index substitution has no effect for
+   an opened term, then it has no effect for the raw term (as long
+   as we are *not* substituting for 0, hence S k below).
+<pre>
+   open e x = {S k ~&gt; u}(open e x)  -&gt; e = {S k ~&gt; u} e
+</pre>
+
+<br/><br/>
+   In other words, expanding the definition of open:
+<pre>
+   {0 ~&gt; x}e = {S k ~&gt; u}({0 ~&gt; x} e)  -&gt; e = {S k ~&gt; u} e
+</pre>
+
+<br/><br/>
+   Of course, to prove this result, we must generalize
+   0 and S k to be any pair of inequal numbers to get a strong
+   enough induction hypothesis for the abs case.
+ 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_rec_lc_core"></a>open_rec_lc_core : forall e j v i u,<br/>
+&nbsp;&nbsp;i &lt;&gt; j -&gt;<br/>
+&nbsp;&nbsp;{j ~&gt; v} e = {i ~&gt; u} ({j ~&gt; v} e) -&gt;<br/>
+&nbsp;&nbsp;e = {i ~&gt; u} e.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> eauto*.<br/>
+&nbsp;&nbsp;induction e; intros j v i u Neq H; simpl <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try solve [inversion H; f_equal; eauto].<br/>
+&nbsp;&nbsp;Case "bvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (j === n)...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (i === n)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+With the help of this lemma, we can complete the proof. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_rec_lc"></a>open_rec_lc : forall k u e,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> e -&gt;<br/>
+&nbsp;&nbsp;e = {k ~&gt; u} e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros k u e LC.<br/>
+&nbsp;&nbsp;generalize dependent k.<br/>
+&nbsp;&nbsp;induction LC.<br/>
+&nbsp;&nbsp;Case "lc_fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl. auto.<br/>
+&nbsp;&nbsp;Case "lc_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intro k.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;f_equal.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold open <span class="keyword">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh x for L.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="STLC_Solutions.html#open_rec_lc_core">open_rec_lc_core</a> <span class="keyword">with</span> (i := <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> k) (j := 0) (u := u) (v := x). auto. auto.<br/>
+&nbsp;&nbsp;Case "lc_app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intro k. simpl. f_equal. auto. auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab185"></a><h3 class="section">Take-home Exercise <code>subst_open_rec</code></h3>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The next lemma demonstrates that free variable substitution
+   distributes over index substitution.
+
+<br/><br/>
+   The proof of this lemma is by straightforward induction over
+   e1. When e1 is a free variable, we need to appeal to
+   <code>open_rec_lc</code>, proved above.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_open_rec"></a>subst_open_rec : forall e1 e2 u x k,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> u -&gt;<br/>
+&nbsp;&nbsp;[x ~&gt; u] ({k ~&gt; e2} e1) = {k ~&gt; [x ~&gt; u] e2} ([x ~&gt; u] e1).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction e1; intros e2 u x k H; simpl <span class="keyword">in</span> *; f_equal; auto.<br/>
+&nbsp;&nbsp;Case "bvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (k === n); auto.<br/>
+&nbsp;&nbsp;Case "fvar".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct (a == x); subst; auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="STLC_Solutions.html#open_rec_lc">open_rec_lc</a>; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab186"></a><h3 class="section">Exercise <code>subst_open_var</code></h3>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The lemma above is most often used with k = 0 and
+    e2 as some fresh variable. Therefore, it simplifies matters
+    to define the following useful corollary.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_open_var"></a>subst_open_var : forall (x y : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) u e,<br/>
+&nbsp;&nbsp;y &lt;&gt; x -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#open">open</a> ([x ~&gt; u] e) y = [x ~&gt; u] (<a class="idref" href="STLC_Solutions.html#open">open</a> e y).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x y u e Neq H.<br/>
+&nbsp;&nbsp;unfold open.<br/>
+&nbsp;&nbsp;rewrite <a class="idref" href="STLC_Solutions.html#subst_open_rec">subst_open_rec</a> <span class="keyword">with</span> (e2 := y).<br/>
+&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;destruct (y == x).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Case "y=x".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Neq. auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Case "y&lt;&gt;x".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+Cofinite quantification 
+</div>
+<code>
+<br/>
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_lc_1"></a>subst_lc_1 : forall (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) u e,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> ([x ~&gt; u] e).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x u e He Hu.<br/>
+&nbsp;&nbsp;induction He.<br/>
+&nbsp;&nbsp;Case "lc_fvar".<br/>
+&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;destruct (x0 == x).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;Case "lc_abs".<br/>
+&nbsp;&nbsp;&nbsp;simpl.<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Here we are stuck. We don't know that x0 is not the same as x.
+
+<br/><br/>
+    The solution is to change the *definition* of local closure so that
+    we get a different induction principle. Currently, in the lc_abs
+    case, we show that an abstraction is locally closed by showing
+    that the body is locally closed, after it has been opened with
+    one particular variable.
+
+<br/><br/>
+<pre>
+  | lc_abs : forall (x:atom) e,
+      lc (open e x) -&gt;
+      lc (abs e)
+</pre>
+
+<br/><br/>
+   Therefore, our induction hypothesis in this case only applies to that
+   variable. From the hypothesis list in the abs case:
+
+<br/><br/>
+    x0 : atom
+    IHHe : lc (<code>x ~&gt; u</code>open e x0)
+
+<br/><br/>
+   The problem is that we don't have any assumptions about x0. It
+   could very well be equal to x.
+
+<br/><br/>
+   A stronger induction principle provides an IH that applies to many
+   variables. In that case, we could pick one that is "fresh enough".
+   To do so, we need to edit the above definition of lc and
+   replace the type of lc_abs with this one:
+
+<br/><br/>
+<pre>
+  | lc_abs : forall L e,
+      (forall x:atom, x `notin` L -&gt; lc (open e x)) -&gt;
+      lc (abs e)
+</pre>
+
+<br/><br/>
+  This rule says that to show that an abstraction is locally closed,
+  we need to show that the body is closed, after it has been opened
+  by any atom x, *except* those in some set L. With this rule, the
+  IH in this proof is now:
+
+<br/><br/>
+  H0 : forall x0 : atom, x0 `notin` L -&gt; lc (<code>x ~&gt; u</code>open e x0)
+
+<br/><br/>
+  We call this "cofinite quantification" because the IH applies to
+  an infinite number of atoms x0, except those in some finite set L.
+
+<br/><br/>
+  Changing the rule in this way does not change what terms are locally
+  closed.  (For more details about cofinite-quantification see:
+  "Engineering Formal Metatheory", Aydemir, Chargu\u00e9raud, Pierce,
+  Pollack, Weirich. POPL 2008.)
+
+<br/><br/>
+  So to complete this proof, make the change to lc_abs above.  Note,
+  that you will need to go back to the proof of <code>open_rec_lc</code> and
+  patch it as well.  To fix that proof, add the line
+  <code>pick fresh x for L.</code>  immediately before <code>apply open_rec_lc_core</code>.
+  This tactic, defined in <code>Metatheory</code>, introduces a new atom <code>x</code> that
+  is known not to be in the set <code>L</code>.
+
+<br/><br/>
+ You will also have to comment out <code>subst_lc_1</code>.
+
+<br/><br/>
+  Once these changes have been made, we can complete the proof
+  of subst_lc.
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_lc"></a>subst_lc : forall (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) u e,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> ([x ~&gt; u] e).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x u e He Hu.<br/>
+&nbsp;&nbsp;induction He.<br/>
+&nbsp;&nbsp;Case "lc_var".<br/>
+&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;destruct (x0 == x).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;Case "lc_abs".<br/>
+&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="STLC_Solutions.html#lc_abs">lc_abs</a> <span class="keyword">with</span> (L := L `union` singleton x).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros x0 Fr.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="STLC_Solutions.html#subst_open_var">subst_open_var</a>. auto. auto. auto.<br/>
+&nbsp;&nbsp;Case "lc_app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl. auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab187"></a><h1 class="section">Tactic support</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+When picking a fresh atom or applying a rule that uses cofinite
+    quantification, choosing a set of atoms to be fresh for can be
+    tedious.  In practice, it is simpler to use a tactic to choose the
+    set to be as large as possible.
+
+<br/><br/>
+    The first tactic we define, <code>gather_atoms</code>, is used to collect
+    together all the atoms in the context.  It relies on an auxiliary
+    tactic from <code>Atom.v</code>, <code>gather_atoms_with</code>, which collects together
+    the atoms appearing in objects of a certain type.  The argument to
+    <code>gather_atoms_with</code> is a function that should return the set of
+    atoms appearing in its argument. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> gather_atoms :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> A := gather_atoms_with (<span class="keyword">fun</span> x : atoms =&gt; x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> B := gather_atoms_with (<span class="keyword">fun</span> x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a> =&gt; singleton x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> C := gather_atoms_with (<span class="keyword">fun</span> x : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * <a class="idref" href="STLC_Solutions.html#typ">typ</a>) =&gt; <a class="idref" href="Environment.html#dom">dom</a> x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> D := gather_atoms_with (<span class="keyword">fun</span> x : <a class="idref" href="STLC_Solutions.html#exp">exp</a> =&gt; <a class="idref" href="STLC_Solutions.html#fv">fv</a> x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;constr:(A `union` B `union` C `union` D).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We can use <code>gather_atoms</code> to define a variant of the <code>(pick fresh
+    x for L)</code> tactic, which we call <code>(pick fresh x)</code>.  The tactic
+    chooses an atom fresh for "everything" in the context. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "pick" "fresh" ident(x) :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> L := gather_atoms <span class="keyword">in</span><br/>
+&nbsp;&nbsp;(pick fresh x for L).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We can also use <code>gather_atoms</code> to define a tactic for applying a
+    rule that is defined using cofinite quantification.  The tactic
+    <code>(pick fresh x and apply H)</code> applies a rule <code>H</code>, just as the
+    <code>apply</code> tactic would.  However, the tactic also picks a
+    sufficiently fresh name <code>x</code> to use.
+
+<br/><br/>
+    Note: We define this tactic in terms of another tactic, <code>(pick
+    fresh x excluding L and apply H)</code>, which is defined and documented
+    in <code>Metatheory.v</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"pick" "fresh" ident(atom_name) "and" "apply" constr(lemma) :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> L := gather_atoms <span class="keyword">in</span><br/>
+&nbsp;&nbsp;pick fresh atom_name excluding L and apply lemma.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab188"></a><h3 class="section">Example</h3>
+
+
+<br/><br/>
+    Below, we reprove <code>subst_lc</code> using <code>(pick fresh and apply)</code>.
+    Step through the proof below to see how <code>(pick fresh and apply)</code>
+    works. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_lc_alternate_proof"></a>subst_lc_alternate_proof : forall (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) u e,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> e -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> ([x ~&gt; u] e).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x u e He Hu.<br/>
+&nbsp;&nbsp;induction He.<br/>
+&nbsp;&nbsp;Case "fvar".<br/>
+&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;destruct (x0 == x).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;Case "abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh y and apply <a class="idref" href="STLC_Solutions.html#lc_abs">lc_abs</a>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="STLC_Solutions.html#subst_open_var">subst_open_var</a>. auto. auto. auto.<br/>
+&nbsp;&nbsp;Case "app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl. auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab189"></a><h1 class="section">Typing environments</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+We represent environments as association lists (lists of pairs of
+    keys and values) whose keys are <code>atom</code>s.  New bindings are added
+    to the head of the list.
+
+<br/><br/>
+    Lists are defined in Coq's standard library. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Print</span> list.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Here, environments bind <code>atom</code>s to <code>typ</code>s.  We define an
+    abbreviation <code>env</code> for the type of these environments.  Coq will
+    print <code>list (atom * typ)</code> as <code>env</code>, and we can use <code>env</code> as a
+    shorthand for writing <code>list (atom * typ)</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> env := (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * <a class="idref" href="STLC_Solutions.html#typ">typ</a>)).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>Environment</code> library, which is included by the <code>Metatheory</code>
+    library, provides functions, predicates, tactics, and lemmas that
+    simplify working with environments.  Note that everything in the
+    library is polymorphic over the type of objects bound in the
+    environment.  Look in <code>Environment.v</code> for additional details about
+    the functions and predicates that we mention below.
+
+<br/><br/>
+    The function <code>dom</code> computes the domain of an environment,
+    returning a finite set of <code>atom</code>s. 
+</div>
+<code>
+
+<br/>
+Check <a class="idref" href="Environment.html#dom">dom</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The unary predicate <code>ok</code> holds when each atom is bound at most
+    once in an environment. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Print</span> ok.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The ternary predicate <code>binds</code> holds when a given binding is
+    present in an environment.  More specifically, <code>binds x a E</code> holds
+    when the binding for <code>x</code> closest to the head of <code>E</code> binds <code>x</code> to
+    <code>a</code>. 
+</div>
+<code>
+
+<br/>
+Check <a class="idref" href="Environment.html#binds">binds</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab190"></a><h1 class="section">Typing relation</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+The definition of the typing relation is straightforward.  In
+    order to ensure that the relation holds for only well-formed
+    environments, we check in the <code>typing_var</code> case that the
+    environment is <code>ok</code>.  The structure of typing derivations
+    implicitly ensures that the relation holds only for locally closed
+    expressions.  Finally, note the use of cofinite quantification in
+    the <code>typing_abs</code> case. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="typing"></a>typing : env -&gt; <a class="idref" href="STLC_Solutions.html#exp">exp</a> -&gt; <a class="idref" href="STLC_Solutions.html#typ">typ</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="typing_var"></a>typing_var : forall E (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) T,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x T E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="STLC_Solutions.html#fvar">fvar</a> x) T<br/>
+&nbsp;&nbsp;| <a name="typing_abs"></a>typing_abs : forall L E e T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing ((x, T1) :: E) (<a class="idref" href="STLC_Solutions.html#open">open</a> e x) T2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="STLC_Solutions.html#abs">abs</a> e) (<a class="idref" href="STLC_Solutions.html#typ_arrow">typ_arrow</a> T1 T2)<br/>
+&nbsp;&nbsp;| <a name="typing_app"></a>typing_app : forall E e1 e2 T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e1 (<a class="idref" href="STLC_Solutions.html#typ_arrow">typ_arrow</a> T1 T2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e2 T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="STLC_Solutions.html#app">app</a> e1 e2) T2.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We add the constructors of the typing relation as hints to be used
+    by the <code>auto</code> and <code>eauto</code> tactics. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Constructors typing.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab191"></a><h1 class="section">Weakening</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+Weakening states that if an expression is typeable in some
+    environment, then it is typeable in any well-formed extension of
+    that environment.  This property is needed to prove the
+    substitution lemma.
+
+<br/><br/>
+    As stated below, this lemma is not directly proveable.  The
+    natural way to try proving this lemma proceeds by induction on the
+    typing derivation for <code>e</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_weakening_0"></a>typing_weakening_0 : forall E F e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> (F ++ E) e T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E F e T H J.<br/>
+&nbsp;&nbsp;induction H; eauto.<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh x and apply <a class="idref" href="STLC_Solutions.html#typing_abs">typing_abs</a>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We are stuck in the <code>typing_abs</code> case because the induction
+    hypothesis <code>H0</code> applies only when we weaken the environment at its
+    head.  In this case, however, we need to weaken the environment in
+    the middle; compare the conclusion at the point where we're stuck
+    to the hypothesis <code>H</code>, which comes from the given typing derivation.
+
+<br/><br/>
+    We can obtain a more useful induction hypothesis by changing the
+    statement to insert new bindings into the middle of the
+    environment, instead of at the head.  However, the proof still
+    gets stuck, as can be seen by examining each of the cases in
+    the proof below.
+
+<br/><br/>
+    Note: To view subgoal n in a proof, use the command "<code><span class="keyword">Show</span> n</code>".
+    To work on subgoal n instead of the first one, use the command
+    "<code>Focus n</code>". 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_weakening_strengthened_0"></a>typing_weakening_strengthened_0 : forall E F G e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> (G ++ E) e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (G ++ F ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> (G ++ F ++ E) e T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E F G e T H J.<br/>
+&nbsp;&nbsp;induction H.<br/>
+<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The hypotheses in the <code>typing_var</code> case include an environment
+    <code>E0</code> that that has no relation to what we need to prove.  The
+    missing fact we need is that <code>E0 = (G ++ E)</code>.
+
+<br/><br/>
+    The problem here arises from the fact that Coq's <code>induction</code>
+    tactic let's us only prove something about all typing derivations.
+    While it's clear to us that weakening applies to all typing
+    derivations, it's not clear to Coq, because the environment is
+    written using concatenation.  The <code>induction</code> tactic expects that
+    all arguments to a judgement are variables.  So we see <code>E0</code> in the
+    proof instead of <code>(G ++ E)</code>.
+
+<br/><br/>
+    The solution is to restate the lemma.  For example, we can prove
+
+<br/><br/>
+<pre>
+  forall E F E' e T, typing E' e T -&gt;
+  forall G, E' = G ++ E -&gt; ok (G ++ F ++ E) -&gt; typing (G ++ F ++ E) e T.
+</pre>
+
+<br/><br/>
+    The equality gets around the problem with Coq's <code>induction</code>
+    tactic.  The placement of the <code>(forall G)</code> quantifier gives us a
+    sufficiently strong induction hypothesis in the <code>typing_abs</code> case.
+
+<br/><br/>
+    However, we prefer not to state the lemma in the way shown above,
+    since it is not as readable as the original statement.  Instead,
+    we use a tactic to introduce the equality within the proof itself.
+    The tactic <code>(remember t <span class="keyword">as</span> t')</code> replaces an object <code>t</code> with the
+    identifier <code>t'</code> everywhere in the goal and introduces an equality
+    <code>t' = t</code> into the context.  It is often combined with <code>generalize
+    dependent</code>, as illustrated below. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab192"></a><h3 class="section">Exercise</h3>
+
+
+<br/><br/>
+    See how we use <code>remember <span class="keyword">as</span></code> in the proof below for weakening.
+    Then, complete the proof. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_weakening_strengthened"></a>typing_weakening_strengthened :  forall E F G e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> (G ++ E) e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (G ++ F ++ E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> (G ++ F ++ E) e T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E F G e T H.<br/>
+&nbsp;&nbsp;remember (G ++ E) <span class="keyword">as</span> E'.<br/>
+&nbsp;&nbsp;generalize dependent G.<br/>
+&nbsp;&nbsp;induction H; intros G Eq Ok; subst.<br/>
+&nbsp;&nbsp;Case "typing_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="STLC_Solutions.html#typing_var">typing_var</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Ok.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="Environment.html#binds_weaken">binds_weaken</a>. apply H0. apply Ok.<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh x and apply <a class="idref" href="STLC_Solutions.html#typing_abs">typing_abs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#cons_concat_assoc">cons_concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Environment.html#cons_concat_assoc">cons_concat_assoc</a>. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Environment.html#cons_concat_assoc">cons_concat_assoc</a>. apply <a class="idref" href="Environment.html#ok_cons">ok_cons</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Ok.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;Case "typing_app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="STLC_Solutions.html#typing_app">typing_app</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply IHtyping1. reflexivity. apply Ok.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply IHtyping2. reflexivity. apply Ok.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab193"></a><h3 class="section">Example</h3>
+
+
+<br/><br/>
+    We can now prove our original statement of weakening.  The only
+    interesting step is the use of the lemma <code>nil_concat</code>, which is
+    defined in <code>Environment.v</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_weakening"></a>typing_weakening : forall E F e T,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E e T -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> (F ++ E) e T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E F e T H J.<br/>
+&nbsp;&nbsp;rewrite &lt;- (<a class="idref" href="Environment.html#nil_concat">nil_concat</a> _ (F ++ E)).<br/>
+&nbsp;&nbsp;apply <a class="idref" href="STLC_Solutions.html#typing_weakening_strengthened">typing_weakening_strengthened</a>; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab194"></a><h1 class="section">Substitution</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+Having proved weakening, we can now prove the usual substitution
+    lemma, which we state both in the form we need and in the
+    strengthened form needed to make the proof go through.
+
+<br/><br/>
+<pre>
+  typing_subst : forall E e u S T z,
+    typing ((z, S) :: E) e T -&gt;
+    typing E u S -&gt;
+    typing E ([z ~&gt; u] e) T
+
+  typing_subst_strengthened : forall E F e u S T z,
+    typing (F ++ (z, S) :: E) e T -&gt;
+    typing E u S -&gt;
+    typing (F ++ E) ([z ~&gt; u] e) T
+</pre>
+
+<br/><br/>
+    The proof of the strengthened statement proceeds by induction on
+    the given typing derivation for <code>e</code>.  The most involved case is
+    the one for variables; the others follow from the induction
+    hypotheses. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab195"></a><h3 class="section">Exercise</h3>
+
+
+<br/><br/>
+    Below, we state what needs to be proved in the <code>typing_var</code> case
+    of the substitution lemma.  Fill in the proof.
+
+<br/><br/>
+    Proof sketch: The proof proceeds by a case analysis on <code>(x == z)</code>,
+    i.e., whether the two variables are the same or not.
+
+<br/><br/>
+
+<ul>
+<li> If <code>(x = z)</code>, then we need to show <code>(typing (F ++ E) u T)</code>.
+        This follows from the given typing derivation for <code>u</code> by
+        weakening and the fact that <code>T</code> must equal <code>S</code>.
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li> If <code>(x &lt;&gt; z)</code>, then we need to show <code>(typing (F ++ E) x T)</code>.
+        This follows by the typing rule for variables. 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_subst_var_case"></a>typing_subst_var_case : forall E F u S T z x,<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x T (F ++ (z, S) :: E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="Environment.html#ok">ok</a> (F ++ (z, S) :: E) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E u S -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> (F ++ E) ([z ~&gt; u] x) T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E F u S T z x H J K.<br/>
+&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;destruct (x == z).<br/>
+&nbsp;&nbsp;Case "x = z".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (T = S).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Environment.html#binds_mid_eq_cons">binds_mid_eq_cons</a>. apply H. apply J.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="STLC_Solutions.html#typing_weakening">typing_weakening</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply K.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Environment.html#ok_remove_mid_cons">ok_remove_mid_cons</a>. apply J.<br/>
+&nbsp;&nbsp;Case "x &lt;&gt; z".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="STLC_Solutions.html#typing_var">typing_var</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Environment.html#ok_remove_mid_cons">ok_remove_mid_cons</a>. apply J.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="Environment.html#binds_remove_mid_cons">binds_remove_mid_cons</a>. apply H. apply n.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab196"></a><h3 class="section">Note</h3>
+
+
+<br/><br/>
+    The other two cases of the proof of the substitution lemma are
+    relatively straightforward.  However, the case for <code>typing_abs</code>
+    needs the fact that the typing relation holds only for
+    locally-closed expressions. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_regular_lc"></a>typing_regular_lc : forall E e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E e T -&gt; <a class="idref" href="STLC_Solutions.html#lc">lc</a> e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E e T H. induction H; eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab197"></a><h3 class="section">Exercise</h3>
+
+
+<br/><br/>
+    Complete the proof of the substitution lemma. The proof proceeds
+    by induction on the typing derivation for <code>e</code>.  The initial steps
+    should use <code>remember <span class="keyword">as</span></code> and <code>generalize dependent</code> in a manner
+    similar to the proof of weakening. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_subst_strengthened"></a>typing_subst_strengthened : forall E F e u S T z,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> (F ++ (z, S) :: E) e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E u S -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> (F ++ E) ([z ~&gt; u] e) T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E F e u S T z He Hu.<br/>
+&nbsp;&nbsp;remember (F ++ (z, S) :: E) <span class="keyword">as</span> E'.<br/>
+&nbsp;&nbsp;generalize dependent F.<br/>
+&nbsp;&nbsp;induction He.<br/>
+&nbsp;&nbsp;Case "typing_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros F Eq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="STLC_Solutions.html#typing_subst_var_case">typing_subst_var_case</a>. apply H0. apply H. apply Hu.<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros F Eq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh y and apply <a class="idref" href="STLC_Solutions.html#typing_abs">typing_abs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="STLC_Solutions.html#subst_open_var">subst_open_var</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="Environment.html#cons_concat_assoc">cons_concat_assoc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Environment.html#cons_concat_assoc">cons_concat_assoc</a>. auto.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="STLC_Solutions.html#typing_regular_lc">typing_regular_lc</a>. apply Hu.<br/>
+&nbsp;&nbsp;Case "typing_app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros F Eq. subst. simpl. eapply <a class="idref" href="STLC_Solutions.html#typing_app">typing_app</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHe1. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHe2. reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab198"></a><h3 class="section">Exercise</h3>
+
+
+<br/><br/>
+    Complete the proof of the substitution lemma stated in the form we
+    need it.  The proof is similar to that of <code>typing_weakening</code>.  In
+    particular, recall the lemma <code>nil_concat</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_subst"></a>typing_subst : forall E e u S T z,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> ((z, S) :: E) e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E u S -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E ([z ~&gt; u] e) T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E e u S T z H J.<br/>
+&nbsp;&nbsp;rewrite &lt;- (<a class="idref" href="Environment.html#nil_concat">nil_concat</a> _ E).<br/>
+&nbsp;&nbsp;eapply <a class="idref" href="STLC_Solutions.html#typing_subst_strengthened">typing_subst_strengthened</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="Environment.html#nil_concat">nil_concat</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply J.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab199"></a><h1 class="section">Values and Evaluation</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+In order to state the preservation lemma, we first need to define
+    values and the small-step evaluation relation.  These inductive
+    relations are straightforward to define.
+
+<br/><br/>
+    Note the hypotheses which ensure that the relations hold only for
+    locally closed terms.  Below, we prove that this is actually the
+    case, since it is not completely obvious from the definitions
+    alone. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="value"></a>value : <a class="idref" href="STLC_Solutions.html#exp">exp</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="value_abs"></a>value_abs : forall e,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> (<a class="idref" href="STLC_Solutions.html#abs">abs</a> e) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;value (<a class="idref" href="STLC_Solutions.html#abs">abs</a> e).<br/>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="eval"></a>eval : <a class="idref" href="STLC_Solutions.html#exp">exp</a> -&gt; <a class="idref" href="STLC_Solutions.html#exp">exp</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="eval_beta"></a>eval_beta : forall e1 e2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> (<a class="idref" href="STLC_Solutions.html#abs">abs</a> e1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#value">value</a> e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="STLC_Solutions.html#app">app</a> (<a class="idref" href="STLC_Solutions.html#abs">abs</a> e1) e2) (<a class="idref" href="STLC_Solutions.html#open">open</a> e1 e2)<br/>
+&nbsp;&nbsp;| <a name="eval_app_1"></a>eval_app_1 : forall e1 e1' e2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval e1 e1' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="STLC_Solutions.html#app">app</a> e1 e2) (<a class="idref" href="STLC_Solutions.html#app">app</a> e1' e2)<br/>
+&nbsp;&nbsp;| <a name="eval_app_2"></a>eval_app_2 : forall e1 e2 e2',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#value">value</a> e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval e2 e2' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="STLC_Solutions.html#app">app</a> e1 e2) (<a class="idref" href="STLC_Solutions.html#app">app</a> e1 e2').<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We add the constructors for these two relations as hints to be used
+    by Coq's <code>auto</code> and <code>eauto</code> tactics. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Constructors value eval.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab200"></a><h1 class="section">Preservation</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab201"></a><h3 class="section">Note</h3>
+
+
+<br/><br/>
+    In order to prove preservation, we need one more lemma, which
+    states that when we open a term, we can instead open the term with
+    a fresh variable and then substitute for that variable.
+
+<br/><br/>
+    Technically, the <code>(lc u)</code> hypothesis is not needed to prove the
+    conclusion.  However, it makes the proof simpler. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="subst_intro"></a>subst_intro : forall (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) u e,<br/>
+&nbsp;&nbsp;x `notin` (<a class="idref" href="STLC_Solutions.html#fv">fv</a> e) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#open">open</a> e u = [x ~&gt; u](<a class="idref" href="STLC_Solutions.html#open">open</a> e x).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x u e H J.<br/>
+&nbsp;&nbsp;unfold open.<br/>
+&nbsp;&nbsp;rewrite <a class="idref" href="STLC_Solutions.html#subst_open_rec">subst_open_rec</a>; auto.<br/>
+&nbsp;&nbsp;simpl.<br/>
+&nbsp;&nbsp;destruct (x == x).<br/>
+&nbsp;&nbsp;Case "x = x".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="STLC_Solutions.html#subst_fresh">subst_fresh</a>; auto.<br/>
+&nbsp;&nbsp;Case "x &lt;&gt; x".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct n; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab202"></a><h3 class="section">Exercise</h3>
+
+
+<br/><br/>
+    Complete the proof of preservation.  In this proof, we proceed by
+    induction on the given typing derivation.  The induction
+    hypothesis has already been appropriately generalized by the given
+    proof fragment.
+
+<br/><br/>
+    Proof sketch: By induction on the typing derivation for <code>e</code>.
+
+<br/><br/>
+
+<ul>
+<li> <code>typing_var</code> case: Variables don't step.
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li> <code>typing_abs</code> case: Abstractions don't step.
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li> <code>typing_app</code> case: By case analysis on how <code>e</code> steps. The
+        <code>eval_beta</code> case is interesting, since it follows by the
+        substitution lemma.  The others follow directly from the
+        induction hypotheses. 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="preservation"></a>preservation : forall E e e' T,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#eval">eval</a> e e' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E e' T.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros E e e' T H.<br/>
+&nbsp;&nbsp;generalize dependent e'.<br/>
+&nbsp;&nbsp;induction H; intros e' J.<br/>
+&nbsp;&nbsp;Case "typing_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion J.<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion J.<br/>
+&nbsp;&nbsp;Case "typing_app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion J; subst; eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;SCase "eval_beta".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick fresh y.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="STLC_Solutions.html#subst_intro">subst_intro</a> y); auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="STLC_Solutions.html#typing_subst">typing_subst</a>; auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="STLC_Solutions.html#typing_regular_lc">typing_regular_lc</a>; eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab203"></a><h1 class="section">Progress</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab204"></a><h3 class="section">Exercise</h3>
+
+
+<br/><br/>
+    Complete the proof of the progress lemma.  The induction
+    hypothesis has already been appropriately generalized by the given
+    proof fragment.
+
+<br/><br/>
+    Proof sketch: By induction on the typing derivation for <code>e</code>.
+
+<br/><br/>
+
+<ul>
+<li> <code>typing_var</code> case: Can't happen; the empty environment doesn't
+        bind anything.
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li> <code>typing_abs</code> case: Abstractions are values.
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li> <code>typing_app</code> case: Applications reduce.  The result follows
+        from an exhaustive case analysis on whether the two components
+        of the application step or are values and the fact that a
+        value must be an abstraction. 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="progress"></a>progress : forall e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> e T -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#value">value</a> e \/ <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> e', <a class="idref" href="STLC_Solutions.html#eval">eval</a> e e'.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e T H.<br/>
+
+<br/>
+<br/>
+&nbsp;&nbsp;assert (<a class="idref" href="STLC_Solutions.html#typing">typing</a> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> e T); auto.<br/>
+
+<br/>
+<br/>
+&nbsp;&nbsp;remember (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * <a class="idref" href="STLC_Solutions.html#typ">typ</a>)) <span class="keyword">as</span> E.<br/>
+
+<br/>
+&nbsp;&nbsp;induction H; subst.<br/>
+
+<br/>
+&nbsp;&nbsp;Case "typing_var".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H1.<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="STLC_Solutions.html#value_abs">value_abs</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="STLC_Solutions.html#typing_regular_lc">typing_regular_lc</a>; eauto.<br/>
+&nbsp;&nbsp;Case "typing_app".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct IHtyping1 <span class="keyword">as</span> [V1 | [e1' Eval1]]; auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHtyping2 <span class="keyword">as</span> [V2 | [e2' Eval2]]; auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion V1; subst. exists (<a class="idref" href="STLC_Solutions.html#open">open</a> e e2); auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists (<a class="idref" href="STLC_Solutions.html#app">app</a> e1 e2'); auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists (<a class="idref" href="STLC_Solutions.html#app">app</a> e1' e2).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="STLC_Solutions.html#eval_app_1">eval_app_1</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="STLC_Solutions.html#typing_regular_lc">typing_regular_lc</a>; eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assumption.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab205"></a><h1 class="section">Additional properties</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+While none of the lemmas below are needed to prove preservation or
+    progress, they verify that our relations do indeed hold only for
+    locally closed expressions.  This serves as a check that we have
+    correctly defined the relations. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab206"></a><h3 class="section">Example</h3>
+
+
+<br/><br/>
+    The lemma directly below, <code>open_abs</code>, is needed to show that the
+    evaluation relation holds only for locally closed terms.  The
+    proof is straightforward, but we can use it to illustrate another
+    feature of Coq's tactic language.
+
+<br/><br/>
+    If we start a proof with "<code><span class="keyword">Proof</span> <span class="keyword">with</span> tac</code>" instead of simply
+    "<code><span class="keyword">Proof</span></code>", every time we end a step with "<code>...</code>", Coq will
+    automatically apply <code>tac</code> to all the subgoals generated by that
+    step.  This makes proof scripts somewhat more concise without
+    hiding the details of the proof script in some far away
+    location. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="open_abs"></a>open_abs : forall e u,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> (<a class="idref" href="STLC_Solutions.html#abs">abs</a> e) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#lc">lc</a> (<a class="idref" href="STLC_Solutions.html#open">open</a> e u).<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto <span class="keyword">using</span> <a class="idref" href="STLC_Solutions.html#subst_lc">subst_lc</a>.<br/>
+&nbsp;&nbsp;intros e u H J.<br/>
+&nbsp;&nbsp;inversion H; subst.<br/>
+&nbsp;&nbsp;pick fresh y.<br/>
+&nbsp;&nbsp;rewrite (<a class="idref" href="STLC_Solutions.html#subst_intro">subst_intro</a> y)...<br/>
+<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab207"></a><h3 class="section">Note</h3>
+
+
+<br/><br/>
+    The three lemmas below are straightforward to prove.  They do not
+    illustrate any new concepts or tactics. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="value_regular"></a>value_regular : forall e,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#value">value</a> e -&gt; <a class="idref" href="STLC_Solutions.html#lc">lc</a> e.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e H. induction H; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="eval_regular"></a>eval_regular : forall e1 e2,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#eval">eval</a> e1 e2 -&gt; <a class="idref" href="STLC_Solutions.html#lc">lc</a> e1 /\ <a class="idref" href="STLC_Solutions.html#lc">lc</a> e2.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros e1 e2 H. induction H; intuition; auto <span class="keyword">using</span> <a class="idref" href="STLC_Solutions.html#value_regular">value_regular</a>, <a class="idref" href="STLC_Solutions.html#open_abs">open_abs</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="typing_regular_ok"></a>typing_regular_ok : forall E e T,<br/>
+&nbsp;&nbsp;<a class="idref" href="STLC_Solutions.html#typing">typing</a> E e T -&gt; <a class="idref" href="Environment.html#ok">ok</a> E.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;induction 1...<br/>
+&nbsp;&nbsp;Case "typing_abs".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pick fresh x.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (<a class="idref" href="Environment.html#ok">ok</a> ((x, T1) :: E))...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H1...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

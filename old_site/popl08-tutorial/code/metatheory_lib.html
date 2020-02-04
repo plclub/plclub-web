@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="Description" content="" />
+	<meta name="Keywords" content="" />
+
+	<meta http-equiv="imagetoolbar" content="no" />
+	<meta name="MSSmartTagsPreventParsing" content="TRUE" />
+	<meta name="googlebot" content="noodp" />
+
+	<title>Metatheory Library</title>
+
+	<link rel="shortcut icon" href="/favicon.ico" />
+
+	<style type="text/css" media="all">
+		@import "css/_defaults.css";
+		@import "css/mediumLayout.css";
+		@import "css/bluetoolbarLayout.css";
+
+		/* BEA added the following */
+		#mainContent li { margin-bottom: .75em; }
+	</style>
+	<!--[if IE]>
+	<link rel="stylesheet" type="text/css" href="css/ie.css" media="all" />
+	<![endif]-->
+	<link rel="stylesheet" type="text/css" href="css/mediumPrint.css" media="print" />
+</head>
+
+<body>
+
+<div id="container">
+
+		<!--
+		<div id="header" class="clearfix">
+
+			<div class="navigation-logo">
+				<a href="#" title="School or Penn Home"><img src="../../images/logo_here_template.gif" alt="School or Penn Logo" /></a>
+			</div>
+			<div class="top-navigation clearfix">
+				<ul class="clearfix">
+					<li class="first"><a href="http://www.upenn.edu/" title="Univeristy of Pennsylvania">Penn</a></li>
+					<li><a href="http://www.seas.upenn.edu/" title="School of Engineering and Applied Science">SEAS</a></li>
+					<li><a href="http://www.cis.upenn.edu/" title="Computer and Information Science">CIS</a></li>
+				</ul>
+				<div class="department-logo">
+					<a href="#" title="Department Name"><img src="../../images/dept_blue_text.jpg" alt="Department Name"/></a>
+				</div>
+			</div>
+		</div>
+		-->
+
+
+<div id="wrapper">
+
+<!-- This is the navigation bar on the left side of the page -->
+<div id="navigation">
+
+<div class="highlights">
+<h2>See also</h2>
+<ul>
+<li><a href="index.html#coqintro" title="Introduction to
+                                         Coq">Introduction to
+    Coq</a></li>
+<li><a href="index.html#stlc" title="Simply-typed lambda calculus">STLC</a></li>
+
+<li><a href="index.html#fsub" title="System F with subtyping">System F<sub>&lt;:</sub></a></li>
+</ul>
+</div>
+
+<!--
+<div class="highlights">
+<h2>Related projects</h2>
+<ul>
+<li><a href="http://alliance.seas.upenn.edu/~plclub/cgi-bin/poplmark/" title="The POPLmark Challenge">POPLmark</a></li>
+<li><a href="http://coq.inria.fr/" title="Coq Proof Assistant">Coq</a></li>
+<li><a href="http://proofgeneral.inf.ed.ac.uk/" title="Proof General">Proof General</a></li>
+</ul>
+</div>
+-->
+
+<!--
+<div class="facts">
+</div>
+-->
+
+</div> <!-- id=navigation -->
+
+<div id="content">
+<div id="mainContent">
+<!-- Edit main content here -->
+
+
+<!-- ============================================================= -->
+<h1>Metatheory Library</h1>
+
+<p>Our library for aiding the formalizing programming language metatheory
+consists primarily of the following three libraries.</p>
+
+<ul>
+
+  <li><b><a href="coqdoc/Atom.html">Atom</a>:</b>  This library defines a
+  type <code>atom</code> with decidable equality and infinitely many
+  elements.  It is always possible to generate an atom fresh for any finite
+  collection of atoms.</li>
+
+  <li><b><a href="coqdoc/Environment.html">Environment</a>:</b>  This
+  library provides operations, lemmas, and tactics for working with
+  environments, association lists whose keys are atoms.</li>
+
+  <li><b><a href="coqdoc/Metatheory.html">Metatheory</a>:</b> This is
+  the main library to include (via Coq's <code>Require</code> command)
+  when starting a new development, since it exports
+  the <a href="coqdoc/Atom.html">Atom</a> and
+  <a href="coqdoc/Environment.html">Environment</a> libraries.  This
+  library defines notations which simplify writing common operations,
+  hints which aid in discharging goals about the freshness of atoms,
+  and tactics which simplify proofs.  It also provides a template for
+  those who want to use different notations, hints, and tactics when
+  formalizing programming language metatheory.</li>
+
+</ul>
+
+<p>The metatheory library depends on the following additional libraries
+which are not specific to programming language metatheory.</p>
+
+<ul>
+
+  <li><b><a href="coqdoc/AdditionalTactics.html">AdditionalTactics</a>:</b>
+  This library provides additional tactics, in particular a variation on
+  <code>remember</code> (from <a
+  href="http://coq.inria.fr/library/Coq.Init.Tactics.html">Coq's standard
+  library</a>) and a <code>Case</code> tactic which helps delineate cases in
+  an inductive proof.</li>
+
+  <li><b><a href="coqdoc/FiniteSets.html">FiniteSets</a>:</b> This library
+  provides an extension of Coq's <a
+  href="http://coq.inria.fr/library/Coq.FSets.FSets.html">library for finite
+  sets</a> that includes extensional equality on sets.</li>
+
+  <li><b><a href="coqdoc/FSetDecide.html">FSetDecide</a>:</b> This library
+  provides a general purpose decision procedure, <code>decideFSet</code>,
+  for solving goals about finite sets.  A similar tactic with the same name
+  is defined in the <a href="coqdoc/Atom.html">Atom</a> library.</li>
+
+  <li><b><a href="coqdoc/FSetNotin.html">FSetNotin</a>:</b> This library
+  provides a tactic, <code>notin_solve</code>, for solving some goals
+  involving non-membership in finite sets.</li>
+
+  <li><b><a href="coqdoc/ListFacts.html">ListFacts</a>:</b> This library
+  provides assorted facts about lists.</li>
+
+  <li><b><a href="coqdoc/Negation.html">Negation</a>:</b> This
+  library provides an extension of Coq's <a
+  href="http://coq.inria.fr/library/Coq.Logic.Decidable.html">Decidable</a>
+  library.</li>
+
+</ul>
+
+<!-- End main content -->
+
+		        </div> <!-- id=mainContent -->
+
+				<!--
+				<div id="footer" class="top-sep">
+				</div>
+				-->
+
+			</div> <!-- id=content -->
+		</div> <!-- id=wrapper -->
+
+</div> <!-- id=container -->
+
+</body>
+</html>
