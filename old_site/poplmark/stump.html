@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Aaron Stump's solution to the POPLmark Challenge</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+
+  <body>
+  <div class="content">
+    <a href="index.html"><img src="poplmark.png" alt="POPLmark logo" class="logo" /></a>
+
+    <p class="heading">Aaron Stump's solution</p>
+
+    <ul>
+      <li>Author: <a href="http://www.divms.uiowa.edu/~astump/">Aaron Stump</a></li>
+      <li>Parts addressed: 1a.</li>
+      <li>Proof assistant / theorem prover used: Coq.</li>
+      <li>Encoding technique: Named.</li>
+      <li>Files: available from
+          the <a href="http://www.divms.uiowa.edu/~astump/poplmark-coq/">author's
+          page</a>.</li>
+    </ul>
+  </div>
+
+  <body>
+  <div class="content">
+    <p class="heading">Commentary</p>
+
+    <p>The thesis of this solution to the POPLmark challenge is that
+      programming language meta-theory can be feasibly formalized, at
+      least in some cases, using names to represent bound
+      variables. There are two main advantages of using names for
+      bound variables. First, the representation of terms is more
+      faithful to the official syntax of the language. Papers
+      describing languages with bound variables, and tools
+      implementing such languages, typically support an input syntax
+      with named variables. Internally they may change representations
+      of terms, but externally they support named variables. Hence,
+      any formal meta-theory done with a representational technique
+      like de Bruijn indices applies directly just to a possible
+      internal representation of terms, not to terms as officially
+      supported. Second, representing bound variables using names
+      avoids the tedious technical complexities often associated with
+      de Bruijn indices. It is perhaps believed that those
+      complexities are to be preferred to the complexities associated
+      with bound variables, for example those arising from the
+      definition of capture-avoiding substitution. The present
+      solution aims to show that at least in some cases, such
+      complexities can be tamed, yielding an approach with similar or
+      perhaps less technical tedium than de Bruijn indices.</p>
+  </div>
+</html>
+  

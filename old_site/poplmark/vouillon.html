@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Jérôme Vouillon's solution to the POPLmark Challenge</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+
+  <body>
+  <div class="content">
+    <a href="index.html"><img src="poplmark.png" alt="POPLmark logo" class="logo" /></a>
+
+    <p class="heading">Jérôme Vouillon's solution</p>
+
+    <ul>
+      <li>Authors: <a href="http://www.pps.jussieu.fr/~vouillon/">Jérôme Vouillon</a></li>
+      <li>Parts addressed: 1 and 2.</li>
+      <li>Proof assistant / theorem prover used: Coq.</li>
+      <li>Encoding technique: de Bruijn indices.</li>
+      <li>Files: [<a href="vouillon-coq.tar.gz">tar.gz</a>]</li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <p class="heading">Commentary</p>
+
+    <p>This solution offers an excellent baseline against which to
+      measure others: the representation technique (pure deBruijn) is
+      one of the simplest and most concrete imaginable, and some of
+      the development is correspondingly concerned with low-level
+      details of index manipulation, etc. However, by appropriate
+      choices of tactics and and low-level lemmas, these low-level
+      details are largely kept from polluting the main definitions or
+      theorems, which closely follow the paper presentation.</p>
+  </div>
+</html>
+  

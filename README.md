@@ -22,7 +22,7 @@ When the site is built we can run
 
 	stack exec site -- build
 
-to build the site. With
+to build the site, which outputs the static html in *_site/*. With
 
 	stack exec site -- watch 
 
@@ -31,6 +31,24 @@ we can launch a live preview server at [http://localhost:8000](http://localhost:
 Sometimes it is necessary to recompile everything from scratch. In this case run
 
 	stack exec site -- rebuild
+
+## Deploy instructions
+
+**After** building the site per the instructions above, you can deploy the site with
+
+	stack exec site deploy
+	
+This presumes that you have access to the *plclub* account on Eniac (i.e., `ssh plclub@eniac` should work). This process will 
+
+	1) Backup the existing website as `html-YYYY-MM-DD.tar`
+	2) Synchronize your local folder `_site/` with the appropriate remote directory
+
+It is conceivable that the remote file permissions can become incorrect when deploying. In this case, you will need to run the two commands
+
+	find ~/html -type f -exec chmod a+r {} +
+	find ~/html -type d -exec chmod a+rx {} +
+
+on the remote machine (such as by saving them as "fix.sh" and running `ssh plclub@eniac ./fix.sh`)
 
 ## Adding information to the site
 

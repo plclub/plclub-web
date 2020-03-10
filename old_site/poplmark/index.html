@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>The POPLmark Challenge</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+
+  <body>
+
+  <div class="content">
+    <img src="poplmark.png" alt="POPLmark logo" class="logo" />
+
+    <p>
+      <b>The POPLmark Challenge</b> is a concrete set of benchmarks
+      intended both for measuring progress and for stimulating
+      discussion and collaboration in mechanizing the metatheory of
+      programming languages.  Since work on the challenge problems has
+      died down, the POPLmark wiki has been replaced with this static
+      page recording the submitted solutions and the project's history.
+    </p>
+  </div>
+
+  <div class="content">
+    <p class="heading"> Challenge Problems </p>
+
+    <p>
+      To gauge progress in mechanizing programming language
+      metatheory, we have issued a set of challenge problems chosen to
+      exercise many aspects of programming languages that are known to
+      be difficult to formalize.
+    </p>
+    
+    <ul>
+      <li> A description of the challenge problems:
+             [<a href="poplmark.pdf">pdf</a>]
+             [<a href="poplmark.ps">ps</a>]
+      </li>
+
+      <li> A preliminary version of the F sub interpreter (written in
+             <a href="http://caml.inria.fr/">OCaml</a>):
+             [<a href="fsubimpl.tar.gz">tar.gz</a>]
+      </li>
+
+      <li> A set of test terms for Challenge 3:
+             [<a href="challenge-03.zip">zip</a>]
+      </li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <p class="heading">Submitted Solutions</p>
+
+    <p>Many researchers have created solutions to the POPLmark
+      Challenge.  The following individuals and groups have submitted
+      solutions that remain accessible as of April, 2012 (names link
+      to pages about their submissions):
+    </p>
+
+    <ul>
+      <li><a href="berghofer.html">Stehan Berghofer</a></li>
+      <li><a href="arthur_de_bruijn.html">Arthur Charguéraud (de Bruijn indices)</a></li>
+      <li><a href="arthur_ln.html">Arthur Charguéraud (locally nameless)</a></li>
+      <li><a href="chlipala.html">Adam Chlipala</a></li>
+      <li><a href="ciaffaglione.html">Alberto Ciaffaglione and Ivan Scagnetto</a></li>
+      <li><a href="cmu.html">Group from CMU (Michael Ashley-Rollman, Karl Crary, and Robert Harper)</a></li>
+      <li><a href="fairbairn.html">Matthew Fairbairn</a></li>
+      <li><a href="gacek.html">Andrew Gacek</a></li>
+      <li><a href="leroy.html">Xavier Leroy</a></li>
+      <li><a href="hirschowitz.html">André Hirschowitz and Marco Maggesi</a></li>
+      <li><a href="wilmer.html">Wilmer Ricciotti</a></li>
+      <li><a href="stump.html">Aaron Stump</a></li>
+      <li><a href="urban.html">Christian Urban et al.</a></li>
+      <li><a href="vouillon.html">Jérôme Vouillon</a></li>
+      <li><a href="xi.html">Hongwei Xi</a></li>
+    </ul>
+    
+    <p>Summary of the encoding techniques and tools used by the
+      available submissions:</p>
+    <table class="compare">
+      <tr>
+        <td></td>
+        <th>Alpha Prolog</th>
+        <th>Coq</th>
+        <th>Twelf</th>
+        <th>ATS</th>
+        <th>Isabelle/HOL</th>
+        <th>Matita</th>
+        <th>Abella</th>
+      </tr>
+      <tr>
+        <th>de Bruijn</th>
+        <td></td>
+        <td><a href="vouillon.html">Vouillon</a>, <a href="arthur_de_bruijn.html">Charguéraud
+            (a)</a></td>
+        <td></td><td></td>
+        <td><a href="berghofer.html">Berghofer</a></td>
+        <td></td><td></td>
+      </tr>
+      <tr>
+        <th>HOAS</th>
+        <td></td><td></td>
+        <td><a href="cmu.html">CMU</a></td>
+        <td></td><td></td><td></td>
+        <td><a href="gacek.html">Gacek</a></td>
+      </tr>
+      <tr>
+	<th>Weak HOAS</th>
+	<td></td>
+	<td><a href="ciaffaglione.html">Ciaffaglione and Scagnetto</a></td>
+	<td></td><td></td><td></td><td></td><td></td>
+      <tr>
+        <th>Hybrid</th>
+        <td></td><td></td><td></td>
+        <td><a href="xi.html">Xi</a></td>
+        <td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <th>Locally nameless</th>
+        <td></td>
+        <td><a href="chlipala.html">Chlipala</a>, <a href="leroy.html">Leroy</a>, 
+            <a href="arthur_ln.html">Charguéraud (b)</a></td>
+        <td></td><td></td><td></td>
+        <td><a href="wilmer.html">Ricciotti</a></td>
+        <td></td>
+      </tr>
+      <tr>
+        <th>Named variables</th>
+        <td></td>
+        <td><a href="stump.html">Stump</a></td>
+        <td></td><td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+	<th>Nested abstract syntax</th>
+	<td></td>
+	<td><a href="hirschowitz.html">Hirschowitz and Maggesi</a></td>
+	<td></td><td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <th>Nominal</th>
+        <td><a href="fairbairn.html">Fairbairn</a></td>
+        <td></td><td></td><td></td>
+        <td><a href="urban.html">Urban et al.</a></td>
+        <td></td><td></td>
+      </tr>
+    </table>
+  </div>
+
+
+  <div class="content">
+    <p class="heading">Mailing list</p>
+
+    <p>The <a href="http://lists.seas.upenn.edu/mailman/listinfo/poplmark">POPLmark
+    mailing list</a> is no longer very active, but you may still
+    subscribe or view its archives.</p>
+  </div>
+
+  <div class="content">
+    <p class="heading">Meetings</p>
+
+    <p>The <a href="http://www.seas.upenn.edu/~sweirich/wmm/">2nd
+    Workshop on Mechanizing Metatheory</a> was held on on October 4,
+    2007, in conjunction
+    with ICFP 2007.</p>
+
+    <p>The <a href="http://www.seas.upenn.edu/~sweirich/wmm/wmm06/">1st
+    Workshop on Mechanizing Metatheory</a> was held at ICFP 2006, on
+    September 21,
+    2006. <a href="http://www.seas.upenn.edu/~sweirich/wmm/wmm06/WMM06Program-abstracts.html">Slides</a>
+    from the workshop are available.</p>
+
+    <p>A "Progress on Poplmark" meeting was held on January 15th,
+    2006. Some of the people working actively on PoplMark gathered to
+    discuss the solutions submitted so far.</p>
+  </div>
+
+  <div class="content">
+    <p class="heading">People</p>
+
+    <p>The POPLmark team is:</p>
+    <ul>
+      <li>University of Pennsylvania: Brian E. Aydemir, Aaron
+        Bohannon, Nate Foster, Benjamin Pierce, Jeff Vaughan, Dimitris
+        Vytiniotis, Geoff Washburn, Stephanie Weirich, Steve Zdancewic
+      </li>
+      <li>University of Cambridge: Matthew Fairbairn, Peter
+      Sewell</li>
+  </div>
+
+  <div class="content">
+    <p class="heading">Acknowledgement</p>
+
+    This project has been supported by the National Science
+    Foundation, grant 0551589.
+  </div>
+</html>
+  

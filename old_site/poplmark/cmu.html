@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Group from CMU's solution to the POPLmark Challenge</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+
+  <body>
+  <div class="content">
+    <a href="index.html"><img src="poplmark.png" alt="POPLmark logo" class="logo" /></a>
+
+    <p class="heading">Group from CMU's solution</p>
+
+    <ul>
+      <li>Authors: Michael Ashley-Rollman, Karl Crary, and Robert Harper.</li>
+      <li>Parts addressed: 1 and 2.</li>
+      <li>Proof assistant / theorem prover used: Twelf.</li>
+      <li>Encoding technique: HOAS.</li>
+      <li>Files: [<a href="cmu-twelf.tar.gz">tar.gz</a>]</li>
+    </ul>
+  </div>
+
+  <body>
+  <div class="content">
+    <p class="heading">Commentary</p>
+
+    <p>The Twelf methodology (worlds, world subsumption, termination
+      checking, etc.) can be a bit mysterious for the uninitiated -
+      not only for writing proofs, but even for understanding the
+      significance of what one is reading. Once past the steep part of
+      the learning curve, though, it becomes pretty natural (or so it
+      is claimed :-). The relative simplicity of the Twelf framework
+      (compared, for example, to Isabelle) is pleasant: proofs are
+      written in a fairly direct style, rather than being carried out
+      by applications of mysterious and powerful tactics. The
+      inability to reuse common structures like lists is annoying, but
+      not prohibitively so.</p>
+
+    <p> HOAS is mostly a big win, but occasionally poses conundrums
+      that have to be worked around in clever ways (e.g., the problem
+      of how to "isolate" a variable in the middle of the context,
+      needed for the transitivity/narrowing proof).</p>
+
+    <p>The choice of an alternative presentation of the evaluation
+      relation, using congruence rules instead of evaluation contexts,
+      provoked an animated discussion on the mailing list. There were
+      some who felt that this constituted a significant departure from
+      the specification; others felt that the congruence rule
+      presentation was "obviously the same" as the one using
+      evaluation rules. One lesson from this discussion is that the
+      "adequacy gap" (i.e., the complexity of the adequacy theorem
+      relating an LF formalization to its paper presentation) can be
+      of variable size and reasonable people can differ on how big it
+      can be before adequacy itself requires a formal proof. However,
+      in practice, Twelf users report that they tend not to bother
+      thinking about this sort of adequacy at all: rather, they
+      formulate their definitions directly in LF.</p>
+
+    <p>Summary: An impressive demonstration of Twelf's strengths on a
+      problem for which it is very well suited. For problems that
+      involve heavy use of variable binding and that fit well with
+      what Twelf can do (all theorems have Pi-2 statements and their
+      proofs proceed by purely syntactic induction over inductively
+      defined structures), Twelf is clearly an excellent tool.</p>
+
+    <p>In its current incarnation, the Twelf metatheory has some
+      limitations (principally the restriction to Pi-2 propositions)
+      that place certain sorts of reasoning beyond its scope. For
+      example, logical relations arguments cannot be carried out
+      (except via heavy encodings), and the status of coinduction is
+      uncertain. Work on lifting these limitations is underway, but a
+      usable system appears to be some way off.</p>
+  </div>
+</html>
+  

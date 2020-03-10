@@ -1,0 +1,1185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+            "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD><TITLE></TITLE>
+
+<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<META name="GENERATOR" content="hevea 1.06">
+</HEAD>
+<BODY >
+<!--HEVEA command line is: hevea main.tex -->
+<!--HTMLHEAD-->
+<!--ENDHTML-->
+<!--PREFIX <ARG ></ARG>-->
+<!--CUT DEF section 1 -->
+
+
+<H1 ALIGN=center> <B><FONT SIZE=7>Dinner with Ambiants<BR>
+<FONT SIZE=5>ICFP Programming Contest<BR>
+2004 Task Description</FONT></FONT></B></H1>
+
+<H3 ALIGN=center>
+<FONT SIZE=4><B>Brought to you by the University of Pennsylvania PL Club</B></FONT><SUP><A NAME="text1" HREF="#note1"><FONT SIZE=2>1</FONT></A></SUP><FONT SIZE=4><B>
+</B></FONT></H3>
+
+<H3 ALIGN=center>
+<B><FONT SIZE=4>Version </FONT></B><A HREF="#currentversion"><B><FONT SIZE=4>4</FONT></B></A><B><FONT SIZE=4><BR>
+June 5, 2004, 21:00 EDT</FONT></B></H3>
+<!--TOC section Overview-->
+
+<H2><A NAME="htoc1">1</A>&nbsp;&nbsp;Overview</H2><!--SEC END -->
+
+The object of this year's programming contest is to design an ant
+colony that will bring the most food particles back to its anthill,
+while fending off ants of another species. To win the contest, you
+must submit the neural wiring for the ants in your colony---a text
+file containing code for a simple, finite state machine that is run by
+all of your ants. In principle, your entry can be written by hand, but
+for complex behaviors you will probably find it useful to write tools
+that <EM>generate</EM> ant code in some way. You may use any programming
+language you like for this purpose.<BR>
+<BR>
+Your ants will compete in a tournament with all the ants submitted by
+other teams. In each match, two species of ants are placed in a
+random world containing two anthills, some food sources, and several
+obstacles. They must explore the world, find food and bring it back
+to their anthill. Ants can communicate or leave trails by means of
+chemical markers. Each species of ants can sense (with limited
+capabilities), but not modify, the markers of the other species. Ants
+can also attack the ants of the other species by surrounding them.
+Ants that die as a result of an attack become food. The match is won
+by the species with the most food in its anthill at the end of
+100,000 rounds. The overall winner is the ant that wins the
+most matches.<BR>
+<BR>
+Along with your finite state machine, your contest submission must
+include the source code for any tools you write to generate or test
+ants programs. We will not attempt to run your tools, but your code
+may influence our choice of the judges' prize. We also encourage you
+to publish a web page describing your entry after the contest results
+have been announced. You can submit up to four separate entries---two
+in the lightning division and two in the regular division.<BR>
+<BR>
+<!--TOC subsection A Brief Look at the State Machine-->
+
+<H3>A Brief Look at the State Machine</H3><!--SEC END -->
+
+As outlined above, the behavior of your ants is defined by a simple,
+finite state machine. Informally, the instructions of this state
+machine can be described as follows:
+<BLOCKQUOTE>
+<TABLE CELLSPACING=2 CELLPADDING=0>
+<TR><TD ALIGN=left NOWRAP><TT>Sense sensedir st1 st2 cond</TT></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Go to state <TT>st1</TT> if <TT>cond</TT> holds in <TT>sensedir</TT>;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>and to state <TT>st2</TT> otherwise.</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>Mark i st</TT></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Set mark <TT>i</TT> in current cell and go to <TT>st</TT>.</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>Unmark i st</TT></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Clear mark <TT>i</TT> in current cell and go to <TT>st</TT>.</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>PickUp st1 st2</TT></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Pick up food from current cell and go to <TT>st1</TT>;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>go to <TT>st2</TT> if there is no food in the current cell.</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>Drop st</TT></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Drop food in current cell and go to <TT>st</TT>.</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>Turn lr st</TT></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Turn left or right and go to <TT>st</TT>.</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>Move st1 st2</TT></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Move forward and go to <TT>st1</TT>;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>go to <TT>st2</TT> if the cell ahead is blocked.</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><TT>Flip p st1 st2</TT></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>Choose a random number <TT>x</TT> from <TT>0</TT> to <TT>p-1</TT>;</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>go to <TT>st1</TT> if <TT>x=0</TT> and <TT>st2</TT> otherwise.</TD>
+</TR></TABLE>
+</BLOCKQUOTE>
+Here is a description of very simple ants in the finite state machine
+language. The ant searches for food by performing a random walk until
+it locates some food. It then picks up the food and wanders randomly
+until it finds itself at home.<BR>
+<BR>
+
+
+<BLOCKQUOTE>
+<PRE>
+Sense Ahead 1 3 Food  ; state 0:  [SEARCH] is there food in front of me?
+Move 2 0              ; state 1:  YES: move onto food (return to state 0 on failure)
+PickUp 8 0            ; state 2:       pick up food and jump to state 8 (or 0 on failure)
+Flip 3 4 5            ; state 3:  NO: choose whether to...
+Turn Left 0           ; state 4:      turn left and return to state 0
+Flip 2 6 7            ; state 5:      ...or...
+Turn Right 0          ; state 6:      turn right and return to state 0
+Move 0 3              ; state 7:      ...or move forward and return to state 0 (or 3 on failure)
+Sense Ahead 9 11 Home ; state 8:  [GO HOME] is the cell in front of me my anthill?   
+Move 10 8             ; state 9:  YES: move onto anthill
+Drop 0                ; state 10:     drop food and return to searching
+Flip 3 12 13          ; state 11: NO: choose whether to...
+Turn Left 8           ; state 12:     turn left and return to state 8                  
+Flip 2 14 15          ; state 13:     ...or...                                    
+Turn Right 8          ; state 14:     turn right and return to state 8                 
+Move 8 11             ; state 15:     ...or move forward and return to state 8
+</PRE>
+</BLOCKQUOTE>
+
+A more detailed specification of the state machine is given in the
+following section.<BR>
+<BR>
+<!--TOC section Technicalities-->
+
+<H2><A NAME="htoc2">2</A>&nbsp;&nbsp;Technicalities</H2><!--SEC END -->
+
+The rest of this document specifies the rules of the game in detail.
+For compactness, we use a combination of English descriptions and
+program fragments written in a simple pseudo-code language. It should
+be easy to translate this specification into a simulator in a
+programming language of your choice, which you can use to develop and
+test your ants. These details are given only for the rigor of
+specification and the ease of implementation. The main part of the
+contest should be the design of your ants rather than the
+implementation of this simulator.<BR>
+<BR>
+<!--TOC subsection Geometry-->
+
+<H3><A NAME="htoc3">2.1</A>&nbsp;&nbsp;Geometry</H3><!--SEC END -->
+
+The <I>world</I> on which the game is played is a hexagonal grid (just
+for fun).
+A <I>position</I> in the world is an (<I>x</I>,<I>y</I>) coordinate, with (0,0) at
+the upper-left corner of the world. <BR>
+<BR>
+<BR>
+<DIV ALIGN=center><IMG SRC="main001.gif"></DIV>
+<BR>
+<BR>
+<BR>
+In the rest of the specification, we
+use the type <TT><I>pos</I></TT> as an abbreviation for pairs of integers:
+<BLOCKQUOTE><PRE>
+type pos = (int, int)
+</PRE></BLOCKQUOTE>On a hexagonal grid, each cell is adjacent to six other cells. We number these in
+clockwise order, from 0 (east) to 5 (north-east). We write <TT><I>dir</I></TT> below
+for the type of integers that we intend to use as directions.
+<BLOCKQUOTE><PRE>
+type dir = 0..5
+</PRE></BLOCKQUOTE>
+<BR>
+<DIV ALIGN=center><IMG SRC="main002.gif"></DIV>
+<BR>
+<BR>
+<BR>
+If <TT><I>d</I></TT> is a direction and <TT><I>p</I></TT> = (<TT><I>x</I></TT>,<TT><I>y</I></TT>) is a position, then the function
+<TT><I>adjacent</I>_<I>cell</I>(<I>p</I>,<I>d</I>)</TT>, which calculates the position of the cell adjacent to <TT><I>p</I></TT> in
+direction <TT><I>d</I></TT>, can be defined as follows:
+<BLOCKQUOTE><PRE>
+function adjacent_cell(p:pos, d:dir):pos = 
+  let (x,y) = p in
+  switch d of
+    case 0: (x+1, y)
+    case 1: if even(y) then (x, y+1) else (x+1, y+1)
+    case 2: if even(y) then (x-1, y+1) else (x, y+1)
+    case 3: (x-1, y)
+    case 4: if even(y) then (x-1, y-1) else (x, y-1)
+    case 5: if even(y) then (x, y-1) else (x+1, y-1)
+</PRE></BLOCKQUOTE>In our pseudo-code notation, functions are defined by <TT><I>function</I></TT>
+declarations (as on the first line). The name and intended type of
+each argument to the function are given in the form <TT><I>name</I>:<I>type</I></TT>.
+If the function returns a value, its type is also given.
+We use <TT><I>let</I></TT> (as on the second line) to bind names to the results
+of intermediate calculations; here, <TT><I>x</I></TT> and <TT><I>y</I></TT> are the components of
+the pair <TT><I>p</I></TT>. The expression ``<TT><I>switch</I></TT> ... <TT><I>of</I></TT> ...'' on the third and
+following lines chooses one of the branches (the expressions following
+``<TT><I>case</I></TT> ...<CODE>:</CODE>'') depending on the value of <TT><I>d</I></TT>.<BR>
+<BR>
+From its current orientation, an ant can turn one step to the left or
+right. We write <TT><I>left</I>_<I>or</I>_<I>right</I></TT> for the set {<TT><I>Left</I></TT>,&nbsp;<TT><I>Right</I></TT>}. In
+pseudo-code: 
+<BLOCKQUOTE><PRE>
+type left_or_right = Left | Right
+</PRE></BLOCKQUOTE>Now, the <TT><I>turn</I></TT> function takes an element of this set and a direction and
+returns a suitably adjusted direction.
+<BLOCKQUOTE><PRE>
+function turn(lr:left_or_right, d:dir):dir = 
+  switch lr of
+    case Left:  (d+5) mod 6
+    case Right: (d+1) mod 6
+</PRE></BLOCKQUOTE>
+Ants can also sense their surroundings, by checking whether one of several
+predicates (defined below) is true in either their current cell or one of
+the three cells in front of them. The function <TT><I>sensed</I>_<I>cell</I></TT> calculates the
+coordinates of the cell being sensed.
+<BLOCKQUOTE><PRE>
+type sense_dir = 
+    Here           /* sense the ant's current cell */
+  | Ahead          /* sense the cell straight ahead in the direction ant is facing */
+  | LeftAhead      /* sense the cell that would be ahead if ant turned left */
+  | RightAhead     /* sense the cell that would be ahead if ant turned right */
+
+function sensed_cell(p:pos, d:dir, sd:sense_dir):pos = 
+  switch sd of
+    case Here: p
+    case Ahead: adjacent_cell(p, d)
+    case LeftAhead: adjacent_cell(p, turn(Left,d))
+    case RightAhead: adjacent_cell(p, turn(Right,d))
+</PRE></BLOCKQUOTE>
+<!--TOC subsection Biology-->
+
+<H3><A NAME="htoc4">2.2</A>&nbsp;&nbsp;Biology</H3><!--SEC END -->
+
+There are two colors of ants: 
+<BLOCKQUOTE><PRE>
+type color = Red | Black
+</PRE></BLOCKQUOTE>Given one color, the function <TT><I>other</I>_<I>color</I></TT> yields the other:
+<BLOCKQUOTE><PRE>
+function other_color(c:color):color = 
+  switch c of
+    case Red: Black
+    case Black: Red
+</PRE></BLOCKQUOTE>The internal state of each ant can be described as a record with the following fields:
+<UL><LI>
+A unique integer <TT><I>id</I></TT> that determines the order in which the ant takes its
+ turn to move or sense during each round of gameplay.
+<LI>A <TT><I>color</I></TT>.
+<LI>An integer between 0 and 9999 representing the current
+ <TT><I>state</I></TT> of its brain. (All the ants of each species run exactly the
+ same program, so the entire neural state of an ant of the species can
+ be characterized by just one number.)
+<LI>An integer <TT><I>resting</I></TT> that keeps track of how long the ant has to
+ rest after its last move before any other action. (Ants move much
+ more slowly than they can turn and sense their surroundings. This
+ is modeled by making an ant rest for 14 rounds after each time it
+ executes a <TT><I>Move</I></TT> instruction. Details of how this works are
+ specified in Section&nbsp;<A HREF="#step">2.11</A>.)
+<LI>A current <TT><I>direction</I></TT>.
+<LI>A boolean <TT><I>has</I>_<I>food</I></TT> indicating whether the ant is currently
+ carrying a food particle. (An ant can hold only a single unit of
+ food at a time.)
+</UL>
+Rather than making up pseudo-code syntax for creating, projecting, and
+modifying records, we will simply assume we can use the following functions to
+extract and modify the components of an ant:
+<BLOCKQUOTE><PRE>
+function state(a:ant):int     = &lt;get state component of a&gt;
+function color(a:ant):color   = &lt;get color component of a&gt;
+function resting(a:ant):int   = &lt;get resting component of a&gt;
+function direction(a:ant):dir = &lt;get direction component of a&gt;
+function has_food(a:ant):bool = &lt;get has_food component of a&gt;
+
+function set_state(a:ant, s:int)     = &lt;set state component of a to be s&gt;
+function set_resting(a:ant, r:int)   = &lt;set resting component of a to be r&gt;
+function set_direction(a:ant, d:dir) = &lt;set direction component of a to be d&gt;
+function set_has_food(a:ant, b:bool) = &lt;set has_food component of a to be b&gt;
+</PRE></BLOCKQUOTE>
+<!--TOC subsection Geography-->
+
+<H3><A NAME="htoc5">2.3</A>&nbsp;&nbsp;Geography</H3><!--SEC END -->
+
+Each cell in the world is either <I>clear</I> or <I>rocky</I>. The
+predicate <TT><I>rocky</I>(<I>p</I>)</TT> is <TT><I>true</I></TT> if the cell at position <TT><I>p</I></TT> is rocky and <TT><I>false</I></TT>
+if <TT><I>p</I></TT> is clear.
+<BLOCKQUOTE><PRE>
+function rocky(p:pos):bool = &lt;true if the cell at position p is rocky&gt;
+</PRE></BLOCKQUOTE>Rocky cells are not very interesting---they just impede movement. All the
+action happens in clear cells.
+At any given moment during the game, each clear cell contains:
+<UL><LI>
+At most one <TT><I>ant</I></TT>. 
+<LI>Some non-negative number of <TT><I>food</I></TT> particles. (There is no limit to the number of food particles that may be on a single
+cell at a given time. An ant and any amount of food may be on a given
+cell at the same time.)
+<LI>One set of chemical <TT><I>markers</I></TT> for each of the two ant colors. 
+</UL>
+As we did for ants, we will not bother fixing a concrete representation for
+this information. Instead, we assume we are given several functions for
+investigating and manipulating the information in cells. 
+The first group of
+functions concerns ants in cells:
+<BLOCKQUOTE><PRE>
+function some_ant_is_at(p:pos):bool =
+  &lt;true if there is an ant in the cell at position p&gt;
+function ant_at(p:pos):ant =
+  &lt;return the ant in the cell at position p&gt;
+function set_ant_at(p:pos, a:ant) =
+  &lt;record the fact that the given ant is at position p&gt;
+function clear_ant_at(p:pos) =
+  &lt;record the fact that no ant is at position p&gt;
+</PRE></BLOCKQUOTE>The <TT><I>ant</I>_<I>at</I></TT> function should only be called on positions for which
+<TT><I>some</I>_<I>ant</I>_<I>is</I>_<I>at</I></TT> returns <TT><I>true</I></TT>. <BR>
+<BR>
+Three more functions are useful for checking whether a given ant is
+alive or dead and, if it is alive, finding the <EM>position</EM> of the
+ant from its <TT><I>id</I></TT>.
+<BLOCKQUOTE><PRE>
+function ant_is_alive(id:int):bool =
+  &lt;true if an ant with the given id exists somewhere in the world&gt;
+function find_ant(id:int):pos =
+  &lt;return current position of the ant with the given id&gt;
+function kill_ant_at(p:pos) = clear_ant_at(p)
+</PRE></BLOCKQUOTE>The <TT><I>find</I>_<I>ant</I></TT> function should only be called when <TT><I>ant</I>_<I>is</I>_<I>alive</I></TT> is
+<TT><I>true</I></TT>. A naive implementation of these functions could simply scan
+all the cells in the world looking for an ant with the given <TT><I>id</I></TT>
+field. Note that whether an ant is alive or dead is defined by
+whether it exists somewhere in the world (as in <TT><I>ant</I>_<I>is</I>_<I>alive</I></TT> and
+<TT><I>kill</I>_<I>ant</I>_<I>at</I></TT>) rather than the ant's own state. Of course, more
+efficient implementations are possible.<BR>
+<BR>
+The next group of functions concerns food in cells:
+<BLOCKQUOTE><PRE>
+function food_at(p:pos):int =
+  &lt;return the amount of food in the cell at position p&gt;
+function set_food_at(p:pos, f:int) =
+  &lt;record the fact that a given amount of food is at position p&gt;
+</PRE></BLOCKQUOTE>Note that the amount of food in a cell does <EM>not</EM> include the food being
+carried by an ant in the cell (if any).<BR>
+<BR>
+Functions for checking and manipulating chemical markers will be given in
+Section&nbsp;<A HREF="#chemistry">2.5</A>.<BR>
+<BR>
+Another important feature of the world's geography is anthills. 
+Some set of clear cells is designated as comprising the
+ <I>red anthill</I>. Another (disjoint) set of cells
+ constitutes the <I>black anthill</I>. The function <TT><I>anthill</I>_<I>at</I></TT> can
+ be used to check whether a given position is part of the anthill of a
+ given color.
+<BLOCKQUOTE><PRE>
+function anthill_at(p:pos, c:color):bool =
+  &lt;true if the cell at position p is in the anthill of color c&gt;
+</PRE></BLOCKQUOTE>
+<!--TOC subsection Cartography-->
+
+<H3><A NAME="htoc6">2.4</A>&nbsp;&nbsp;Cartography</H3><!--SEC END -->
+
+Contest entries will be judged by playing them against each other on a
+collection of worlds generated at random under certain constraints,
+described in Section&nbsp;<A HREF="#contestworlds">3.1</A>. To facilitate testing and
+save you the trouble of writing your own random world generator,
+several of these worlds---similar but not identical to the ones we
+will actually use for judging---can be found on the contest web site
+at <A HREF="http://icfpcontest.org/worlds/"><TT>http://icfpcontest.org/worlds/</TT></A>. The concrete format of
+these worlds is as follows:
+<UL><LI>
+The first line contains a single integer representing the size of the
+ world in the <TT><I>x</I></TT> dimension.
+<LI>The second line contains a single integer representing the size of the
+ world in the <TT><I>y</I></TT> dimension.
+<LI>The rest of the file consists of <TT><I>y</I></TT> lines, each containing <TT><I>x</I></TT>
+ one-character cell specifiers, separated by spaces (even lines also
+ contain a leading space before the first cell specifier). The top-left
+ cell specifier corresponds to position (0,0).
+</UL>
+The possible cell specifiers are:
+<BLOCKQUOTE><PRE>
+        #        rocky cell
+        .        clear cell (containing nothing interesting) 
+        +        red anthill cell 
+        -        black anthill cell 
+        1 to 9   clear cell containing the given number of food particles
+</PRE></BLOCKQUOTE>For example, here is a concrete description of a very tiny world (this
+world is for testing only; it does not qualify as a world used for
+judging as described in Section&nbsp;<A HREF="#contestworlds">3.1</A>):
+<BLOCKQUOTE>
+<BLOCKQUOTE><A NAME="tiny"></A>
+<PRE>
+10
+10
+# # # # # # # # # #
+ # 9 9 . . . . 3 3 #
+# 9 # . - - - - - #
+ # . # - - - - - - #
+# . . 5 - - - - - #
+ # + + + + + 5 . . #
+# + + + + + + # . #
+ # + + + + + . # 9 #
+# 3 3 . . . . 9 9 #
+ # # # # # # # # # #
+</PRE>
+</BLOCKQUOTE>
+</BLOCKQUOTE>
+Note that world description files do not explicitly mention ants. Instead,
+during initialization, each anthill cell is populated with an ant of the
+same color (see Section&nbsp;<A HREF="#init">2.12</A>).<BR>
+<BR>
+<!--TOC subsection Chemistry-->
+
+<H3><A NAME="htoc7">2.5</A>&nbsp;&nbsp;Chemistry</H3><!--SEC END -->
+<A NAME="chemistry"></A>
+Each ant can place and sense 6 different kinds of
+<I>chemical markers</I>, numbered <TT>0</TT> through <TT>5</TT>.
+<BLOCKQUOTE><PRE>
+type marker = 0..5
+</PRE></BLOCKQUOTE>The markers for the two colors of
+ants are completely separate---i.e., the marks in each cell contain 12 bits
+worth of information. The following functions are used to investigate and
+manipulate the markers in a cell.
+<BLOCKQUOTE><PRE>
+function set_marker_at(p:pos, c:color, i:marker) =
+  &lt;set marker i of color c in cell p&gt;
+function clear_marker_at(p:pos, c:color, i:marker) =
+  &lt;clear marker i of color c in cell p&gt;
+function check_marker_at(p:pos, c:color, i:marker):bool =
+  &lt;true if marker i of color c is set in cell p&gt;
+function check_any_marker_at(p:pos, c:color):bool =
+  &lt;true if ANY marker of color c is set in cell p&gt;
+</PRE></BLOCKQUOTE>Note the final function, <TT><I>check</I>_<I>any</I>_<I>marker</I>_<I>at</I></TT>. Ants of a given color can
+individually sense, set, and clear all 6 of their own markers, but are only
+able to detect the presence of <EM>some</EM> marker belonging to the other
+species. <BR>
+<BR>
+Unlike the chemical markers used by real ants, markers in this game persist
+until they are explicitly cleared. All markers in all cells are initially
+clear. <BR>
+<BR>
+<!--TOC subsection Phenomenology-->
+
+<H3><A NAME="htoc8">2.6</A>&nbsp;&nbsp;Phenomenology</H3><!--SEC END -->
+
+The <TT><I>Sense</I></TT> instruction in the ant control language described below can be
+used to check a number of conditions:
+<BLOCKQUOTE><PRE>
+type condition =
+    Friend             /* cell contains an ant of the same color */
+  | Foe                /* cell contains an ant of the other color */
+  | FriendWithFood     /* cell contains an ant of the same color carrying food */
+  | FoeWithFood        /* cell contains an ant of the other color carrying food */
+  | Food               /* cell contains food (not being carried by an ant) */
+  | Rock               /* cell is rocky */
+  | Marker(marker)     /* cell is marked with a marker of this ant's color */
+  | FoeMarker          /* cell is marked with *some* marker of the other color */
+  | Home               /* cell belongs to this ant's anthill */
+  | FoeHome            /* cell belongs to the other anthill */
+</PRE></BLOCKQUOTE>Note that the <TT><I>Marker</I></TT> condition is parameterized by the kind of the
+chemical marker to be sensed: an ant can test for the presence of just
+one of its own markers in a single instruction.<BR>
+<BR>
+The function <TT><I>cell</I>_<I>matches</I></TT> takes a position <TT><I>p</I></TT>, a condition <TT><I>cond</I></TT>,
+and a color <TT><I>c</I></TT> (the color of the ant that is doing the sensing), and
+checks whether <TT><I>cond</I></TT> holds at <TT><I>p</I></TT>.
+<BLOCKQUOTE><PRE>
+function cell_matches(p:pos, cond:condition, c:color):bool = 
+  if rocky(p) then 
+    if cond = Rock then true else false
+  else
+    switch cond of
+      case Friend:
+        some_ant_is_at(p) &amp;&amp;
+        color(ant_at(p)) = c
+      case Foe:
+        some_ant_is_at(p) &amp;&amp;
+        color(ant_at(p)) &lt;&gt; c
+      case FriendWithFood:
+        some_ant_is_at(p) &amp;&amp;
+        color(ant_at(p)) = c &amp;&amp;
+        has_food(ant_at(p))
+      case FoeWithFood:
+        some_ant_is_at(p) &amp;&amp;
+        color(ant_at(p)) &lt;&gt; c &amp;&amp;
+        has_food(ant_at(p))
+      case Food:
+        food_at(p) &gt; 0
+      case Rock:
+        false
+      case Marker(i):
+        check_marker_at(p, c, i)
+      case FoeMarker:
+        check_any_marker_at(p, other_color(c))
+      case Home:
+        anthill_at(p, c)
+      case FoeHome:
+        anthill_at(p, other_color(c))
+</PRE></BLOCKQUOTE>The operator <TT>&amp;&amp;</TT> here represents <EM>boolean and</EM>. (Below, <TT>||</TT>
+represents <EM>boolean or</EM>).<BR>
+<BR>
+<!--TOC subsection Neurology-->
+
+<H3><A NAME="htoc9">2.7</A>&nbsp;&nbsp;Neurology</H3><!--SEC END -->
+<A NAME="instructions"></A>
+The brain of each species of ant consists of a simple finite state
+machine. States are numbered beginning from 0 (up to
+a maximum of 9999). 
+<BLOCKQUOTE><PRE>
+type state = int
+</PRE></BLOCKQUOTE>In each state, the next action to be taken and the next state(s) to enter
+after executing the action are determined by one of the following
+<TT><I>instruction</I></TT>s: 
+<BLOCKQUOTE><PRE>
+type instruction =
+    Sense(sense_dir, state, state, condition)  
+  | Mark(marker, state)
+  | Unmark(marker, state)
+  | PickUp(state, state)
+  | Drop(state)
+  | Turn(left_or_right, state)
+  | Move(state, state)
+  | Flip(int, state, state)
+</PRE></BLOCKQUOTE>The meanings of these instructions are specified formally in the <TT><I>step</I></TT>
+function in Section&nbsp;<A HREF="#step">2.11</A>.<BR>
+<BR>
+Conceptually, each ant brain is just an array of instructions, indexed by
+states. We use the function <TT><I>get</I>_<I>instruction</I>(<I>c</I>,<I>s</I>)</TT> to retrieve the instruction
+for state <TT><I>s</I></TT> in the brain of color <TT><I>c</I></TT>. (All ants of the same color have
+the same state machine in their brains.)
+<BLOCKQUOTE><PRE>
+function get_instruction(c:color, s:state):instruction =
+  &lt;get the instruction for state s of ant color c&gt;
+</PRE></BLOCKQUOTE>
+<!--TOC subsection Neuro-Cartography-->
+
+<H3><A NAME="htoc10">2.8</A>&nbsp;&nbsp;Neuro-Cartography</H3><!--SEC END -->
+<A NAME="antsyn"></A>
+Each contest entry is a file describing an ant state machine. The concrete
+format of these files is as follows:
+<UL><LI>
+Each line in the file represents one state. The first line is state
+ 0, the second line state 1, and so on.
+<LI>The file may contain no more than 10000 lines. (It may contain
+ fewer.) 
+<LI>Each line consists of a sequence of whitespace-separated <EM>tokens</EM>,
+ followed (optionally) by a comment beginning with a 
+ semicolon and extending to the end of the line.
+<LI>Tokens are either keywords or integers. Keywords are case-insensitive.
+<LI>The first token on the line indicates the instruction. The others
+ supply the required arguments, depending on the instruction as in Section&nbsp;<A HREF="#instructions">2.7</A>.
+<LI>The possible tokens for instructions are:
+<BLOCKQUOTE><PRE>
+        Sense
+        Mark
+        Unmark
+        PickUp
+        Drop
+        Turn
+        Move
+        Flip
+</PRE></BLOCKQUOTE>The tokens for sensing directions are:
+<BLOCKQUOTE><PRE>
+        Here
+        Ahead
+        LeftAhead
+        RightAhead
+</PRE></BLOCKQUOTE>The tokens for conditions are:
+<BLOCKQUOTE><PRE>
+        Friend
+        Foe
+        FriendWithFood
+        FoeWithFood
+        Food
+        Rock
+        Marker
+        FoeMarker
+        Home
+        FoeHome
+</PRE></BLOCKQUOTE>The tokens for arguments to <TT><I>turn</I></TT> are:
+<BLOCKQUOTE><PRE>
+        Left
+        Right
+</PRE></BLOCKQUOTE>Note that the tokens are exactly the same as the names used in our pseudo-code
+type definitions.
+<LI>Thus, the concrete syntax of each instruction line can be summarized as
+follows:
+<DIV ALIGN=center><TABLE>
+<TR VALIGN=middle><TD NOWRAP>
+</TD>
+<TD NOWRAP><TABLE CELLSPACING=2 CELLPADDING=0>
+<TR><TD ALIGN=left NOWRAP><I><I>instruction</I></I></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>::=</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Sense</I></TT>&nbsp;&nbsp;<I><I>sensedir</I></I>&nbsp;&nbsp;<I><I>st</I></I><SUB><FONT SIZE=2>1</FONT></SUB>&nbsp;&nbsp;<I><I>st</I></I><SUB><FONT SIZE=2>2</FONT></SUB>&nbsp;&nbsp;<I><I>cond</I></I></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Mark</I></TT>&nbsp;&nbsp;<I>i</I>&nbsp;&nbsp;<I><I>st</I></I></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Unmark</I></TT>&nbsp;&nbsp;<I>i</I>&nbsp;&nbsp;<I><I>st</I></I></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>PickUp</I></TT>&nbsp;&nbsp;<I><I>st</I></I><SUB><FONT SIZE=2>1</FONT></SUB>&nbsp;&nbsp;<I><I>st</I></I><SUB><FONT SIZE=2>2</FONT></SUB></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Drop</I></TT>&nbsp;&nbsp;<I><I>st</I></I></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Turn</I></TT>&nbsp;&nbsp;<I><I>lr</I></I>&nbsp;&nbsp;<I><I>st</I></I></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Move</I></TT>&nbsp;&nbsp;<I><I>st</I></I><SUB><FONT SIZE=2>1</FONT></SUB>&nbsp;&nbsp;<I><I>st</I></I><SUB><FONT SIZE=2>2</FONT></SUB></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Flip</I></TT>&nbsp;&nbsp;<I>p</I>&nbsp;&nbsp;<I><I>st</I></I><SUB><FONT SIZE=2>1</FONT></SUB>&nbsp;&nbsp;<I><I>st</I></I><SUB><FONT SIZE=2>2</FONT></SUB></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><I><I>sensedir</I></I></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>::=</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Here</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Ahead</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>LeftAhead</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>RightAhead</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><I><I>cond</I></I></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>::=</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Friend</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Foe</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>FriendWithFood</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>FoeWithFood</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Food</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Rock</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Marker</I></TT>&nbsp;&nbsp;<I>i</I></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>FoeMarker</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Home</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP>&nbsp;</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>|</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>FoeHome</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><I><I>lr</I></I></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>::=</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP><TT><I>Left</I></TT> | <TT><I>Right</I></TT></TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><I><I>st</I></I></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>::=</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>0 | 1 | 2 | ... | 9999</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><I><I>i</I></I></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>::=</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>0 | 1 | 2 | 3 | 4 | 5</TD>
+</TR>
+<TR><TD ALIGN=left NOWRAP><I><I>p</I></I></TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=center NOWRAP>::=</TD>
+<TD VALIGN=top ALIGN=center NOWRAP>&nbsp;&nbsp;</TD>
+<TD ALIGN=left NOWRAP>1 | 2 | 3 | ...</TD>
+</TR></TABLE></TD>
+</TR></TABLE></DIV>
+Note the syntax of <TT><I>Marker</I></TT> conditions.
+See also <A HREF="http://icfpcontest.org/sample.ant"><TT>http://icfpcontest.org/sample.ant</TT></A> for an example.
+</UL>
+<!--TOC subsection Martial Arts-->
+
+<H3><A NAME="htoc11">2.9</A>&nbsp;&nbsp;Martial Arts</H3><!--SEC END -->
+
+Besides gathering food, ants may engage in combat with other ants. The
+rules are simple:
+<UL><LI>
+If an ant ever finds itself adjacent to 5 (or 6) ants of the other
+ species, it dies.
+<LI>When an ant dies, it turns into 3 particles of food.
+</UL>
+More formally:
+<BLOCKQUOTE><PRE>
+function adjacent_ants(p:pos, c:color):int =
+  let n = 0 in
+  for d = 0..5 do
+    let cel = adjacent_cell(p, d) in
+    if some_ant_is_at(cel) &amp;&amp; color(ant_at(cel)) = c then &lt;increment n by 1&gt;
+  end;
+  n
+</PRE></BLOCKQUOTE>
+<BLOCKQUOTE><PRE>
+function check_for_surrounded_ant_at(p:pos) =
+  if some_ant_is_at(p) then 
+    let a = ant_at(p) in
+    if adjacent_ants(p, other_color(color(a))) &gt;= 5 then begin
+      kill_ant_at(p);
+      set_food_at(p, food_at(p) + 3 + (if has_food(a) then 1 else 0))
+    end
+</PRE></BLOCKQUOTE>
+<BLOCKQUOTE><PRE>
+function check_for_surrounded_ants(p:pos) =
+  check_for_surrounded_ant_at(p);
+  for d = 0..5 do
+    check_for_surrounded_ant_at(adjacent_cell(p,d))
+  end
+</PRE></BLOCKQUOTE>The last function is used in Section&nbsp;<A HREF="#step">2.11</A> for checking possible
+death each time an ant moves.<BR>
+<BR>
+<!--TOC subsection Number Theory-->
+
+<H3><A NAME="htoc12">2.10</A>&nbsp;&nbsp;Number Theory</H3><!--SEC END -->
+<A NAME="random"></A>
+To implement the <TT><I>Flip</I></TT> instruction, we need a source of random numbers.
+Pretty much any pseudo-random number generator will do for this, but,
+if you want to test that your simulator gives exactly the same
+results as ours, you will want to use the same random numbers that we do.
+To this end, let us define a function <TT><I>randomint</I></TT> that, whenever it is called
+with a positive argument <TT><I>n</I></TT>, yields a pseudo-random integer between <TT>0</TT> and <TT><I>n</I></TT>-1,
+inclusive. 
+<BLOCKQUOTE><PRE>
+function randomint(n:int):int = ... 
+</PRE></BLOCKQUOTE>The sequence of numbers returned by <TT><I>randomint</I></TT> may be specified as follows:
+<UL><LI>
+Let <I>s</I><SUB><FONT SIZE=2>0</FONT></SUB> be an <I>initial seed</I> for the series.
+<LI>For each <I>i</I>, calculate <I>s</I><SUB><FONT SIZE=2><I>i</I>+1</FONT></SUB> from <I>s</I><SUB><FONT SIZE=2><I>i</I></FONT></SUB> as follows:
+<DIV ALIGN=center>
+ <I>s</I><SUB><FONT SIZE=2><I>i</I>+1</FONT></SUB> = <I>s</I><SUB><FONT SIZE=2><I>i</I></FONT></SUB> × 22695477 + 1
+</DIV>
+The multiplication and addition operations here are the ordinary mathematical
+ones---i.e., the specification is phrased in terms of infinite-precision integers.
+<LI>Next, we calculate another series <I>x</I><SUB><FONT SIZE=2>0</FONT></SUB>, <I>x</I><SUB><FONT SIZE=2>1</FONT></SUB>, etc. from the elements
+<I>s</I><SUB><FONT SIZE=2>4</FONT></SUB>,&nbsp;
+<I>s</I><SUB><FONT SIZE=2>5</FONT></SUB>, etc. of the first series:
+<DIV ALIGN=center>
+ <I>x</I><SUB><FONT SIZE=2><I>i</I></FONT></SUB> = (<I>s</I><SUB><FONT SIZE=2><I>i</I>+4</FONT></SUB> <B>div</B> 65536) <B>mod</B> 16384
+</DIV>
+Again, the integer division and modulus operations are the ordinary
+mathematical ones. 
+<LI>Now, if the the <I>i</I><SUP><FONT SIZE=2><FONT SIZE=1>th</FONT></FONT></SUP> call to <TT><I>randomint</I></TT> is given
+argument <TT><I>n</I></TT>, then the result is
+<DIV ALIGN=center>
+<I>x</I><SUB><FONT SIZE=2><I>i</I></FONT></SUB> <B>mod</B> <TT><I>n</I></TT>.
+</DIV>
+</UL>
+This specification can readily be translated into ordinary fixed-precision
+arithmetic in many programming languages using the standard multiplication,
+addition, and bitwise operations on machine integers. To help you check
+that your implementation of <TT><I>randomint</I></TT> matches ours, here are our values
+for <I>x</I><SUB><FONT SIZE=2>0</FONT></SUB> to <I>x</I><SUB><FONT SIZE=2>99</FONT></SUB>, when the initial seed <I>s</I><SUB><FONT SIZE=2>0</FONT></SUB> is 12345:
+<BLOCKQUOTE>
+ 7193, 2932, 10386, 5575, 100, 15976, 430, 9740, 9449, 1636, 11030, 9848,
+ 13965, 16051, 14483, 6708, 5184, 15931, 7014, 461, 11371, 5856, 2136, 9139,
+ 1684, 15900, 10236, 13297, 1364, 6876, 15687, 14127, 11387, 13469, 11860,
+ 15589, 14209, 16327, 7024, 3297, 3120, 842, 12397, 9212, 5520, 4983, 7205,
+ 7193, 4883, 7712, 6732, 7006, 10241, 1012, 15227, 9910, 14119, 15124, 6010,
+ 13191, 5820, 14074, 5582, 5297, 10387, 4492, 14468, 7879, 8839, 12668,
+ 5436, 8081, 4900, 10723, 10360, 1218, 11923, 3870, 12071, 3574, 12232,
+ 15592, 12909, 9711, 6638, 2488, 12725, 16145, 9746, 9053, 5881, 3867,
+ 10512, 4312, 8529, 1576, 15803, 5498, 12730, 7397.
+</BLOCKQUOTE>
+<!--TOC subsection Kinetics-->
+
+<H3><A NAME="htoc13">2.11</A>&nbsp;&nbsp;Kinetics</H3><!--SEC END -->
+<A NAME="step"></A>
+At last, we are ready to describe what happens when an ant actually
+executes an instruction. The function <TT><I>step</I></TT> takes an ant <TT><I>id</I></TT>, finds
+that ant in the world (if it is still alive), gets the instruction
+corresponding to its current <TT><I>state</I></TT>, evaluates the instruction, and
+changes the ant's internal state and the state of the world. Note
+that the step for Move instructions takes into account the rest period
+needed after an ant moves. It also checks whether the ant's movement
+has caused an enemy to become surrounded.
+<BLOCKQUOTE><PRE>
+function step(id:int) =
+  if ant_is_alive(id) then
+    let p = find_ant(id) in
+    let a = ant_at(p) in
+    if resting(a) &gt; 0 then
+      set_resting(a, resting(a) - 1)
+    else
+      switch get_instruction(color(a), state(a)) of
+        case Sense(sensedir, st1, st2, cond):
+          let p' = sensed_cell(p, direction(a), sensedir) in
+          let st = if cell_matches(p', cond, color(a)) then st1 else st2 in
+          set_state(a, st)
+        case Mark(i, st):
+          set_marker_at(p, color(a), i);
+          set_state(a, st)
+        case Unmark(i, st):
+          clear_marker_at(p, color(a), i);
+          set_state(a, st)
+        case PickUp(st1, st2):
+          if has_food(a) || food_at(p) = 0 then 
+            set_state(a, st2) 
+          else begin
+            set_food_at(p, food_at(p) - 1);
+            set_has_food(a, true);
+            set_state(a, st1)
+          end
+        case Drop(st):
+          if has_food(a) then begin
+            set_food_at(p, food_at(p) + 1);
+            set_has_food(a, false)
+          end;
+          set_state(a, st)
+        case Turn(lr, st): 
+          set_direction(a, turn(lr, direction(a)));
+          set_state(a, st)
+        case Move(st1, st2):
+          let newp = adjacent_cell(p, direction(a)) in
+          if rocky(newp) || some_ant_is_at(newp) then
+            set_state(a, st2)
+          else begin
+            clear_ant_at(p);
+            set_ant_at(newp, a);
+            set_state(a, st1);
+            set_resting(a, 14);
+            check_for_surrounded_ants(newp)
+          end 
+        case Flip(n, st1, st2):
+          let st = if randomint(n) = 0 then st1 else st2 in
+          set_state(a, st)
+</PRE></BLOCKQUOTE>
+A single <EM>round</EM> of the game consists of executing the next instruction
+for every ant---i.e., calling the <TT><I>step</I></TT> function for each ant in numerical
+order, from 0 up to the maximum <TT><I>id</I></TT>.<BR>
+<BR>
+<!--TOC subsection Game Play and Scoring-->
+
+<H3><A NAME="htoc14">2.12</A>&nbsp;&nbsp;Game Play and Scoring</H3><!--SEC END -->
+<A NAME="init"></A>
+A complete <EM>game</EM> is played as follows:
+<UL><LI>
+The world and the brains of the two ants are loaded from files as
+ described above
+<LI>Each cell in the red anthill is populated with a red ant and each black
+ anthill cell with a black ant. The ants all start in state 0, facing east
+ (direction 0), and not carrying any food.
+<LI>All ants (regardless of their colors) are assigned identities in
+ top-to-bottom, left-to-right order---i.e., the topmost-leftmost ant
+ gets identity 0; the next ant to its right gets identity 1; etc.
+ When all ants on the topmost row have been assigned identities, then
+ the leftmost ant on the second row down gets the next identity, and
+ so on.
+<LI>The game is played for 100,000 complete rounds. (I.e., every
+ ant gets to execute up to 100,000 instructions.)
+<LI>At the end, we count the number of food particles currently
+ in the anthill cells of each color. The color with the most
+ food wins. Remember that food being carried by an ant does not count, even if it 
+ is standing on its own anthill.
+</UL>
+<!--TOC subsection Testing-->
+
+<H3><A NAME="htoc15">2.13</A>&nbsp;&nbsp;Testing</H3><!--SEC END -->
+<A NAME="testing"></A>
+To make sure your simulator is behaving exactly the same as ours, you
+may find it useful to compare their results step by step. The file
+<A HREF="http://icfpcontest.org/tiny.world"><TT>http://icfpcontest.org/tiny.world</TT></A> on the contest web site
+contains the tiny world shown in Section&nbsp;<A HREF="#tiny">2.4</A>. The file
+<A HREF="http://icfpcontest.org/sample.ant"><TT>http://icfpcontest.org/sample.ant</TT></A> contains an ant that is
+written in a convoluted way so as to exercise most of the control
+paths in the simulator. The directory
+<A HREF="http://icfpcontest.org/dump/"><TT>http://icfpcontest.org/dump/</TT></A> contains complete traces of
+the state of our simulator after each round in a game pitting this ant
+against itself on this tiny world with initial random seed <I>s</I><SUB><FONT SIZE=2>0</FONT></SUB> =
+12345. These traces show the initial random seed and the entire
+state of the world after every round between 0 and 10,000. This state
+of the world contains the state of every cell---whether it is rocky,
+the number of food (if any), the color of a hill (if the cell is a
+hill), all the red and black marks in the cell, and the state of an
+ant (if there is one) in this order. The state of an ant consists of
+its color, id, direction, number of food being carried, state, and the
+<TT><I>resting</I></TT> field. 
+The first executed round of the game is Round 1. Round 0 in the
+beginning of the dump just marks the description of the initial state.
+See the actual files for more details. All
+the files are in ASCII code with 0x0a (called LF or NL, also known as
+the UNIX newline code) for the end of a line.<BR>
+<BR>
+<!--TOC section Contest Mechanics-->
+
+<H2><A NAME="htoc16">3</A>&nbsp;&nbsp;Contest Mechanics</H2><!--SEC END -->
+
+<!--TOC subsection Contest Worlds-->
+
+<H3><A NAME="htoc17">3.1</A>&nbsp;&nbsp;Contest Worlds</H3><!--SEC END -->
+<A NAME="contestworlds"></A>
+The design of effective strategies for this game is quite sensitive to
+several specific parameters---the size of the world, the number of
+ants, the amount and density of food available in the world, and the
+sorts of obstacles that may be encountered.<BR>
+<BR>
+The worlds used for judging will be randomly generated, according to the
+following rules:
+<UL><LI>
+The dimensions of the world are always 100 × 100 cells.
+<LI>The cells on the perimeter are always rocky.
+<LI>Every world contains exactly the same <I>elements</I>, of particular shapes: two
+anthills, ten rocks, and eight blobs of
+food. The anthills, in particular, are hexagons with sides of length 6.
+Also, a food blob is always a 3-by-4 rectangle, with each cell containing 5
+food particles.
+<LI>The positions and orientations of the elements are chosen
+ randomly, subject to the constraint that there is always at least
+ one empty cell between non-food elements. Also, no elements overlap.
+ (The anthill elements are 6-ways-symmetric, so their orientation
+ actually does not matter. All ants are initially facing in direction 0.)
+</UL>
+A collection of random worlds satisfying these specifications can be
+found on the contest web site at
+<A HREF="http://icfpcontest.org/worlds/"><TT>http://icfpcontest.org/worlds/</TT></A>. Here is one of them:
+<BLOCKQUOTE>
+<PRE><FONT SIZE=1>
+100
+100
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 5 5 5 . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 5 5 5 . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 5 5 5 . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . + + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # . + + + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . - - - - - - . . . . . . . . . . . . . + + + + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . - - - - - - - . . . . . . . . . . . . + + + + + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . - - - - - - - - . . . . . . . . . . . + + + + + + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . - - - - - - - - - . . . . . . . . . . . + + + + + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . - - - - - - - - - - . . . . . . . . . . . + + + + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . - - - - - - - - - - - . . . . . . . . . . . + + + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . - - - - - - - - - - . . . . . . . . . . . . + + + + + + + . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . - - - - - - - - - . . . . . . . . . . . . . + + + + + + . . . . . # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . - - - - - - - - . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . - - - - - - - . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . - - - - - - . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . # . . . . . . . . . . . . . . . # # . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . 5 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . # # . . . . . . . . . . . . . . # # . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . 5 5 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . # # . . . . . . . . . . . . . . # # . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . 5 5 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . # # # . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . 5 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . # # # . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . # # . . . . . . . . . . . . . . # # # # # # # # # . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . # # # . . . . . . . . . . . . . # # # # # # # # # # . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . # # # # . . . . . . . . . . . . # # . . . . . . # # . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . # # . # # . . . # . . . . . . . # # . . . . . . # # . . . . . 5 5 5 # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # . . . . . . # # . . # # . . # # . . . . . . # # # # # # # # # # . . . . . 5 5 5 . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . # # . # # . . . . . . # # # # # # # # # . . . . . . 5 5 5 . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . # # # # . . . . . . . . . . . . . . . . . . . . . 5 5 5 . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # # # # # # # # # # # . . . . . . . . . . . . . . . . . . . # . . . . . # # # . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # # # # # # # # # # # . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . # . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . # # # # # # # # . . . . . . . . . . # # . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . # # # # # # # # # # . . . . . . . . . # # . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . # # . . . . . . # # . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . # # . . . . . . # # . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . # # . . . . # . # # . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . # # . . . # . . # # . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . # # . . # . . . # # . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . # # . # . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . # # . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . # # . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . # # # # # # # # # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . # # # # # # # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # # # # # # # # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # # # # # # # # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . # # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . # # # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . # . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 5 5 5 . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 5 5 5 . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . 5 5 5 5 . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . # . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . # # . . . . . . # . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # # # # # # # # # . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . # # . . . . . . # # . . . . . . . . . . . . . . . . . . # . . . . . . . . . # # # # # # # # # # . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . # . . . . . . # # . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . # # . . . . . # # . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . 5 . . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . # # . . . . # # . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . 5 5 . . . . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . # # . . . # # . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . 5 5 5 . 5 . . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . # # . . # # . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . 5 5 5 . 5 5 . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . # # . # # . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . 5 5 . 5 5 5 . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . # # # # . . . . . . . . . . . . . . . . . . . . . . . . # # . . . . . . 5 . . 5 5 5 . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . # # # . . . . . . . 5 5 5 5 . . . . . . . . . . . . . . # # . . . . . . . . . 5 5 . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . # # . . . . . . . . 5 5 5 5 . . . . . . . . . . . . . . # # . . . . . . . . . 5 . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 5 5 5 . . . . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 5 5 5 . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 5 5 5 . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5 5 5 5 . . . . . . . . . . . # # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . # 
+ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+</FONT></PRE><FONT SIZE=1>
+</FONT>
+</BLOCKQUOTE>
+
+<!--TOC subsection Judging-->
+
+<H3><A NAME="htoc18">3.2</A>&nbsp;&nbsp;Judging</H3><!--SEC END -->
+<A NAME="judging"></A>
+During the tournament, each pair of submissions is pitted against each
+other <EM>twice</EM> on each of the contest worlds---once with the first
+submission playing red and the second black, and once with the first
+playing black and the second red. A submission gains 2 points for
+each game it wins, and 1 point for each draw. The submission with the
+most points wins the tournament. The number of the worlds used during
+the tournament is unspecified, but will be large enough for
+determining a clear winner. If there is nevertheless no clear winner,
+the tournament is repeated with a certain number of finalist
+submissions. 
+The seed used by the random number generator is unspecified.<BR>
+<BR>
+<!--TOC subsection General Information and Submission Instructions-->
+
+<H3><A NAME="htoc19">3.3</A>&nbsp;&nbsp;General Information and Submission Instructions</H3><!--SEC END -->
+
+See
+<A HREF="http://icfpcontest.org/rules.php"><TT>http://icfpcontest.org/rules.php</TT></A>
+and
+<A HREF="http://icfpcontest.org/submit.php"><TT>http://icfpcontest.org/submit.php</TT></A>
+for the contest rules and submission instructions.<BR>
+<BR>
+<!--TOC section Change Log-->
+
+<H2><A NAME="htoc20">4</A>&nbsp;&nbsp;Change Log</H2><!--SEC END -->
+
+<OL type=1><LI>
+Initial release.
+<LI>Typo fixed in a URL.
+<LI>The concrete syntax of ant instructions clarified (the last itemization in Section&nbsp;<A HREF="#antsyn">2.8</A>).
+<LI>Miscellaneous non-critical clarifications and fixes: 
+shape of food blobs (Section&nbsp;<A HREF="#contestworlds">3.1</A>), 
+random seed for tournaments (Section&nbsp;<A HREF="#judging">3.2</A>), 
+meaning of ``Round 0'' in the dump files (Section&nbsp;<A HREF="#testing">2.13</A>),
+a variable bound in the <TT>Flip</TT> case of <TT>step</TT> function does not
+anymore shadow the earlier binding for <TT>p</TT> (Section&nbsp;<A HREF="#step">2.11</A>), 
+removed 0 from the grammar for <I>p</I> (Section&nbsp;<A HREF="#antsyn">2.8</A>) and
+noticed that <TT>randomint</TT> expects a positive argument
+(Section&nbsp;<A HREF="#random">2.10</A>).
+<A NAME="currentversion"></A></OL>
+<!--BEGIN NOTES document-->
+<HR WIDTH="50%" SIZE=1><DL><DT><A NAME="note1" HREF="#text1"><FONT SIZE=5>1</FONT></A><DD>
+ Malo Denielou,
+ Nate Foster,
+ Vladimir Gapeyev,
+ Michael Levin,
+ Benjamin Pierce, 
+ Eijiro Sumii,
+ Stephen Tse,
+ Dimitrios Vytiniotis,
+ Geoff Washburn,
+ Stephanie Weirich, 
+and
+ Steve Zdancewic
+ 
+</DL>
+<!--END NOTES-->
+<!--HTMLFOOT-->
+<!--ENDHTML-->
+<!--FOOTER-->
+<HR SIZE=2>
+<BLOCKQUOTE><EM>This document was translated from L<sup>A</sup>T<sub>E</sub>X by
+</EM><A HREF="http://pauillac.inria.fr/~maranget/hevea/index.html"><EM>H<FONT SIZE=2><sup>E</sup></FONT>V<FONT SIZE=2><sup>E</sup></FONT>A</EM></A><EM>.
+</EM></BLOCKQUOTE>
+</BODY>
+</HTML>

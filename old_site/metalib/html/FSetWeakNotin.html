@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>FSetWeakNotin</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library FSetWeakNotin</h1>
+
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Lemmas and tactics for working with and solving goals related to
+    non-membership in finite sets.  The main tactic of interest here
+    is <code>solve_notin</code>.
+
+<br/><br/>
+    Implicit arguments are declared by default in this library.
+
+<br/><br/>
+    Original authors: Brian Aydemir and Arthur Chargu'eraud. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetInterface.html#">FSetInterface</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab42"></a><h1 class="section">Implementation</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="Notin"></a>Notin (<span class="keyword">Import</span> X : <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetInterface.html#">FSetInterface.WS</a>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab43"></a><h2 class="section">Facts about set non-membership</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.notin_empty"></a>notin_empty : forall x,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x <a class="idref" href="FSetWeakNotin.html#X.empty">empty</a>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.notin_union"></a>notin_union : forall x E F,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x E -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x F -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> E F).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_union"></a>elim_notin_union : forall x E F,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> E F) -&gt; (~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x E) /\ (~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x F).<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.notin_singleton"></a>notin_singleton : forall x y,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.E.eq">E.eq</a> x y -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> y).<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_singleton"></a>elim_notin_singleton : forall x y,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> y) -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.E.eq">E.eq</a> x y.<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_singleton'"></a>elim_notin_singleton' : forall x y,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> y) -&gt; x &lt;&gt; y.<br/>
+<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.notin_add"></a>notin_add : forall x y F,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.E.eq">E.eq</a> y x -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x F -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.add">add</a> y F).<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_add"></a>elim_notin_add : forall x y F,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.add">add</a> y F) -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.E.eq">E.eq</a> y x /\ ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x F.<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_add'"></a>elim_notin_add' : forall x y F,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.add">add</a> y F) -&gt; y &lt;&gt; x /\ ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x F.<br/>
+<br/>
+<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab44"></a><h2 class="section">Tactics</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>destruct_notin</code> destructs all hypotheses of the form
+    <code>(~ In x E)</code>, where <code>E</code> is built using only <code>empty</code>, <code>add</code>,
+    <code>union</code>, and <code>singleton</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> destruct_notin :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: <a class="idref" href="FSetWeakNotin.html#X.In">In</a> ?x ?E -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change (~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x E) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_notin<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> _ <a class="idref" href="FSetWeakNotin.html#X.empty">empty</a> |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_notin<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> ?x (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> ?E ?F) |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (@<a class="idref" href="FSetWeakNotin.html#Notin.elim_notin_union">elim_notin_union</a> x E F H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_notin<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> ?x (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> ?y) |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> F1 := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> F2 := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (F1 := @<a class="idref" href="FSetWeakNotin.html#Notin.elim_notin_singleton">elim_notin_singleton</a> x y H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (F2 := @<a class="idref" href="FSetWeakNotin.html#Notin.elim_notin_singleton'">elim_notin_singleton'</a> x y H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_notin<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> ?x (<a class="idref" href="FSetWeakNotin.html#X.add">add</a> ?y ?F) |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (@<a class="idref" href="FSetWeakNotin.html#Notin.elim_notin_add">elim_notin_add</a> x y F H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (@<a class="idref" href="FSetWeakNotin.html#Notin.elim_notin_add'">elim_notin_add'</a> x y F H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_notin<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idtac<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>solve_notin</code> solves goals of them form <code>(x &lt;&gt; y)</code> and
+    <code>(~ In x E)</code> that are provable from hypotheses of the form
+    destructed by <code>destruct_notin</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> solve_notin :=<br/>
+&nbsp;&nbsp;destruct_notin;<br/>
+&nbsp;&nbsp;repeat (progress (  apply <a class="idref" href="FSetWeakNotin.html#Notin.notin_empty">notin_empty</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| apply <a class="idref" href="FSetWeakNotin.html#Notin.notin_union">notin_union</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| apply <a class="idref" href="FSetWeakNotin.html#Notin.notin_singleton">notin_singleton</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| apply <a class="idref" href="FSetWeakNotin.html#Notin.notin_add">notin_add</a>));<br/>
+&nbsp;&nbsp;solve [ trivial | congruence | intuition auto ].<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab45"></a><h2 class="section">Examples and test cases</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+These examples and test cases are not meant to be exhaustive. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_1"></a>test_solve_notin_1 : forall x E F G,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> E F) -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x G -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> E G).<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_2"></a>test_solve_notin_2 : forall x y E F G,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> E (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> y) F)) -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x G -&gt;<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> y) /\ ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> y (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> x).<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_3"></a>test_solve_notin_3 : forall x y,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.E.eq">E.eq</a> x y -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> y) /\ ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> y (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> x).<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_4"></a>test_solve_notin_4 : forall x y E F G,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> E (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> x) F)) -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> y G.<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_5"></a>test_solve_notin_5 : forall x y E F,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> E (<a class="idref" href="FSetWeakNotin.html#X.union">union</a> (<a class="idref" href="FSetWeakNotin.html#X.singleton">singleton</a> y) F)) -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> y E -&gt;<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.E.eq">E.eq</a> y x /\ ~ <a class="idref" href="FSetWeakNotin.html#X.E.eq">E.eq</a> x y.<br/>
+<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_6"></a>test_solve_notin_6 : forall x y E,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x (<a class="idref" href="FSetWeakNotin.html#X.add">add</a> y E) -&gt; ~ <a class="idref" href="FSetWeakNotin.html#X.E.eq">E.eq</a> x y /\ ~ <a class="idref" href="FSetWeakNotin.html#X.In">In</a> x E.<br/>
+<br/>
+
+<br/>
+<span class="keyword">End</span> <a class="idref" href="FSetWeakNotin.html#Notin">Notin</a>.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

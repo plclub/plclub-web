@@ -17,15 +17,14 @@ cabal.sandbox.config
 tests/Main
 _cache
 _store
-_site
 
 stack*.yaml.lock
 
 .stack-work/
 *.lock
-_site/
 _cache/
 papers/*.html
 papers/*.bib
 papers/*.bak
 papers/*.keys
+_site/

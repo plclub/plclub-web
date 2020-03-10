@@ -1,0 +1,57 @@
+/* 
+	bluetoolbarLayout.css
+	overwrites base styles
+*/
+
+#header {
+	margin:0;
+	padding:0;
+	min-width:760px;
+	background-color:#FFFFFF;
+	background-image:url(../images/bg_blue-toolbar.gif);
+	background-repeat:repeat-x;
+	background-position:left top;
+}
+#header .navigation-logo {
+	margin:0;
+	padding:10px 20px 3px 10px;
+	width:175px;
+	float:left;
+	text-align: center;
+	background-color:#FFFFFF;
+	border:none;
+}
+#header .top-navigation {
+	display:block;
+	margin:0;
+	padding:0;
+	float:left;
+	clear:none;
+}
+#header .top-navigation ul {
+	display:block;
+	margin:0;
+	padding:3px 10px;
+	font-size: 1em;
+	font-weight: bold;
+	list-style-type:none;
+}
+#header .top-navigation .department-logo {
+	display:block;
+	margin:12px 0 0 0;
+	padding:0;
+	clear:left;
+}
+
+
+#mainContent {
+	/*
+	margin:0 15px 25px 0;
+	padding:15px 25px 15px 0;
+	min-height:300px;
+	*/
+	margin:0 15px 25px 0;
+	padding:15px 25px 15px 0;
+	min-height:300px;
+	height:100%;
+}

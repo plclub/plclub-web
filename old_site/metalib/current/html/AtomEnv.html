@@ -1,0 +1,1073 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>AtomEnv</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library AtomEnv</h1>
+
+<div class="code">
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#">Decidable</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSets.html#">FSets</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#">List</a></span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="AdditionalTactics.html#">AdditionalTactics</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="ListFacts.html#">ListFacts</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="PennFSetDecide.html#">PennFSetDecide</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="AssocList.html#">AssocList</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="Atom.html#">Atom</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="AtomSet.html#">AtomSet</a></span>.<br/>
+<span class="id" type="keyword">Import</span> <span class="id" type="var">AtomSetImpl</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab23"></a><h1 class="section">Signature</h1>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+Note that our library has an implicit convention for the "normal
+    form" of an association list.  This normal form requires that a
+    list be built only from <span class="inlinecode"><span class="id" type="var">nil</span></span> (the empty list), <span class="inlinecode"><span class="id" type="var">one</span></span> (the
+    singleton list), and <span class="inlinecode"><span class="id" type="var">app</span></span> (concatenation).  Additionally,
+    concatenations should be associated to the right and the list
+    should not contain any <span class="inlinecode"><span class="id" type="var">nil</span></span> terms, unless it is the empty list
+    itself.
+
+<br/><br/>
+    This allows association lists to be written in a slightly more
+    uniform manner when compared to using both <span class="inlinecode"><span class="id" type="var">cons</span></span> and <span class="inlinecode"><span class="id" type="var">app</span></span> to
+    build them.  The downsides are that Coq's <span class="inlinecode"><span class="id" type="tactic">simpl</span></span> tactic will
+    simplify instances of <span class="inlinecode"><span class="id" type="var">one</span></span> down to <span class="inlinecode"><span class="id" type="var">cons</span></span> and that there are
+    instances in which one needs to write association lists that are
+    not in normal form (typically, some concatenation will need to be
+    associated to the left).  The <span class="inlinecode"><span class="id" type="var">simpl_env</span></span> and <span class="inlinecode"><span class="id" type="var">rewrite_env</span></span>
+    tactics below are designed to minimize the impact of these
+    downsides.
+
+<br/><br/>
+    We have considered other alternative implementations, but the scheme
+    described above seems to work the best in practice. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <span class="id" type="keyword">Type</span> <span class="id" type="module"><a name="ENVIRONMENT">ENVIRONMENT</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab24"></a><h2 class="section">Basic definitions</h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+This section defines the following basic operations and
+      predicates on association lists.
+
+<br/><br/>
+
+<ul>
+<li> <span class="inlinecode"><span class="id" type="var">one</span></span>: Constructs an association list consisting of exactly
+          one binding.
+
+</li>
+<li> <span class="inlinecode"><span class="id" type="var">map</span></span>: Maps a function over the values in an association list.
+
+</li>
+<li> <span class="inlinecode"><span class="id" type="var">dom</span></span>: Computes the domain of an association list, i.e., the
+          set consisting of its keys.
+
+</li>
+<li> <span class="inlinecode"><span class="id" type="var">disjoint</span></span>: Binary predicate that holds when the domains of
+          two association lists are disjoint.
+
+</li>
+<li> <span class="inlinecode"><span class="id" type="var">binds</span></span>: Ternary predicate that holds when a key-value pair
+          appears somewhere in an association list.
+
+</li>
+<li> <span class="inlinecode"><span class="id" type="var">uniq</span></span>: Unary predicate that holds when an association list
+          binds any given key at most once.  Note that <span class="inlinecode"><span class="id" type="var">uniq_push</span></span> is
+          defined in terms of <span class="inlinecode"><span class="id" type="var">one</span></span>, due to our normal form for
+          association lists.
+
+</li>
+</ul>
+
+<br/><br/>
+      Implicit arguments are declared by default for these
+      definitions.  We define some local notations to make the
+      definition of <span class="inlinecode"><span class="id" type="var">uniq</span></span> easier to read and to be consistent with
+      the notations used in the rest of this library. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.Definitions">Definitions</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.Definitions.A">A</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.Definitions.B">B</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.Definitions.C">C</a></span> : <span class="id" type="keyword">Type</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="ENVIRONMENT.one">one</a></span> (<span class="id" type="var">C</span> : <span class="id" type="keyword">Type</span>) (<span class="id" type="var">item</span> : <span class="id" type="var">C</span>) : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">C</span> := <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">cons</a></span> <span class="id" type="var">item</span> <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="ENVIRONMENT.map">map</a></span> (<span class="id" type="var">f</span> : <span class="id" type="var">A</span> → <span class="id" type="var">B</span>) (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#map">List.map</a></span> (<span class="id" type="keyword">fun</span> <span class="id" type="var">b</span> ⇒ <span class="id" type="keyword">match</span> <span class="id" type="var">b</span> <span class="id" type="keyword">with</span> (<span class="id" type="var">x</span>, <span class="id" type="var">a</span>) ⇒ (<span class="id" type="var">x</span>, <span class="id" type="var">f</span> <span class="id" type="var">a</span>) <span class="id" type="keyword">end</span>) <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Fixpoint</span> <span class="id" type="definition"><a name="ENVIRONMENT.dom">dom</a></span> (<span class="id" type="var">A</span> : <span class="id" type="keyword">Type</span>) (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) {<span class="id" type="keyword">struct</span> <span class="id" type="var">E</span>} : <span class="id" type="definition"><a class="idref" href="AtomSet.html#atoms">atoms</a></span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">E</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> ⇒ <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.empty">empty</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" type="var">x</span>, <span class="id" type="var">_</span>) :: <span class="id" type="var">E'</span> ⇒ <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.add">add</a></span> <span class="id" type="var">x</span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#dom">dom</a></span> <span class="id" type="var">E'</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)) : <span class="id" type="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.Subset">Subset</a></span> (<span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.inter">inter</a></span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>) (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">F</span>)) <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.empty">empty</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <span class="id" type="definition"><a name="ENVIRONMENT.binds">binds</a></span> (<span class="id" type="var">x</span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>) (<span class="id" type="var">a</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) : <span class="id" type="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a></span> (<span class="id" type="var">x</span>, <span class="id" type="var">a</span>) <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <span class="id" type="keyword">Local</span> "x ~ a" := (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.one">one</a></span> (<span class="id" type="var">x</span>, <span class="id" type="var">a</span>)) (<span class="id" type="tactic">at</span> <span class="id" type="var">level</span> 68).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <span class="id" type="keyword">Local</span> "x `notin` E" := (~ <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.In">AtomSetImpl.In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">E</span>) (<span class="id" type="tactic">at</span> <span class="id" type="var">level</span> 70).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Inductive</span> <span class="id" type="inductive"><a name="ENVIRONMENT.uniq">uniq</a></span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A) → <span class="id" type="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="constructor"><a name="ENVIRONMENT.uniq_nil">uniq_nil</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#uniq">uniq</a></span> <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="constructor"><a name="ENVIRONMENT.uniq_push">uniq_push</a></span> : ∀ <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#uniq">uniq</a></span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#uniq">uniq</a></span> ((<span class="id" type="var">x</span> ~ <span class="id" type="var">a</span>) ++ <span class="id" type="var">E</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.Definitions">Definitions</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab25"></a><h2 class="section">Local notations</h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+We make a local notation for <span class="inlinecode"><span class="id" type="var">one</span></span>, and for operations and
+      predicate on finite sets, in order to make the statements of the
+      lemmas below more readable.  The notations are local so that
+      users of this functor may choose their own notations. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <span class="id" type="keyword">Local</span> "[ i ]" := (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.one">one</a></span> <span class="id" type="var">i</span>).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <span class="id" type="keyword">Local</span> "x ~ T" := (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.one">one</a></span> (<span class="id" type="var">x</span>, <span class="id" type="var">T</span>)) (<span class="id" type="tactic">at</span> <span class="id" type="var">level</span> 68).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <span class="id" type="keyword">Local</span> "E `union` F" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.union">AtomSetImpl.union</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="tactic">at</span> <span class="id" type="var">level</span> 65, <span class="id" type="var">right</span> <span class="id" type="var">associativity</span>).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <span class="id" type="keyword">Local</span> "x `in` E" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.In">AtomSetImpl.In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">E</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="tactic">at</span> <span class="id" type="var">level</span> 70).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <span class="id" type="keyword">Local</span> "x `notin` E" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(~ <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.In">AtomSetImpl.In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">E</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="tactic">at</span> <span class="id" type="var">level</span> 70).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <span class="id" type="keyword">Local</span> "E [=] F" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.Equal">AtomSetImpl.Equal</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="tactic">at</span> <span class="id" type="var">level</span> 70, <span class="id" type="var">no</span> <span class="id" type="var">associativity</span>).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <span class="id" type="keyword">Local</span> "E [&lt;=] F" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.Subset">AtomSetImpl.Subset</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="tactic">at</span> <span class="id" type="var">level</span> 70, <span class="id" type="var">no</span> <span class="id" type="var">associativity</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab26"></a><h2 class="section">List properties</h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+The following block of properties is used mainly for rewriting
+      association lists into the normal form described above.  See the
+      <span class="inlinecode"><span class="id" type="var">simpl_env</span></span> and <span class="inlinecode"><span class="id" type="var">rewrite_env</span></span> tactics below. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.ListProperties">ListProperties</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.ListProperties.X">X</a></span> : <span class="id" type="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.ListProperties.x">x</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.ListProperties.y">y</a></span> : <span class="id" type="var">X</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.ListProperties.l">l</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.ListProperties.l1">l1</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.ListProperties.l2">l2</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.ListProperties.l3">l3</a></span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">X</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.cons_app_one">cons_app_one</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">cons</a></span> <span class="id" type="var">x</span> <span class="id" type="var">l</span> = [ <span class="id" type="var">x</span> ] ++ <span class="id" type="var">l</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.cons_app_assoc">cons_app_assoc</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">cons</a></span> <span class="id" type="var">x</span> <span class="id" type="var">l1</span>) ++ <span class="id" type="var">l2</span> = <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">cons</a></span> <span class="id" type="var">x</span> (<span class="id" type="var">l1</span> ++ <span class="id" type="var">l2</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.app_assoc">app_assoc</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="var">l1</span> ++ <span class="id" type="var">l2</span>) ++ <span class="id" type="var">l3</span> = <span class="id" type="var">l1</span> ++ (<span class="id" type="var">l2</span> ++ <span class="id" type="var">l3</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.app_nil_1">app_nil_1</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> ++ <span class="id" type="var">l</span> = <span class="id" type="var">l</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.app_nil_2">app_nil_2</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">l</span> ++ <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> = <span class="id" type="var">l</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.in_one">in_one</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a></span> <span class="id" type="var">x</span> [ <span class="id" type="var">y</span> ] ↔ <span class="id" type="var">x</span> = <span class="id" type="var">y</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.in_app">in_app</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a></span> <span class="id" type="var">x</span> (<span class="id" type="var">l1</span> ++ <span class="id" type="var">l2</span>) ↔ <span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">l1</span> ∨ <span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">l2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.ListProperties">ListProperties</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.cons_app_one">cons_app_one</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.cons_app_assoc">cons_app_assoc</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.app_assoc">app_assoc</a></span> : <span class="id" type="var">rewr_list</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.app_nil_1">app_nil_1</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.app_nil_2">app_nil_2</a></span> : <span class="id" type="var">rewr_list</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.in_one">in_one</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.in_app">in_app</a></span> : <span class="id" type="var">rewr_list_in</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The following block of properties is an assortment of
+      structural properties about lists. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.AssortedListProperties">AssortedListProperties</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.AssortedListProperties.X">X</a></span> : <span class="id" type="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.AssortedListProperties.x">x</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.AssortedListProperties.y">y</a></span> : <span class="id" type="var">X</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.AssortedListProperties.l">l</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.AssortedListProperties.l1">l1</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.AssortedListProperties.l2">l2</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.AssortedListProperties.l3">l3</a></span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">X</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.one_eq_app">one_eq_app</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ <span class="id" type="var">x</span> ] ++ <span class="id" type="var">l1</span> = <span class="id" type="var">l2</span> ++ <span class="id" type="var">l3</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(∃ <span class="id" type="var">qs</span>, <span class="id" type="var">l2</span> = <span class="id" type="var">x</span> :: <span class="id" type="var">qs</span> ∧ <span class="id" type="var">l1</span> = <span class="id" type="var">qs</span> ++ <span class="id" type="var">l3</span>) ∨<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="var">l2</span> = <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> ∧ <span class="id" type="var">l3</span> = <span class="id" type="var">x</span> :: <span class="id" type="var">l1</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.app_eq_one">app_eq_one</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">l2</span> ++ <span class="id" type="var">l3</span> = [ <span class="id" type="var">x</span> ] ++ <span class="id" type="var">l1</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(∃ <span class="id" type="var">qs</span>, <span class="id" type="var">l2</span> = <span class="id" type="var">x</span> :: <span class="id" type="var">qs</span> ∧ <span class="id" type="var">l1</span> = <span class="id" type="var">qs</span> ++ <span class="id" type="var">l3</span>) ∨<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="var">l2</span> = <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> ∧ <span class="id" type="var">l3</span> = <span class="id" type="var">x</span> :: <span class="id" type="var">l1</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.nil_neq_one_mid">nil_neq_one_mid</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> ≠ <span class="id" type="var">l1</span> ++ [ <span class="id" type="var">x</span> ] ++ <span class="id" type="var">l2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.one_mid_neq_nil">one_mid_neq_nil</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">l1</span> ++ [ <span class="id" type="var">x</span> ] ++ <span class="id" type="var">l2</span> ≠ <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.AssortedListProperties">AssortedListProperties</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab27"></a><h2 class="section">Properties of <span class="inlinecode"><span class="id" type="var">map</span></span> and <span class="inlinecode"><span class="id" type="var">dom</span></span></h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+The following lemmas are used mainly to simplify applications of
+      <span class="inlinecode"><span class="id" type="var">map</span></span> and <span class="inlinecode"><span class="id" type="var">dom</span></span> to association lists.  See also the <span class="inlinecode"><span class="id" type="var">simpl_env</span></span>
+      and <span class="inlinecode"><span class="id" type="var">rewrite_env</span></span> tactics below. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.Properties">Properties</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.Properties.A">A</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.Properties.B">B</a></span> : <span class="id" type="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.Properties.f">f</a></span> : <span class="id" type="var">A</span> → <span class="id" type="var">B</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.Properties.x">x</a></span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.Properties.b">b</a></span> : <span class="id" type="var">A</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.Properties.E">E</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.Properties.F">F</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.Properties.G">G</a></span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.map_nil">map_nil</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> = <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.map_cons">map_cons</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> ((<span class="id" type="var">x</span>, <span class="id" type="var">b</span>) :: <span class="id" type="var">E</span>) = (<span class="id" type="var">x</span>, <span class="id" type="var">f</span> <span class="id" type="var">b</span>) :: <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.map_one">map_one</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> (<span class="id" type="var">x</span> ~ <span class="id" type="var">b</span>) = (<span class="id" type="var">x</span> ~ <span class="id" type="var">f</span> <span class="id" type="var">b</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.map_app">map_app</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) = <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span> ++ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.dom_nil">dom_nil</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(@<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">A</span> <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span>) = <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.empty">empty</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.dom_cons">dom_cons</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> ((<span class="id" type="var">x</span>, <span class="id" type="var">b</span>) :: <span class="id" type="var">E</span>) [=] <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.singleton">singleton</a></span> <span class="id" type="var">x</span> `<span class="id" type="var">union</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.dom_one">dom_one</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> (<span class="id" type="var">x</span> ~ <span class="id" type="var">b</span>) [=] <span class="id" type="definition"><a class="idref" href="AtomSet.html#AtomSetImpl.singleton">singleton</a></span> <span class="id" type="var">x</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.dom_app">dom_app</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) [=] <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span> `<span class="id" type="var">union</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.dom_map">dom_map</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>) [=] <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.Properties">Properties</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map_nil">map_nil</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map_cons">map_cons</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map_one">map_one</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map_app">map_app</a></span> : <span class="id" type="var">rewr_map</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_nil">dom_nil</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_cons">dom_cons</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_one">dom_one</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_app">dom_app</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_map">dom_map</a></span> : <span class="id" type="var">rewr_dom</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab28"></a><h2 class="section">The <span class="inlinecode"><span class="id" type="var">simpl_env</span></span> tactic</h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><span class="id" type="var">simpl_env</span></span> tactic rewrites association lists so that they
+      are in the normal form described above.  Similar to the <span class="inlinecode"><span class="id" type="tactic">simpl</span></span>
+      tactic, we define "<span class="inlinecode"><span class="id" type="keyword">in</span> *</span>" and "<span class="inlinecode"><span class="id" type="keyword">in</span> <span class="id" type="var">H</span></span>" variants of the tactic. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Ltac</span> <span class="id" type="var">simpl_env</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">autorewrite</span> <span class="id" type="keyword">with</span> <span class="id" type="var">rewr_list</span> <span class="id" type="var">rewr_list_in</span> <span class="id" type="var">rewr_map</span> <span class="id" type="var">rewr_dom</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Tactic Notation</span> "simpl_env" "in" <span class="id" type="var">hyp</span>(<span class="id" type="var">H</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">autorewrite</span> <span class="id" type="keyword">with</span> <span class="id" type="var">rewr_list</span> <span class="id" type="var">rewr_list_in</span> <span class="id" type="var">rewr_map</span> <span class="id" type="var">rewr_dom</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Tactic Notation</span> "simpl_env" "in" "*" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">autorewrite</span> <span class="id" type="keyword">with</span> <span class="id" type="var">rewr_list</span> <span class="id" type="var">rewr_list_in</span> <span class="id" type="var">rewr_map</span> <span class="id" type="var">rewr_dom</span> <span class="id" type="keyword">in</span> *.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab29"></a><h2 class="section">The <span class="inlinecode"><span class="id" type="var">rewrite_env</span></span> tactic</h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+The tactic <span class="inlinecode">(<span class="id" type="var">rewrite_env</span> <span class="id" type="var">E</span>)</span> replaces an association list in
+      the conclusion of the goal with <span class="inlinecode"><span class="id" type="var">E</span></span>.  Suitability for
+      replacement is determined by whether <span class="inlinecode"><span class="id" type="var">simpl_env</span></span> can put <span class="inlinecode"><span class="id" type="var">E</span></span>
+      and the chosen environment in the same normal form, up to
+      convertibility's in Coq.  We also define an "<span class="inlinecode"><span class="id" type="keyword">in</span> <span class="id" type="var">H</span></span>" variant
+      that performs the replacement in a hypothesis <span class="inlinecode"><span class="id" type="var">H</span></span>.  
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Tactic Notation</span> "rewrite_env" <span class="id" type="var">constr</span>(<span class="id" type="var">E</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">goal</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" type="var">context</span>[?x] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">change</span> <span class="id" type="var">x</span> <span class="id" type="keyword">with</span> <span class="id" type="var">E</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" type="var">context</span>[?x] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">replace</span> <span class="id" type="var">x</span> <span class="id" type="keyword">with</span> <span class="id" type="var">E</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | <span class="id" type="tactic">try</span> <span class="id" type="tactic">reflexivity</span>; <span class="id" type="var">simpl_env</span>; <span class="id" type="tactic">reflexivity</span> ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Tactic Notation</span> "rewrite_env" <span class="id" type="var">constr</span>(<span class="id" type="var">E</span>) "in" <span class="id" type="var">hyp</span>(<span class="id" type="var">H</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">type</span> <span class="id" type="var">of</span> <span class="id" type="var">H</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">context</span>[?x] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">change</span> <span class="id" type="var">x</span> <span class="id" type="keyword">with</span> <span class="id" type="var">E</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">context</span>[?x] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">replace</span> <span class="id" type="var">x</span> <span class="id" type="keyword">with</span> <span class="id" type="var">E</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | <span class="id" type="tactic">try</span> <span class="id" type="tactic">reflexivity</span>; <span class="id" type="var">simpl_env</span>; <span class="id" type="tactic">reflexivity</span> ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab30"></a><h2 class="section">Basic facts about <span class="inlinecode"><span class="id" type="var">disjoint</span></span></h2>
+
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.BasicDisjointFacts">BasicDisjointFacts</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Implicit</span> <span class="id" type="keyword">Types</span> <span class="id" type="var">A</span> <span class="id" type="var">B</span> <span class="id" type="var">C</span> : <span class="id" type="keyword">Type</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_sym_1">disjoint_sym_1</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">F</span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_sym">disjoint_sym</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span> ↔ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">F</span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_one_1">disjoint_one_1</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">x</span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>) (<span class="id" type="var">a</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="var">x</span> ~ <span class="id" type="var">a</span>) <span class="id" type="var">F</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_one_2">disjoint_one_2</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">x</span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>) (<span class="id" type="var">a</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">F</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="var">x</span> ~ <span class="id" type="var">a</span>) <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_one_l">disjoint_one_l</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">x</span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>) (<span class="id" type="var">a</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="var">x</span> ~ <span class="id" type="var">a</span>) <span class="id" type="var">E</span> ↔ <span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_one_r">disjoint_one_r</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">x</span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>) (<span class="id" type="var">a</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> (<span class="id" type="var">x</span> ~ <span class="id" type="var">a</span>) ↔ <span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_app_1">disjoint_app_1</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">E</span> <span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">G</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) <span class="id" type="var">G</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">G</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_app_2">disjoint_app_2</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">E</span> <span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">G</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) <span class="id" type="var">G</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">F</span> <span class="id" type="var">G</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_app_3">disjoint_app_3</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">E</span> <span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">G</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">G</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">F</span> <span class="id" type="var">G</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) <span class="id" type="var">G</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_app_l">disjoint_app_l</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">E</span> <span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">G</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) <span class="id" type="var">G</span> ↔ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">G</span> ∧ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">F</span> <span class="id" type="var">G</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_app_r">disjoint_app_r</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> (<span class="id" type="var">E</span> <span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">G</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">G</span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) ↔ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">G</span> ∧ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">F</span> <span class="id" type="var">G</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_map_1">disjoint_map_1</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> <span class="id" type="var">C</span> (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)) (<span class="id" type="var">f</span> : <span class="id" type="var">A</span> → <span class="id" type="var">C</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>) <span class="id" type="var">F</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_map_2">disjoint_map_2</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> <span class="id" type="var">C</span> (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)) (<span class="id" type="var">f</span> : <span class="id" type="var">A</span> → <span class="id" type="var">C</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>) <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_map_l">disjoint_map_l</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> <span class="id" type="var">C</span> (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)) (<span class="id" type="var">f</span> : <span class="id" type="var">A</span> → <span class="id" type="var">C</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>) <span class="id" type="var">F</span> ↔ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.disjoint_map_r">disjoint_map_r</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∀ <span class="id" type="var">A</span> <span class="id" type="var">B</span> <span class="id" type="var">C</span> (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)) (<span class="id" type="var">F</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*B)) (<span class="id" type="var">f</span> : <span class="id" type="var">A</span> → <span class="id" type="var">C</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">F</span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>) ↔ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.BasicDisjointFacts">BasicDisjointFacts</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_one_l">disjoint_one_l</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_one_r">disjoint_one_r</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_app_l">disjoint_app_l</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_app_r">disjoint_app_r</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_map_l">disjoint_map_l</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_map_r">disjoint_map_r</a></span><br/>
+&nbsp;&nbsp;: <span class="id" type="var">rewr_uniq</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab31"></a><h2 class="section">Basic facts about <span class="inlinecode"><span class="id" type="var">uniq</span></span></h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+The following lemmas are facts about <span class="inlinecode"><span class="id" type="var">uniq</span></span> with respect to the
+      basic functions (<span class="inlinecode"><span class="id" type="var">one</span></span>, <span class="inlinecode"><span class="id" type="var">app</span></span>, and <span class="inlinecode"><span class="id" type="var">map</span></span>) that can be used to
+      build association lists. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.UniqProperties">UniqProperties</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqProperties.A">A</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqProperties.B">B</a></span> : <span class="id" type="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqProperties.f">f</a></span> : <span class="id" type="var">A</span> → <span class="id" type="var">B</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqProperties.x">x</a></span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqProperties.b">b</a></span> : <span class="id" type="var">A</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqProperties.E">E</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqProperties.F">F</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqProperties.G">G</a></span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_one">uniq_one</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">x</span> ~ <span class="id" type="var">b</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_app_1">uniq_app_1</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) → <span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_app_2">uniq_app_2</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) → <span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_app_3">uniq_app_3</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) → <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_app_4">uniq_app_4</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">F</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_app">uniq_app</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) ↔ <span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">E</span> ∧ <span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">F</span> ∧ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a></span> <span class="id" type="var">E</span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_map_1">uniq_map_1</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_map_2">uniq_map_2</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_map">uniq_map</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>) ↔ <span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.UniqProperties">UniqProperties</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq_app">uniq_app</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq_map">uniq_map</a></span> : <span class="id" type="var">rewr_uniq</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab32"></a><h2 class="section">The <span class="inlinecode"><span class="id" type="var">solve_uniq</span></span> tactic</h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+This tactic attempts to solve goals about <span class="inlinecode"><span class="id" type="var">uniq</span></span>.  Given its
+      definition, it's likely to work only when the hypotheses in the
+      goal already contain all the relevant <span class="inlinecode"><span class="id" type="var">uniq</span></span> propositions.
+      Thus, the tactic may not be generally useful.  It is useful,
+      however, for proving facts about <span class="inlinecode"><span class="id" type="var">uniq</span></span> such as the ones below.
+
+<br/><br/>
+      Implementation note: The second <span class="inlinecode"><span class="id" type="var">simpl_env</span></span> in the definition
+      is because of <span class="inlinecode"><span class="id" type="var">disjoint_one_</span>{<span class="id" type="var">l</span>,r}</span>.  The "<span class="inlinecode">|| <span class="id" type="tactic">fail</span></span>" at the end
+      is so that in the case of failure, the error message reported to
+      the user is not the one from <span class="inlinecode"><span class="id" type="var">fsetdec</span></span>. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Ltac</span> <span class="id" type="var">solve_uniq</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">try</span> <span class="id" type="tactic">trivial</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">simpl_env</span> <span class="id" type="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">autorewrite</span> <span class="id" type="keyword">with</span> <span class="id" type="var">rewr_uniq</span> <span class="id" type="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">simpl_env</span> <span class="id" type="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intuition</span> (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">auto</span> <span class="id" type="keyword">using</span> <span class="id" type="constructor"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq_nil">uniq_nil</a></span>, <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq_one">uniq_one</a></span> ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="tactic">rewrite</span> → <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_sym">disjoint_sym</a></span>; <span class="id" type="tactic">auto</span>) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="tactic">unfold</span> <span class="id" type="var">disjoint</span> <span class="id" type="keyword">in</span> *; <span class="id" type="var">fsetdec</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|| <span class="id" type="tactic">fail</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab33"></a><h2 class="section">Facts about <span class="inlinecode"><span class="id" type="var">uniq</span></span></h2>
+
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.UniqDerived">UniqDerived</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqDerived.A">A</a></span> : <span class="id" type="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqDerived.x">x</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqDerived.y">y</a></span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqDerived.a">a</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqDerived.b">b</a></span> : <span class="id" type="var">A</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqDerived.E">E</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqDerived.F">F</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.UniqDerived.G">G</a></span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_cons">uniq_cons</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> ((<span class="id" type="var">x</span>, <span class="id" type="var">a</span>) :: <span class="id" type="var">E</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_insert_mid">uniq_insert_mid</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">G</span> ++ <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> (<span class="id" type="var">G</span> ++ <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">G</span> ++ (<span class="id" type="var">x</span> ~ <span class="id" type="var">a</span>) ++ <span class="id" type="var">E</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_remove_mid">uniq_remove_mid</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span> ++ <span class="id" type="var">G</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">G</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.uniq_map_app_l">uniq_map_app_l</a></span> : ∀ (<span class="id" type="var">f</span> : <span class="id" type="var">A</span> → <span class="id" type="var">A</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">F</span> ++ <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">F</span> ++ <span class="id" type="var">E</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.fresh_mid_tail">fresh_mid_tail</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">F</span> ++ (<span class="id" type="var">x</span> ~ <span class="id" type="var">a</span>) ++ <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.fresh_mid_head">fresh_mid_head</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">F</span> ++ (<span class="id" type="var">x</span> ~ <span class="id" type="var">a</span>) ++ <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.UniqDerived">UniqDerived</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab34"></a><h2 class="section">Basic facts about <span class="inlinecode"><span class="id" type="var">binds</span></span></h2>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+The following lemmas are facts about <span class="inlinecode"><span class="id" type="var">binds</span></span> with respect to the
+      basic functions (<span class="inlinecode"><span class="id" type="var">one</span></span> and <span class="inlinecode"><span class="id" type="var">app</span></span>) that can be used to build
+      association lists.
+
+<br/><br/>
+      Note: <span class="inlinecode"><span class="id" type="var">map</span></span> is treated further below. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.BindsProperties">BindsProperties</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsProperties.A">A</a></span> : <span class="id" type="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsProperties.x">x</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsProperties.y">y</a></span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsProperties.a">a</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsProperties.b">b</a></span> : <span class="id" type="var">A</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsProperties.E">E</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsProperties.F">F</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsProperties.G">G</a></span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_nil">binds_nil</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> ↔ <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_one_1">binds_one_1</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> = <span class="id" type="var">y</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">a</span> = <span class="id" type="var">b</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">y</span> ~ <span class="id" type="var">b</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_one_2">binds_one_2</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">y</span> ~ <span class="id" type="var">b</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> = <span class="id" type="var">y</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_one_3">binds_one_3</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">y</span> ~ <span class="id" type="var">b</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">a</span> = <span class="id" type="var">b</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_one">binds_one</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">y</span> ~ <span class="id" type="var">b</span>) ↔ <span class="id" type="var">x</span> = <span class="id" type="var">y</span> ∧ <span class="id" type="var">a</span> = <span class="id" type="var">b</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_app_1">binds_app_1</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_app_2">binds_app_2</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">F</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_app_3">binds_app_3</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span> ∨ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_app">binds_app</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) ↔ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span> ∨ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.BindsProperties">BindsProperties</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_nil">binds_nil</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_one">binds_one</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_app">binds_app</a></span> : <span class="id" type="var">rewr_binds</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_nil">binds_nil</a></span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_one">binds_one</a></span> : <span class="id" type="var">rewr_binds_uniq</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab35"></a><h2 class="section">Additional lemmas and tactics for working with <span class="inlinecode"><span class="id" type="var">binds</span></span></h2>
+
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.MoreBindsProperties">MoreBindsProperties</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.MoreBindsProperties.A">A</a></span> : <span class="id" type="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.MoreBindsProperties.x">x</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.MoreBindsProperties.y">y</a></span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.MoreBindsProperties.a">a</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.MoreBindsProperties.b">b</a></span> : <span class="id" type="var">A</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.MoreBindsProperties.E">E</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.MoreBindsProperties.F">F</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.MoreBindsProperties.G">G</a></span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_dom_contradiction">binds_dom_contradiction</a></span>: ∀ (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_app_uniq">binds_app_uniq</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span>) ↔<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span> ∧ <span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">F</span>) ∨<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">F</span> ∧ <span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>)).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.MoreBindsProperties">MoreBindsProperties</a></span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint</span> <span class="id" type="var">Rewrite</span> <span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_app_uniq">binds_app_uniq</a></span> <span class="id" type="keyword">using</span> <span class="id" type="var">solve_uniq</span> : <span class="id" type="var">rewr_binds_uniq</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><span class="id" type="var">apply_binds_dom_contradiction</span></span> tactic solves a goal by
+      applying the <span class="inlinecode"><span class="id" type="var">binds_dom_contradiction</span></span> lemma.  The tactic
+      succeeds only if the the hypotheses of the lemma are immediately
+      satisfied. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Ltac</span> <span class="id" type="var">apply_binds_dom_contradiction</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">goal</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">H</span> : <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> ?x ?a ?E, <span class="id" type="var">J</span> : ?x `<span class="id" type="var">notin</span>` (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> ?E) |- <span class="id" type="var">_</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">assert</span> <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span> <span class="id" type="tactic">by</span> <span class="id" type="tactic">apply</span> (@<span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_dom_contradiction">binds_dom_contradiction</a></span> <span class="id" type="var">_</span> <span class="id" type="var">_</span> <span class="id" type="var">_</span> <span class="id" type="var">_</span> <span class="id" type="var">H</span> <span class="id" type="var">J</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intuition</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">H</span> : <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> ?x ?a ?E, <span class="id" type="var">J</span> : ?x `<span class="id" type="keyword">in</span>` (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> ?E) → <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span> |- <span class="id" type="var">_</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">assert</span> <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span> <span class="id" type="tactic">by</span> <span class="id" type="tactic">apply</span> (@<span class="id" type="axiom"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_dom_contradiction">binds_dom_contradiction</a></span> <span class="id" type="var">_</span> <span class="id" type="var">_</span> <span class="id" type="var">_</span> <span class="id" type="var">_</span> <span class="id" type="var">H</span> <span class="id" type="var">J</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intuition</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><span class="id" type="var">solve_binds</span></span> tactic attempts to solve goals about <span class="inlinecode"><span class="id" type="var">binds</span></span>.
+      Given its definition, it's likely to work only when the
+      hypotheses in the goal already contain all the relevant <span class="inlinecode"><span class="id" type="var">binds</span></span>
+      propositions.  Thus, the tactic may not be generally useful.  It
+      is useful, however, for proving facts about <span class="inlinecode"><span class="id" type="var">binds</span></span> such as the
+      ones below. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Ltac</span> <span class="id" type="var">solve_binds</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">simpl_env</span> <span class="id" type="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">autorewrite</span> <span class="id" type="keyword">with</span> <span class="id" type="var">rewr_binds</span> <span class="id" type="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intuition</span> (<span class="id" type="tactic">auto</span> || <span class="id" type="var">fsetdec</span> || <span class="id" type="var">apply_binds_dom_contradiction</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|| <span class="id" type="tactic">fail</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The tactics <span class="inlinecode"><span class="id" type="var">analyze_binds</span></span> and <span class="inlinecode"><span class="id" type="var">analyze_binds_uniq</span></span> tactics
+      take as an argument a hypotheses about <span class="inlinecode"><span class="id" type="var">binds</span></span> and perform a
+      case analysis based on the structure of the association list.
+      In the case of <span class="inlinecode"><span class="id" type="var">analyze_binds_uniq</span></span>, the analysis is performed
+      assuming that the association list is <span class="inlinecode"><span class="id" type="var">uniq</span></span>.  The lemmas
+      <span class="inlinecode"><span class="id" type="var">binds_app</span></span> and <span class="inlinecode"><span class="id" type="var">binds_app_uniq</span></span> are examples of such case
+      analysis.
+
+<br/><br/>
+      Implementation notes:
+
+<br/><br/>
+
+<ul>
+<li> The initial calls to <span class="inlinecode"><span class="id" type="var">simpl_env</span></span> put the relevant
+          association lists into normal form.
+
+</li>
+<li> In the case of <span class="inlinecode"><span class="id" type="var">binds_app_uniq</span></span>, we assert that the
+          association list is <span class="inlinecode"><span class="id" type="var">uniq</span></span>.  This enables the <span class="inlinecode"><span class="id" type="var">autorewrite</span></span>
+          step to succeed.
+
+</li>
+<li> Rather than work on <span class="inlinecode"><span class="id" type="var">H</span></span> itself, we copy it and work on the
+          copy.  Thus, in instances where the analysis leaves unsolved
+          subgoals, it is still possible to see the original
+          hypothesis.
+
+</li>
+<li> The rest of the tactic breaks apart the copy of H and tries
+          several simple means for solving the resulting subgoals. 
+</li>
+</ul>
+
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Ltac</span> <span class="id" type="var">analyze_binds</span> <span class="id" type="var">H</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">simpl_env</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">simpl_env</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">type</span> <span class="id" type="var">of</span> <span class="id" type="var">H</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> ?x ?a ?E ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">J</span> := <span class="id" type="tactic">fresh</span> <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">pose</span> <span class="id" type="var">proof</span> <span class="id" type="var">H</span> <span class="id" type="keyword">as</span> <span class="id" type="var">J</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">autorewrite</span> <span class="id" type="keyword">with</span> <span class="id" type="var">rewr_binds</span> <span class="id" type="keyword">in</span> <span class="id" type="var">J</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">simpl_env</span> <span class="id" type="keyword">in</span> <span class="id" type="var">J</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">try</span> (<span class="id" type="tactic">progress</span> <span class="id" type="var">decompose</span> [<span class="id" type="var">and</span> <span class="id" type="var">or</span>] <span class="id" type="var">J</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">J</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">try</span> <span class="id" type="var">solve</span> [<span class="id" type="tactic">trivial</span> | <span class="id" type="tactic">discriminate</span> | <span class="id" type="tactic">intuition</span> | <span class="id" type="var">fsetdec</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Ltac</span> <span class="id" type="var">analyze_binds_uniq</span> <span class="id" type="var">H</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">simpl_env</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">simpl_env</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">type</span> <span class="id" type="var">of</span> <span class="id" type="var">H</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> ?x ?a ?E ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">goal</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">H</span> : <span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> ?E |- <span class="id" type="var">_</span> ⇒ <span class="id" type="var">idtac</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">_</span> ⇒ <span class="id" type="tactic">assert</span> (<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">E</span>); [ <span class="id" type="tactic">try</span> <span class="id" type="var">solve_uniq</span> | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">J</span> := <span class="id" type="tactic">fresh</span> <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">pose</span> <span class="id" type="var">proof</span> <span class="id" type="var">H</span> <span class="id" type="keyword">as</span> <span class="id" type="var">J</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">autorewrite</span> <span class="id" type="keyword">with</span> <span class="id" type="var">rewr_binds_uniq</span> <span class="id" type="keyword">in</span> <span class="id" type="var">J</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">simpl_env</span> <span class="id" type="keyword">in</span> <span class="id" type="var">J</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">try</span> (<span class="id" type="tactic">progress</span> <span class="id" type="var">decompose</span> [<span class="id" type="var">and</span> <span class="id" type="var">or</span>] <span class="id" type="var">J</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">J</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">try</span> <span class="id" type="var">solve</span> [<span class="id" type="tactic">trivial</span> | <span class="id" type="tactic">discriminate</span> | <span class="id" type="tactic">intuition</span> | <span class="id" type="var">fsetdec</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab36"></a><h2 class="section">Facts about <span class="inlinecode"><span class="id" type="var">binds</span></span></h2>
+
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <span class="id" type="section"><a name="ENVIRONMENT.BindsDerived">BindsDerived</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.A">A</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.B">B</a></span> : <span class="id" type="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.f">f</a></span> : <span class="id" type="var">A</span> → <span class="id" type="var">B</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.x">x</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.y">y</a></span> : <span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.a">a</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.b">b</a></span> : <span class="id" type="var">A</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Variables</span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.E">E</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.F">F</a></span> <span class="id" type="variable"><a name="ENVIRONMENT.BindsDerived.G">G</a></span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_dec">binds_dec</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(∀ <span class="id" type="var">a</span> <span class="id" type="var">b</span> : <span class="id" type="var">A</span>, {<span class="id" type="var">a</span> = <span class="id" type="var">b</span>} + {<span class="id" type="var">a</span> ≠ <span class="id" type="var">b</span>}) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span>} + {~ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_lookup_dec">binds_lookup_dec</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#decidable">decidable</a></span> (∃ <span class="id" type="var">a</span>, <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_lookup_dec_specif">binds_lookup_dec_specif</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" type="var">a</span> : <span class="id" type="var">A</span> | <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span>} + (∀ <span class="id" type="var">a</span>, ~ <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_map">binds_map</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> (<span class="id" type="var">f</span> <span class="id" type="var">a</span>) (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_map_inv">binds_map_inv</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(∀ <span class="id" type="var">a</span> <span class="id" type="var">b</span>, <span class="id" type="var">f</span> <span class="id" type="var">a</span> = <span class="id" type="var">f</span> <span class="id" type="var">b</span> → <span class="id" type="var">a</span> = <span class="id" type="var">b</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> (<span class="id" type="var">f</span> <span class="id" type="var">a</span>) (<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_weaken">binds_weaken</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">G</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">E</span> ++ <span class="id" type="var">F</span> ++ <span class="id" type="var">G</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_mid_eq">binds_mid_eq</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">F</span> ++ (<span class="id" type="var">x</span> ~ <span class="id" type="var">b</span>) ++ <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">F</span> ++ (<span class="id" type="var">x</span> ~ <span class="id" type="var">b</span>) ++ <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">a</span> = <span class="id" type="var">b</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_remove_mid">binds_remove_mid</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">F</span> ++ (<span class="id" type="var">y</span> ~ <span class="id" type="var">b</span>) ++ <span class="id" type="var">G</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> ≠ <span class="id" type="var">y</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">F</span> ++ <span class="id" type="var">G</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_In">binds_In</a></span> : ∀ <span class="id" type="var">x</span> <span class="id" type="var">a</span> (<span class="id" type="var">E</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> (<span class="id" type="definition"><a class="idref" href="Atom.html#atom">atom</a></span>*A)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="keyword">in</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.binds_unique">binds_unique</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">b</span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">a</span> = <span class="id" type="var">b</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.fresh_app_l">fresh_app_l</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">F</span> ++ <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">E</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">F</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Axiom</span> <span class="id" type="axiom"><a name="ENVIRONMENT.fresh_app_r">fresh_app_r</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a></span> (<span class="id" type="var">F</span> ++ <span class="id" type="var">E</span>) →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a></span> <span class="id" type="var">x</span> <span class="id" type="var">a</span> <span class="id" type="var">F</span> →<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">x</span> `<span class="id" type="var">notin</span>` <span class="id" type="definition"><a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a></span> <span class="id" type="var">E</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <span class="id" type="section"><a class="idref" href="AtomEnv.html#ENVIRONMENT.BindsDerived">BindsDerived</a></span>.<br/>
+
+<br/>
+<span class="id" type="keyword">End</span> <span class="id" type="module"><a class="idref" href="AtomEnv.html#ENVIRONMENT">ENVIRONMENT</a></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab37"></a><h1 class="section">Module instantiation</h1>
+
+</div>
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+We can use our implementation of association lists (in AssocList) to
+    implement a module with the above signature.   Note that the tactics
+    provided end in <span class="inlinecode"><span class="id" type="var">_env</span></span>, not <span class="inlinecode"><span class="id" type="var">_alist</span></span> as the implementation of
+    <span class="inlinecode"><span class="id" type="var">AssocList.Make</span></span> might suggest.  (Tactics do not need to agree between a
+    module's signature and its implementation.) 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <span class="id" type="module"><a name="AtomEnvImpl">AtomEnvImpl</a></span> : <span class="id" type="module"><a class="idref" href="AtomEnv.html#ENVIRONMENT">ENVIRONMENT</a></span> := <span class="id" type="module"><a class="idref" href="AssocList.html#">AssocList.Make</a></span> <span class="id" type="module"><a class="idref" href="Atom.html#">AtomImpl</a></span> <span class="id" type="module"><a class="idref" href="AtomSet.html#">AtomSetImpl</a></span>.<br/>
+</div>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

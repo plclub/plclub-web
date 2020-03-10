@@ -1,0 +1,1370 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>FSetWeakDecide</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library FSetWeakDecide</h1>
+
+<code>
+<br/>
+</code>
+
+<div class="doc">
+This file implements a decision procedure for a certain
+    class of propositions involving finite sets.  
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> FSetWeak.<br/>
+
+<br/>
+<span class="keyword">Module</span> <a name="Decide"></a>Decide (<span class="keyword">Import</span> M : S).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab42"></a><h1 class="section">Overview</h1>
+
+    This functor defines the tactic <code>fsetdec</code>, which will
+    solve any valid goal of the form
+<pre>
+    forall s1 ... sn,
+    forall x1 ... xm,
+    P1 -&gt; ... -&gt; Pk -&gt; P
+</pre>
+
+<br/><br/>
+    where <code>P</code>'s are defined by the grammar:
+<pre>
+
+P ::=
+| Q
+| Empty F
+| Subset F F'
+| Equal F F'
+
+Q ::=
+| E.eq X X'
+| In X F
+| Q /\ Q'
+| Q \/ Q'
+| Q -&gt; Q'
+| Q &lt;-&gt; Q'
+| ~ Q
+| True
+| False
+
+F ::=
+| S
+| empty
+| singleton X
+| add X F
+| remove X F
+| union F F'
+| inter F F'
+| diff F F'
+
+X ::= x1 | ... | xm
+S ::= s1 | ... | sn
+
+</pre>
+
+<br/><br/>
+The tactic will also work on some goals that vary slightly from
+the above form:
+
+<ul>
+<li> The variables and hypotheses may be mixed in any order and may
+  have already been introduced into the context.  Moreover,
+  there may be additional, unrelated hypotheses mixed in (these
+  will be ignored).
+
+</li>
+<li> A conjunction of hypotheses will be handled as easily as
+  separate hypotheses, i.e., <code>P1 /\ P2 -&gt; P</code> can be solved iff
+  <code>P1 -&gt; P2 -&gt; P</code> can be solved.
+
+</li>
+<li> <code>fsetdec</code> should solve any goal if the FSet-related hypotheses
+  are contradictory.
+
+</li>
+<li> <code>fsetdec</code> will first perform any necessary zeta and beta
+  reductions and will invoke <code>subst</code> to eliminate any Coq
+  equalities between finite sets or their elements.
+
+</li>
+<li> If <code>E.eq</code> is convertible with Coq's equality, it will not
+  matter which one is used in the hypotheses or conclusion.
+
+</li>
+<li> The tactic can solve goals where the finite sets or set
+  elements are expressed by Coq terms that are more complicated
+  than variables.  However, non-local definitions are not
+  expanded, and Coq equalities between non-variable terms are
+  not used.  For example, this goal will be solved:
+<pre>
+    forall (f : t -&gt; t),
+    forall (g : elt -&gt; elt),
+    forall (s1 s2 : t),
+    forall (x1 x2 : elt),
+    Equal s1 (f s2) -&gt;
+    E.eq x1 (g (g x2)) -&gt;
+    In x1 s1 -&gt;
+    In (g (g x2)) (f s2)
+</pre>
+
+</li>
+</ul>
+
+<br/><br/>
+  This one will not be solved:
+<pre>
+    forall (f : t -&gt; t),
+    forall (g : elt -&gt; elt),
+    forall (s1 s2 : t),
+    forall (x1 x2 : elt),
+    Equal s1 (f s2) -&gt;
+    E.eq x1 (g x2) -&gt;
+    In x1 s1 -&gt;
+    g x2 = g (g x2) -&gt;
+    In (g (g x2)) (f s2)
+</pre>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab43"></a><h1 class="section">Facts and Tactics for Propositional Logic</h1>
+
+      These lemmas and tactics are in a module so that they do
+      not affect the namespace if you import the enclosing
+      module <code>Decide</code>. 
+</div>
+<code>
+&nbsp;&nbsp;<span class="keyword">Module</span> <a name="FSetLogicalFacts"></a>FSetLogicalFacts.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Require</span> <span class="keyword">Export</span> Decidable.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Require</span> <span class="keyword">Export</span> Setoid.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab44"></a><h2 class="section">Lemmas and Tactics About Decidable Propositions</h2>
+
+        XXX: The lemma <code>dec_iff</code> should have been included in
+        <code>Decidable.v</code>.  Some form of the <code>solve_decidable</code>
+        tactics below would also make sense in <code>Decidable.v</code>.
+        
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.dec_iff"></a>dec_iff : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable (P &lt;-&gt; Q).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+With this hint database, we can leverage <code>auto</code> to check
+        decidability of propositions. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Hint</span> Resolve<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dec_True dec_False dec_or dec_and dec_imp dec_not dec_iff<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: decidable_prop.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>solve_decidable <span class="keyword">using</span> lib</code> will solve goals about the
+        decidability of a proposition, assisted by an auxiliary
+        database of lemmas.  The database is intended to contain
+        lemmas stating the decidability of base propositions,
+        (e.g., the decidability of equality on a particular
+        inductive type). 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "solve_decidable" "<span class="keyword">using</span>" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- decidable ?P =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;solve [ auto 100 with decidable_prop db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "solve_decidable" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;solve_decidable <span class="keyword">using</span> core.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab45"></a><h2 class="section">Propositional Equivalences Involving Negation</h2>
+
+        These are all written with the unfolded form of
+        negation, since I am not sure if setoid rewriting will
+        always perform conversion. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab46"></a><h3 class="section">Eliminating Negations</h3>
+
+        We begin with lemmas that, when read from left to right,
+        can be understood as ways to eliminate uses of <code>not</code>. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.not_true_iff"></a>not_true_iff :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(True -&gt; False) &lt;-&gt; False.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.not_false_iff"></a>not_false_iff :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(False -&gt; False) &lt;-&gt; True.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.not_not_iff"></a>not_not_iff : forall P : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(((P -&gt; False) -&gt; False) &lt;-&gt; P).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.contrapositive"></a>contrapositive : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(((P -&gt; False) -&gt; (Q -&gt; False)) &lt;-&gt; (Q -&gt; P)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.or_not_l_iff_1"></a>or_not_l_iff_1 : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((P -&gt; False) \/ Q &lt;-&gt; (P -&gt; Q)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.or_not_l_iff_2"></a>or_not_l_iff_2 : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((P -&gt; False) \/ Q &lt;-&gt; (P -&gt; Q)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.or_not_r_iff_1"></a>or_not_r_iff_1 : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(P \/ (Q -&gt; False) &lt;-&gt; (Q -&gt; P)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.or_not_r_iff_2"></a>or_not_r_iff_2 : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(P \/ (Q -&gt; False) &lt;-&gt; (Q -&gt; P)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.imp_not_l"></a>imp_not_l : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(((P -&gt; False) -&gt; Q) &lt;-&gt; (P \/ Q)).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab47"></a><h3 class="section">Moving Negations Around</h3>
+
+        We have four lemmas that, when read from left to right,
+        describe how to push negations toward the leaves of a
+        proposition and, when read from right to left, describe
+        how to pull negations toward the top of a proposition. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.not_or_iff"></a>not_or_iff : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(P \/ Q -&gt; False) &lt;-&gt; (P -&gt; False) /\ (Q -&gt; False).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.not_and_iff"></a>not_and_iff : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(P /\ Q -&gt; False) &lt;-&gt; (P -&gt; Q -&gt; False).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.not_imp_iff"></a>not_imp_iff : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(((P -&gt; Q) -&gt; False) &lt;-&gt; P /\ (Q -&gt; False)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetLogicalFacts.not_imp_rev_iff"></a>not_imp_rev_iff : forall P Q : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(((P -&gt; Q) -&gt; False) &lt;-&gt; (Q -&gt; False) /\ P).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab48"></a><h2 class="section">Tactics for Negations</h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "fold" "any" "not" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold (~ P) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold (~ P)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>push not <span class="keyword">using</span> db</code> will pushes all negations to the
+        leaves of propositions in the goal, using the lemmas in
+        <code>db</code> to assist in checking the decidability of the
+        propositions involved.  If <code><span class="keyword">using</span> db</code> is omitted, then
+        <code>core</code> will be used.  Additional versions are provided
+        to manipulate the hypotheses or the hypotheses and goal
+        together.
+
+<br/><br/>
+        XXX: This tactic and the similar subsequent ones should
+        have been defined using <code>autorewrite</code>.  However, there
+        is a bug in the order that Coq generates subgoals when
+        rewriting using a setoid.  In order to work around this
+        bug, these tactics had to be written out in an explicit
+        way.  When the bug is fixed these tactics will break!!
+        
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" "<span class="keyword">using</span>" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not, iff;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_true_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [True -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite not_true_iff<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_false_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [False -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite not_false_iff<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_not_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; False) -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_not_iff P);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by contrapositive *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; False) -&gt; (?Q -&gt; False)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (contrapositive P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by or_not_l_iff_1/_2 *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; False) \/ ?Q] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_l_iff_1 P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_l_iff_2 P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by or_not_r_iff_1/_2 *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P \/ (?Q -&gt; False)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_r_iff_1 P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_r_iff_2 P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by imp_not_l *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; False) -&gt; ?Q] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (imp_not_l P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_or_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P \/ ?Q -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_or_iff P Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_and_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P /\ ?Q -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_and_iff P Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_imp_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; ?Q) -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_imp_iff P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold any not.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">using</span> core.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"push" "not" "<span class="keyword">in</span>" "*" "|-" "<span class="keyword">using</span>" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not, iff <span class="keyword">in</span> * |-;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_true_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [True -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite not_true_iff <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_false_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [False -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite not_false_iff <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_not_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; False) -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_not_iff P) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by contrapositive *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; False) -&gt; (?Q -&gt; False)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (contrapositive P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by or_not_l_iff_1/_2 *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; False) \/ ?Q] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_l_iff_1 P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_l_iff_2 P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by or_not_r_iff_1/_2 *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P \/ (?Q -&gt; False)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_r_iff_1 P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_r_iff_2 P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by imp_not_l *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; False) -&gt; ?Q] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (imp_not_l P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_or_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P \/ ?Q -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_or_iff P Q) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_and_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P /\ ?Q -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_and_iff P Q) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_imp_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; ?Q) -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_imp_iff P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold any not.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" "<span class="keyword">in</span>" "*" "|-"  :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">in</span> * |- <span class="keyword">using</span> core.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" "<span class="keyword">in</span>" "*" "<span class="keyword">using</span>" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">using</span> db; push not <span class="keyword">in</span> * |- <span class="keyword">using</span> db.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" "<span class="keyword">in</span>" "*" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">in</span> * <span class="keyword">using</span> core.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<code>pull not <span class="keyword">using</span> db</code> will pull as many negations as
+        possible toward the top of the propositions in the goal,
+        using the lemmas in <code>db</code> to assist in checking the
+        decidability of the propositions involved.  If <code><span class="keyword">using</span>
+        db</code> is omitted, then <code>core</code> will be used.  Additional
+        versions are provided to manipulate the hypotheses or
+        the hypotheses and goal together. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" "<span class="keyword">using</span>" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not, iff;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_true_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [True -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite not_true_iff<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_false_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [False -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite not_false_iff<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_not_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; False) -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_not_iff P);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by contrapositive *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; False) -&gt; (?Q -&gt; False)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (contrapositive P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by or_not_l_iff_1/_2 *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; False) \/ ?Q] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_l_iff_1 P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_l_iff_2 P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by or_not_r_iff_1/_2 *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P \/ (?Q -&gt; False)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_r_iff_1 P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_r_iff_2 P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by imp_not_l *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; False) -&gt; ?Q] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (imp_not_l P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_or_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; False) /\ (?Q -&gt; False)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (not_or_iff P Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_and_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P -&gt; ?Q -&gt; False] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (not_and_iff P Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_imp_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P /\ (?Q -&gt; False)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (not_imp_iff P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_imp_rev_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?Q -&gt; False) /\ ?P] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (not_imp_rev_iff P Q);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ solve_decidable using db | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold any not.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pull not <span class="keyword">using</span> core.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"pull" "not" "<span class="keyword">in</span>" "*" "|-" "<span class="keyword">using</span>" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not, iff <span class="keyword">in</span> * |-;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_true_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [True -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite not_true_iff <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_false_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [False -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite not_false_iff <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by not_not_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; False) -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (not_not_iff P) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by contrapositive *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; False) -&gt; (?Q -&gt; False)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (contrapositive P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by or_not_l_iff_1/_2 *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; False) \/ ?Q] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_l_iff_1 P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_l_iff_2 P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by or_not_r_iff_1/_2 *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P \/ (?Q -&gt; False)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_r_iff_1 P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (or_not_r_iff_2 P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** simplification by imp_not_l *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; False) -&gt; ?Q] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (imp_not_l P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_or_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; False) /\ (?Q -&gt; False)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (not_or_iff P Q) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_and_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P -&gt; ?Q -&gt; False] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (not_and_iff P Q) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_imp_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P /\ (?Q -&gt; False)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (not_imp_iff P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** rewriting by not_imp_rev_iff *)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?Q -&gt; False) /\ ?P] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (not_imp_rev_iff P Q) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | solve_decidable using db ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold any not.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" "<span class="keyword">in</span>" "*" "|-"  :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pull not <span class="keyword">in</span> * |- <span class="keyword">using</span> core.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" "<span class="keyword">in</span>" "*" "<span class="keyword">using</span>" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pull not <span class="keyword">using</span> db; pull not <span class="keyword">in</span> * |- <span class="keyword">using</span> db.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" "<span class="keyword">in</span>" "*" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pull not <span class="keyword">in</span> * <span class="keyword">using</span> core.<br/>
+
+<br/>
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> FSetLogicalFacts.<br/>
+&nbsp;&nbsp;<span class="keyword">Import</span> FSetLogicalFacts.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab49"></a><h1 class="section">Auxiliary Tactics</h1>
+
+      Again, these lemmas and tactics are in a module so that
+      they do not affect the namespace if you import the
+      enclosing module <code>Decide</code>.  
+</div>
+<code>
+&nbsp;&nbsp;<span class="keyword">Module</span> <a name="FSetDecideAuxiliary"></a>FSetDecideAuxiliary.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab50"></a><h2 class="section">Generic Tactics</h2>
+
+        We begin by defining a few generic, useful tactics. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<code><span class="keyword">if</span> t <span class="keyword">then</span> t1 <span class="keyword">else</span> t2</code> executes <code>t</code> and, if it does not
+        fail, then <code>t1</code> will be applied to all subgoals
+        produced.  If <code>t</code> fails, then <code>t2</code> is executed. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"<span class="keyword">if</span>" tactic(t)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"<span class="keyword">then</span>" tactic(t1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"<span class="keyword">else</span>" tactic(t2) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;first [ t; first [ t1 | fail 2 ] | t2 ].<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>prop P holds by t</code> succeeds (but does not modify the
+        goal or context) if the proposition <code>P</code> can be proved by
+        <code>t</code> in the current context.  Otherwise, the tactic
+        fails. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "prop" constr(P) "holds" "by" tactic(t) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> H := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert P <span class="keyword">as</span> H by t;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+This tactic acts just like <code>assert ... by ...</code> but will
+        fail if the context already contains the proposition. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "assert" "new" constr(e) "by" tactic(t) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: e |- _ =&gt; fail 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; assert e by t<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>subst++</code> is similar to <code>subst</code> except that
+
+<ul>
+<li> it never fails (as <code>subst</code> does on recursive
+          equations),
+
+</li>
+<li> it substitutes locally defined variable for their
+          definitions,
+
+</li>
+<li> it performs beta reductions everywhere, which may
+          arise after substituting a locally defined function
+          for its definition.
+        
+</li>
+</ul>
+
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "subst" "++" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| x : _ |- _ =&gt; subst x<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cbv zeta beta <span class="keyword">in</span> *.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+If you have a negated goal and <code>H</code> is a negated
+        hypothesis, then <code>contra H</code> exchanges your goal and <code>H</code>,
+        removing the negations.  (Just like <code>swap</code> but reuses
+        the same name. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> contra H :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> J := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rename J into H.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>decompose records</code> calls <code>decompose record H</code> on every
+        relevant hypothesis <code>H</code>. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "decompose" "records" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: _ |- _ =&gt; progress (decompose record H); clear H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab51"></a><h2 class="section">Discarding Irrelevant Hypotheses</h2>
+
+        We will want to clear the context of any
+        non-FSet-related hypotheses in order to increase the
+        speed of the tactic.  To do this, we will need to be
+        able to decide which are relevant.  We do this by making
+        a simple inductive definition classifying the
+        propositions of interest. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Inductive</span> <a name="Decide.FSetDecideAuxiliary.FSet_elt_Prop"></a>FSet_elt_Prop : <span class="keyword">Prop</span> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="Decide.FSetDecideAuxiliary.eq_Prop"></a>eq_Prop : forall (S : <span class="keyword">Set</span>) (x y : S),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (x = y)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="Decide.FSetDecideAuxiliary.eq_elt_prop"></a>eq_elt_prop : forall x y,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (E.eq x y)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| In_elt_prop : forall x s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (In x s)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| True_elt_prop :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop True<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| False_elt_prop :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop False<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| conj_elt_prop : forall P Q,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (P /\ Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| disj_elt_prop : forall P Q,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (P \/ Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| impl_elt_prop : forall P Q,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (P -&gt; Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| not_elt_prop : forall P,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (~ P).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Inductive</span> <a name="Decide.FSetDecideAuxiliary.FSet_Prop"></a>FSet_Prop : <span class="keyword">Prop</span> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="Decide.FSetDecideAuxiliary.elt_FSet_Prop"></a>elt_FSet_Prop : forall P,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_Prop P<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="Decide.FSetDecideAuxiliary.Empty_FSet_Prop"></a>Empty_FSet_Prop : forall s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_Prop (Empty s)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="Decide.FSetDecideAuxiliary.Subset_FSet_Prop"></a>Subset_FSet_Prop : forall s1 s2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_Prop (Subset s1 s2)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="Decide.FSetDecideAuxiliary.Equal_FSet_Prop"></a>Equal_FSet_Prop : forall s1 s2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_Prop (Equal s1 s2).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Here is the tactic that will throw away hypotheses that
+        are not useful (for the intended scope of the <code>fsetdec</code>
+        tactic). 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Hint</span> Constructors FSet_elt_Prop FSet_Prop : FSet_Prop.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> discard_nonFSet :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decompose records;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : ?P |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> prop (FSet_Prop P) holds by<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(auto 100 <span class="keyword">with</span> FSet_Prop)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span> fail<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span> clear H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab52"></a><h2 class="section">Turning Set Operators into Propositional Connectives</h2>
+
+        The lemmas will be used to break down set operations
+        into propositional formulas built over the predicates
+        <code>In</code> and <code>E.eq</code> applied only to variables.  We are going
+        to use them with <code>autorewrite</code>.  (There were copied from
+        the <code>Facts</code> functor to break that module dependency.)
+        
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Section</span> Iff.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> s s' : t.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x y : elt.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.empty_iff"></a>empty_iff : In x empty &lt;-&gt; False.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.singleton_iff"></a>singleton_iff : In y (singleton x) &lt;-&gt; E.eq x y.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.add_iff"></a>add_iff : In y (add x s) &lt;-&gt; E.eq x y \/ In y s.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.remove_iff"></a>remove_iff :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In y (remove x s) &lt;-&gt; In y s /\ ~ E.eq x y.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.union_iff"></a>union_iff :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (union s s') &lt;-&gt; In x s \/ In x s'.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.inter_iff"></a>inter_iff :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (inter s s') &lt;-&gt; In x s /\ In x s'.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.diff_iff"></a>diff_iff :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (diff s s') &lt;-&gt; In x s /\ ~ In x s'.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">End</span> Iff.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;empty_iff singleton_iff add_iff remove_iff union_iff<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inter_iff diff_iff<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: set_simpl.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab53"></a><h2 class="section">Decidability of FSet Propositions</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>In</code> is decidable. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.dec_In"></a>dec_In : forall x s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable (In x s).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>E.eq</code> is decidable. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.dec_eq"></a>dec_eq : forall (x y : E.t),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable (E.eq x y).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The hint database <code>FSet_decidability</code> will be given to
+        the <code>push_neg</code> tactic from the module <code>Negation</code>. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Hint</span> Resolve dec_In dec_eq : FSet_decidability.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab54"></a><h2 class="section">Normalizing Propositions About Equality</h2>
+
+        We have to deal with the fact that <code>E.eq</code> may be
+        convertible with Coq's equality.  Thus, we will find the
+        following tactics useful to replace one form with the
+        other everywhere. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The next tactic, <code>Logic_eq_to_E_eq</code>, mentions the term
+        <code>E.t</code>; thus, we must ensure that <code>E.t</code> is used in favor
+        of any other convertible but syntactically distinct
+        term. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> change_to_E_t :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : ?T |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change T <span class="keyword">with</span> E.t <span class="keyword">in</span> H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| J : _ |- _ =&gt; progress (change T <span class="keyword">with</span> E.t <span class="keyword">in</span> J)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- _ =&gt; progress (change T <span class="keyword">with</span> E.t)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span> )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall x : ?T, _ |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change T <span class="keyword">with</span> E.t <span class="keyword">in</span> H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| J : _ |- _ =&gt; progress (change T <span class="keyword">with</span> E.t <span class="keyword">in</span> J)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- _ =&gt; progress (change T <span class="keyword">with</span> E.t)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span> )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+These two tactics take us from Coq's built-in equality
+        to <code>E.eq</code> (and vice versa) when possible. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> Logic_eq_to_E_eq :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: _ |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change (@Logic.eq E.t) <span class="keyword">with</span> E.eq <span class="keyword">in</span> H)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change (@Logic.eq E.t) <span class="keyword">with</span> E.eq)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> E_eq_to_Logic_eq :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: _ |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change E.eq <span class="keyword">with</span> (@Logic.eq E.t) <span class="keyword">in</span> H)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change E.eq <span class="keyword">with</span> (@Logic.eq E.t))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We are going to write a tactic that works like the
+        built-in tactic <code>subst</code>, but at the level of set element
+        equality (which may or may not be the convertible with
+        Coq's equality). 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Section</span> RewriteWithEq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x y z : E.t.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> s : t.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.rewr_eq_l"></a>rewr_eq_l :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.eq x y -&gt; (E.eq x z &lt;-&gt; E.eq y z).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.rewr_eq_r"></a>rewr_eq_r :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.eq x y -&gt; (E.eq z x &lt;-&gt; E.eq z y).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideAuxiliary.rewr_In"></a>rewr_In :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.eq x y -&gt; (In x s &lt;-&gt; In y s).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">End</span> RewriteWithEq.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> substFSetElt x :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| eq1: E.eq x ?y |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> prop (E.eq x y) holds by apply E.eq_refl<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span> fail<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span> (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (progress (<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [E.eq x ?z] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_eq_l x y z eq1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [E.eq ?z x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_eq_r x y z eq1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [In x ?s] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_In x y s eq1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| eq2: context [E.eq x ?z] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> prop (E.eq y z) holds by apply E.eq_refl<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span> fail<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span> rewrite -&gt; (rewr_eq_l x y z eq1) <span class="keyword">in</span> eq2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| eq2: context [E.eq ?z x] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_eq_r x y z eq1) <span class="keyword">in</span> eq2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [In x ?s] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_In x y s eq1) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : context [x] |- _ =&gt; clear H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear x)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| eq1: E.eq ?y x |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> prop (E.eq x y) holds by apply E.eq_refl<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span> fail<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span> (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply E.eq_sym <span class="keyword">in</span> eq1;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (progress (<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [E.eq x ?z] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_eq_l x y z eq1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [E.eq ?z x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_eq_r x y z eq1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [In x ?s] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_In x y s eq1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| eq2: context [E.eq x ?z] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> prop (E.eq y z) holds by apply E.eq_refl<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span> fail<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span> rewrite -&gt; (rewr_eq_l x y z eq1) <span class="keyword">in</span> eq2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| eq2: context [E.eq ?z x] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_eq_r x y z eq1) <span class="keyword">in</span> eq2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [In x ?s] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (rewr_In x y s eq1) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : context [x] |- _ =&gt; clear H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear x)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> substFSet :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (progress (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| x : E.t |- _ =&gt; substFSetElt x<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>)).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab55"></a><h2 class="section">Considering Decidability of Base Propositions</h2>
+
+        This tactic adds assertions about the decidability of
+        <code>E.eq</code> and <code>In</code> to the context.  This is necessary for
+        the completeness of the <code>fsetdec</code> tactic.  However, in
+        order to minimize the cost of proof search, we should be
+        careful to not add more than we need.  Once negations
+        have been pushed to the leaves of the propositions, we
+        only need to worry about decidability for those base
+        propositions that appear in a negated form. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> assert_decidability :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** We actually don't want these rules to fire <span class="keyword">if</span> the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;syntactic context <span class="keyword">in</span> the patterns below is trivially<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;empty, but we'll just do some clean-up at the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;afterward. 
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab56"></a><h2 class="section">Handling <code>Empty</code>, <code>Subset</code>, and <code>Equal</code></h2>
+
+        This tactic instantiates universally quantified
+        hypotheses (which arise from the unfolding of <code>Empty</code>,
+        <code>Subset</code>, and <code>Equal</code>) for each of the set element
+        expressions that is involved in some membership or
+        equality fact.  Then it throws away those hypotheses,
+        which should no longer be needed. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> inst_FSet_hypotheses :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : E.t, _,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_ : context [ In ?x _ ] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : E.t, _<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|- context [ In ?x _ ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : E.t, _,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_ : context [ E.eq ?x _ ] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : E.t, _<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|- context [ E.eq ?x _ ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : E.t, _,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_ : context [ E.eq _ ?x ] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : E.t, _<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|- context [ E.eq _ ?x ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : E.t, _ |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab57"></a><h2 class="section">The Core <code>fsetdec</code> Auxiliary Tactics</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Here is the crux of the proof search.  Recursion through
+        <code>intuition</code>!  (This will terminate if I correctly
+        understand the behavior of <code>intuition</code>.) 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> fsetdec_rec :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try (<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: E.eq ?x ?x -&gt; False |- _ =&gt; destruct H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try apply E.eq_refl;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try contradiction;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress substFSet;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition fsetdec_rec.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+If we add <code>unfold Empty, Subset, Equal <span class="keyword">in</span> *; intros;</code> to
+        the beginning of this tactic, it will satisfy the same
+        specification as the <code>fsetdec</code> tactic; however, it will
+        be much slower than necessary without the pre-processing
+        done by the wrapper tactic <code>fsetdec</code>. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> fsetdec_body :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst_FSet_hypotheses;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> set_simpl <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">in</span> * <span class="keyword">using</span> FSet_decidability;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert_decidability;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;substFSet;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (forall x : E.t, E.eq x x) by exact E.eq_refl;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(intuition fsetdec_rec) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fail 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"because the goal is beyond the scope of this tactic".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> FSetDecideAuxiliary.<br/>
+&nbsp;&nbsp;<span class="keyword">Import</span> FSetDecideAuxiliary.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab58"></a><h1 class="section">The <code>fsetdec</code> Tactic</h1>
+
+      Here is the top-level tactic (the only one intended for
+      clients of this library).  It's specification is given at
+      the top of the file. 
+</div>
+<code>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> fsetdec :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(** We first unfold any occurrences of [iff]. 
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab59"></a><h1 class="section">Examples</h1>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Module</span> <a name="FSetDecideTestCases"></a>FSetDecideTestCases.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_eq_trans_1"></a>test_eq_trans_1 : forall x y z s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.eq x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ ~ E.eq z y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In z s.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_eq_trans_2"></a>test_eq_trans_2 : forall x y z r s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (singleton y) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ In z r -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ ~ In z (add y r) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In z s.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_eq_neq_trans_1"></a>test_eq_neq_trans_1 : forall w x y z s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.eq x w -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ ~ E.eq x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ E.eq y z -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In w s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In w (remove z s).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_eq_neq_trans_2"></a>test_eq_neq_trans_2 : forall w x y z r1 r2 s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (singleton w) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ In x r1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (add y r1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In y r2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In y (remove z r2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In w s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In w (remove z s).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_In_singleton"></a>test_In_singleton : forall x,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (singleton x).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_add_In"></a>test_add_In : forall x y s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (add y s) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ E.eq x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x s.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_Subset_add_remove"></a>test_Subset_add_remove : forall x s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s [&lt;=] (add x (remove x s)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_eq_disjunction"></a>test_eq_disjunction : forall w x y z,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In w (add x (add y (singleton z))) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.eq w x \/ E.eq w y \/ E.eq w z.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_not_In_disj"></a>test_not_In_disj : forall x y s1 s2 s3 s4,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ In x (union s1 (union s2 (union s3 (add y s4)))) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ (In x s1 \/ In x s4 \/ E.eq y x).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_not_In_conj"></a>test_not_In_conj : forall x y s1 s2 s3 s4,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ In x (union s1 (union s2 (union s3 (add y s4)))) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ In x s1 /\ ~ In x s4 /\ ~ E.eq y x.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_iff_conj"></a>test_iff_conj : forall a x s s',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(In a s' &lt;-&gt; E.eq x a \/ In a s) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(In a s' &lt;-&gt; In a (add x s)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_set_ops_1"></a>test_set_ops_1 : forall x q r s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(singleton x) [&lt;=] s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Empty (union q r) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Empty (inter (diff s q) (diff s r)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ In x s.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.eq_chain_test"></a>eq_chain_test : forall x1 x2 x3 x4 s1 s2 s3 s4,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Empty s1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x2 (add x1 s1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x3 s2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ In x3 (remove x2 s2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ In x4 s3 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x4 (add x3 s3) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x1 s4 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Subset (add x4 s4) s4.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test_too_complex"></a>test_too_complex : forall x y z r s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.eq x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(In x (singleton y) -&gt; r [&lt;=] s) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In z r -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In z s.<br/>
+</code>
+
+<div class="doc">
+<code>fsetdec</code> is not intended to solve this directly. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.function_test_1"></a>function_test_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (f : t -&gt; t),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (g : elt -&gt; elt),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (s1 s2 : t),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (x1 x2 : elt),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equal s1 (f s2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.eq x1 (g (g x2)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x1 s1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In (g (g x2)) (f s2).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.function_test_2"></a>function_test_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (f : t -&gt; t),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (g : elt -&gt; elt),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (s1 s2 : t),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (x1 x2 : elt),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Equal s1 (f s2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E.eq x1 (g x2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x1 s1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g x2 = g (g x2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In (g (g x2)) (f s2).<br/>
+</code>
+
+<div class="doc">
+<code>fsetdec</code> is not intended to solve this directly. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Decide.FSetDecideTestCases.test"></a>test :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (f : t -&gt; t),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (s : t),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (x y : elt),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (add y (f s)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ E.eq x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In x (f s).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> FSetDecideTestCases.<br/>
+
+<br/>
+<span class="keyword">End</span> Decide.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>Metatheory</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Metatheory</h1>
+
+<code>
+</code>
+
+<div class="doc">
+Library for programming languages metatheory.
+
+<br/><br/>
+    Authors: Brian Aydemir and Arthur Charguéraud, with help from
+    Aaron Bohannon, Benjamin Pierce, Jeffrey Vaughan, Dimitrios
+    Vytiniotis, Stephanie Weirich, and Steve Zdancewic. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="AdditionalTactics.html">AdditionalTactics</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="Atom.html">Atom</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="Environment.html">Environment</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab69"></a><h1 class="section">Notations</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Decidable equality on atoms and natural numbers may be written
+    using natural notation. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> "x == y" :=<br/>
+&nbsp;&nbsp;(<a class="idref" href="Atom.html#AtomImpl.eq_atom_dec">eq_atom_dec</a> x y) (at level 67) : metatheory_scope.<br/>
+<span class="keyword">Notation</span> "i === j" :=<br/>
+&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Arith.Peano_dec.html#eq_nat_dec">Peano_dec.eq_nat_dec</a> i j) (at level 67) : metatheory_scope.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Common set operations may be written using infix notation. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> "E `union` F" :=<br/>
+&nbsp;&nbsp;(<a class="idref" href="Atom.html#AtomSet.F.union">AtomSet.F.union</a> E F)<br/>
+&nbsp;&nbsp;(at level 69, right associativity, format "E  `union`  '/' F")<br/>
+&nbsp;&nbsp;: set_scope.<br/>
+<span class="keyword">Notation</span> "x `<span class="keyword">in</span>` E" :=<br/>
+&nbsp;&nbsp;(<a class="idref" href="Atom.html#AtomSet.F.In">AtomSet.F.In</a> x E) (at level 69) : set_scope.<br/>
+<span class="keyword">Notation</span> "x `notin` E" :=<br/>
+&nbsp;&nbsp;(~ <a class="idref" href="Atom.html#AtomSet.F.In">AtomSet.F.In</a> x E) (at level 69) : set_scope.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The empty set may be written similarly to informal practice. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> "{}" :=<br/>
+&nbsp;&nbsp;(<a class="idref" href="Atom.html#AtomSet.F.empty">AtomSet.F.empty</a>) : metatheory_scope.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+It is useful to have an abbreviation for constructing singleton
+    sets. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> singleton := (<a class="idref" href="Atom.html#AtomSet.F.singleton">AtomSet.F.singleton</a>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Open the notation scopes declared above. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Open</span> <span class="keyword">Scope</span> metatheory_scope.<br/>
+<span class="keyword">Open</span> <span class="keyword">Scope</span> set_scope.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab70"></a><h1 class="section">Tactic for working with cofinite quantification</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Consider a rule <code>H</code> (equivalently, hypothesis, constructor, lemma,
+    etc.) of the form <code>(forall L ..., ... -&gt; (forall y, y `notin` L -&gt;
+    P) -&gt; ... -&gt; Q)</code>, where <code>Q</code>'s outermost constructor is not a
+    <code>forall</code>.  There may be multiple hypotheses of with the indicated
+    form in <code>H</code>.
+
+<br/><br/>
+    The tactic <code>(pick fresh x and apply H)</code> applies <code>H</code> to the current
+    goal, instantiating <code>H</code>'s first argument (i.e., <code>L</code>) with the
+    finite set of atoms <code>L'</code>.  In each new subgoal arising from a
+    hypothesis of the form <code>(forall y, y `notin` L -&gt; P)</code>, the atom
+    <code>y</code> is introduced as <code>x</code>, and <code>(y `notin` L)</code> is introduced using
+    a generated name.
+
+<br/><br/>
+    If we view <code>H</code> as a rule that uses cofinite quantification, the
+    tactic can be read as picking a sufficiently fresh atom to open a
+    term with.  
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"pick" "fresh" ident(atom_name)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"excluding" constr(L)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"and" "apply" constr(H) :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> L := beautify_fset L <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;first [apply (@H L) | eapply (@H L)];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- forall _, _ `notin` _ -&gt; _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> Fr := fresh "Fr" <span class="keyword">in</span> intros atom_name Fr<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- forall _, _ `notin` _ -&gt; _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fail 1 "because" atom_name "is already defined"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idtac<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab71"></a><h1 class="section">Automation</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+These hints should discharge many of the freshness and inequality
+    goals that arise in programming language metatheory proofs, in
+    particular those arising from cofinite quantification. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve notin_empty notin_singleton notin_union.<br/>
+<span class="keyword">Hint</span> Extern 4 (_ `notin` _) =&gt; simpl_env; notin_solve.<br/>
+<span class="keyword">Hint</span> Extern 4 (_ &lt;&gt; _ :&gt; <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) =&gt; simpl_env; notin_solve.<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

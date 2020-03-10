@@ -1,0 +1,1066 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>AtomEnv</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library AtomEnv</h1>
+
+<code>
+
+<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#">Decidable</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSets.html#">FSets</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#">List</a>.<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="AdditionalTactics.html#">AdditionalTactics</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="PennFSetDecide.html#">PennFSetDecide</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="ListFacts.html#">ListFacts</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="AssocList.html#">AssocList</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="Atom.html#">Atom</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="AtomSet.html#">AtomSet</a>.<br/>
+<span class="keyword">Import</span> AtomSetImpl.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab23"></a><h1 class="section">Signature</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Note that our library has an implicit convention for the "normal
+    form" of an association list.  This normal form requires that a
+    list be built only from <code>nil</code> (the empty list), <code>one</code> (the
+    singleton list), and <code>app</code> (concatenation).  Additionally,
+    concatenations should be associated to the right and the list
+    should not contain any <code>nil</code> terms, unless it is the empty list
+    itself.
+
+<br/><br/>
+    This allows association lists to be written in a slightly more
+    uniform manner when compared to using both <code>cons</code> and <code>app</code> to
+    build them.  The downsides are that Coq's <code>simpl</code> tactic will
+    simplify instances of <code>one</code> down to <code>cons</code> and that there are
+    instances in which one needs to write association lists that are
+    not in normal form (typically, some concatenation will need to be
+    associated to the left).  The <code>simpl_env</code> and <code>rewrite_env</code>
+    tactics below are designed to minimize the impact of these
+    downsides.
+
+<br/><br/>
+    We have considered other alternative implementations, but the scheme
+    described above seems to work the best in practice. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <span class="keyword">Type</span> <a name="ENVIRONMENT"></a>ENVIRONMENT.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab24"></a><h2 class="section">Basic definitions</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+This section defines the following basic operations and
+      predicates on association lists.
+
+<br/><br/>
+
+<ul>
+<li> <code>one</code>: Constructs an association list consisting of exactly
+          one binding.
+
+</li>
+<li> <code>map</code>: Maps a function over the values in an association list.
+
+</li>
+<li> <code>dom</code>: Computes the domain of an association list, i.e., the
+          set consisting of its keys.
+
+</li>
+<li> <code>disjoint</code>: Binary predicate that holds when the domains of
+          two association lists are disjoint.
+
+</li>
+<li> <code>binds</code>: Ternary predicate that holds when a key-value pair
+          appears somewhere in an association list.
+
+</li>
+<li> <code>uniq</code>: Unary predicate that holds when an association list
+          binds any given key at most once.  Note that <code>uniq_push</code> is
+          defined in terms of <code>one</code>, due to our normal form for
+          association lists.
+
+</li>
+</ul>
+
+<br/><br/>
+      Implicit arguments are declared by default for these
+      definitions.  We define some local notations to make the
+      definition of <code>uniq</code> easier to read and to be consistent with
+      the notations used in the rest of this library. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.Definitions"></a>Definitions.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.Definitions.A"></a>A <a name="ENVIRONMENT.Definitions.B"></a>B <a name="ENVIRONMENT.Definitions.C"></a>C : <span class="keyword">Type</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Definition</span> <a name="ENVIRONMENT.one"></a>one (C : <span class="keyword">Type</span>) (item : C) : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> C := <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">cons</a> item <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Definition</span> <a name="ENVIRONMENT.map"></a>map (f : A -&gt; B) (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#map">List.map</a> (<span class="keyword">fun</span> b =&gt; <span class="keyword">match</span> b <span class="keyword">with</span> (x, a) =&gt; (x, f a) <span class="keyword">end</span>) E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Fixpoint</span> <a name="ENVIRONMENT.dom"></a>dom (A : <span class="keyword">Type</span>) (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) {struct E} : <a class="idref" href="AtomSet.html#atoms">atoms</a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> E <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> =&gt; <a class="idref" href="AtomSet.html#AtomSetImpl.empty">empty</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| (x, _) :: E' =&gt; <a class="idref" href="AtomSet.html#AtomSetImpl.add">add</a> x (dom E')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Definition</span> <a name="ENVIRONMENT.disjoint"></a>disjoint (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)) : <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomSet.html#AtomSetImpl.Subset">Subset</a> (<a class="idref" href="AtomSet.html#AtomSetImpl.inter">inter</a> (<a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E) (<a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> F)) <a class="idref" href="AtomSet.html#AtomSetImpl.empty">empty</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Definition</span> <a name="ENVIRONMENT.binds"></a>binds (x : <a class="idref" href="Atom.html#atom">atom</a>) (a : A) (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) : <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a> (x, a) E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x ~ a" := (<a class="idref" href="AtomEnv.html#ENVIRONMENT.one">one</a> (x, a)) (at level 68).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x `notin` E" := (~ <a class="idref" href="AtomSet.html#AtomSetImpl.In">AtomSetImpl.In</a> x E) (at level 69).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Inductive</span> <a name="ENVIRONMENT.uniq"></a>uniq : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A) -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a name="ENVIRONMENT.uniq_nil"></a>uniq_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a name="ENVIRONMENT.uniq_push"></a>uniq_push : forall x a E,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq ((x ~ a) ++ E).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.Definitions">Definitions</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab25"></a><h2 class="section">Local notations</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We make a local notation for <code>one</code>, and for operations and
+      predicate on finite sets, in order to make the statements of the
+      lemmas below more readable.  The notations are local so that
+      users of this functor may choose their own notations. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "[ i ]" := (<a class="idref" href="AtomEnv.html#ENVIRONMENT.one">one</a> i).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x ~ T" := (<a class="idref" href="AtomEnv.html#ENVIRONMENT.one">one</a> (x, T)) (at level 68).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "E `union` F" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="AtomSet.html#AtomSetImpl.union">AtomSetImpl.union</a> E F) (at level 69, right associativity).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x `in` E" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="AtomSet.html#AtomSetImpl.In">AtomSetImpl.In</a> x E) (at level 69).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x `notin` E" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ <a class="idref" href="AtomSet.html#AtomSetImpl.In">AtomSetImpl.In</a> x E) (at level 69).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "E [=] F" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="AtomSet.html#AtomSetImpl.Equal">AtomSetImpl.Equal</a> E F) (at level 70, no associativity).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "E [&lt;=] F" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="AtomSet.html#AtomSetImpl.Subset">AtomSetImpl.Subset</a> E F) (at level 70, no associativity).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab26"></a><h2 class="section">List properties</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following block of properties is used mainly for rewriting
+      association lists into the normal form described above.  See the
+      <code>simpl_env</code> and <code>rewrite_env</code> tactics below. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.ListProperties"></a>ListProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.ListProperties.X"></a>X : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.ListProperties.x"></a>x <a name="ENVIRONMENT.ListProperties.y"></a>y : X.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.ListProperties.l"></a>l <a name="ENVIRONMENT.ListProperties.l1"></a>l1 <a name="ENVIRONMENT.ListProperties.l2"></a>l2 <a name="ENVIRONMENT.ListProperties.l3"></a>l3 : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> X.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.cons_app_one"></a>cons_app_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">cons</a> x l = [ x ] ++ l.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.cons_app_assoc"></a>cons_app_assoc :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">cons</a> x l1) ++ l2 = <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">cons</a> x (l1 ++ l2).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.app_assoc"></a>app_assoc :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.app_nil_1"></a>app_nil_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> ++ l = l.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.app_nil_2"></a>app_nil_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l ++ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> = l.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.in_one"></a>in_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a> x [ y ] &lt;-&gt; x = y.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.in_app"></a>in_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a> x (l1 ++ l2) &lt;-&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a> x l1 \/ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a> x l2.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.ListProperties">ListProperties</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite <a class="idref" href="AtomEnv.html#ENVIRONMENT.cons_app_one">cons_app_one</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.cons_app_assoc">cons_app_assoc</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.app_assoc">app_assoc</a> : rewr_list.<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite <a class="idref" href="AtomEnv.html#ENVIRONMENT.app_nil_1">app_nil_1</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.app_nil_2">app_nil_2</a> : rewr_list.<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite <a class="idref" href="AtomEnv.html#ENVIRONMENT.in_one">in_one</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.in_app">in_app</a> : rewr_list_in.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The following block of properties is an assortment of
+      structural properties about lists. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.AssortedListProperties"></a>AssortedListProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.AssortedListProperties.X"></a>X : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.AssortedListProperties.x"></a>x <a name="ENVIRONMENT.AssortedListProperties.y"></a>y : X.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.AssortedListProperties.l"></a>l <a name="ENVIRONMENT.AssortedListProperties.l1"></a>l1 <a name="ENVIRONMENT.AssortedListProperties.l2"></a>l2 <a name="ENVIRONMENT.AssortedListProperties.l3"></a>l3 : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> X.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.one_eq_app"></a>one_eq_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ x ] ++ l1 = l2 ++ l3 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exists qs, l2 = x :: qs /\ l1 = qs ++ l3) \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(l2 = <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> /\ l3 = x :: l1).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.app_eq_one"></a>app_eq_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l2 ++ l3 = [ x ] ++ l1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exists qs, l2 = x :: qs /\ l1 = qs ++ l3) \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(l2 = <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> /\ l3 = x :: l1).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.nil_neq_one_mid"></a>nil_neq_one_mid :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> &lt;&gt; l1 ++ [ x ] ++ l2.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.one_mid_neq_nil"></a>one_mid_neq_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l1 ++ [ x ] ++ l2 &lt;&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.AssortedListProperties">AssortedListProperties</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab27"></a><h2 class="section">Properties of <code>map</code> and <code>dom</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemmas are used mainly to simplify applications of
+      <code>map</code> and <code>dom</code> to association lists.  See also the <code>simpl_env</code>
+      and <code>rewrite_env</code> tactics below. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.Properties"></a>Properties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.Properties.A"></a>A <a name="ENVIRONMENT.Properties.B"></a>B : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.Properties.f"></a>f : A -&gt; B.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.Properties.x"></a>x : <a class="idref" href="Atom.html#atom">atom</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.Properties.b"></a>b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.Properties.E"></a>E <a name="ENVIRONMENT.Properties.F"></a>F <a name="ENVIRONMENT.Properties.G"></a>G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.map_nil"></a>map_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> = <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.map_cons"></a>map_cons :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f ((x, b) :: E) = (x, f b) :: <a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.map_one"></a>map_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f (x ~ b) = (x ~ f b).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.map_app"></a>map_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f (E ++ F) = <a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E ++ <a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.dom_nil"></a>dom_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(@<a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> A <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>) = <a class="idref" href="AtomSet.html#AtomSetImpl.empty">empty</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.dom_cons"></a>dom_cons :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> ((x, b) :: E) [=] <a class="idref" href="AtomSet.html#AtomSetImpl.singleton">singleton</a> x `union` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.dom_one"></a>dom_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> (x ~ b) [=] <a class="idref" href="AtomSet.html#AtomSetImpl.singleton">singleton</a> x.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.dom_app"></a>dom_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> (E ++ F) [=] <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E `union` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.dom_map"></a>dom_map :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E) [=] <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.Properties">Properties</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite <a class="idref" href="AtomEnv.html#ENVIRONMENT.map_nil">map_nil</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.map_cons">map_cons</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.map_one">map_one</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.map_app">map_app</a> : rewr_map.<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_nil">dom_nil</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_cons">dom_cons</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_one">dom_one</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_app">dom_app</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom_map">dom_map</a> : rewr_dom.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab28"></a><h2 class="section">The <code>simpl_env</code> tactic</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>simpl_env</code> tactic rewrites association lists so that they
+      are in the normal form described above.  Similar to the <code>simpl</code>
+      tactic, we define "<code><span class="keyword">in</span> *</code>" and "<code><span class="keyword">in</span> H</code>" variants of the tactic. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> simpl_env :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_list rewr_list_in rewr_map rewr_dom.<br/>
+&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "simpl_env" "in" hyp(H) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_list rewr_list_in rewr_map rewr_dom <span class="keyword">in</span> H.<br/>
+&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "simpl_env" "in" "*" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_list rewr_list_in rewr_map rewr_dom <span class="keyword">in</span> *.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab29"></a><h2 class="section">The <code>rewrite_env</code> tactic</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>(rewrite_env E)</code> replaces an association list in
+      the conclusion of the goal with <code>E</code>.  Suitability for
+      replacement is determined by whether <code>simpl_env</code> can put <code>E</code>
+      and the chosen environment in the same normal form, up to
+      convertibility's in Coq.  We also define an "<code><span class="keyword">in</span> H</code>" variant
+      that performs the replacement in a hypothesis <code>H</code>.  
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "rewrite_env" constr(E) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change x <span class="keyword">with</span> E<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace x <span class="keyword">with</span> E;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | try reflexivity; simpl_env; reflexivity ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "rewrite_env" constr(E) "in" hyp(H) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> type of H <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change x <span class="keyword">with</span> E <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace x <span class="keyword">with</span> E <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | try reflexivity; simpl_env; reflexivity ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab30"></a><h2 class="section">Basic facts about <code>disjoint</code></h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.BasicDisjointFacts"></a>BasicDisjointFacts.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Implicit</span> Types A B C : <span class="keyword">Type</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_sym_1"></a>disjoint_sym_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> F E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_sym"></a>disjoint_sym :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E F &lt;-&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> F E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_one_1"></a>disjoint_one_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (x : <a class="idref" href="Atom.html#atom">atom</a>) (a : A) (F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (x ~ a) F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_one_2"></a>disjoint_one_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (x : <a class="idref" href="Atom.html#atom">atom</a>) (a : A) (F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (x ~ a) F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_one_l"></a>disjoint_one_l :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (x : <a class="idref" href="Atom.html#atom">atom</a>) (a : A) (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (x ~ a) E &lt;-&gt; x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_one_r"></a>disjoint_one_r :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (x : <a class="idref" href="Atom.html#atom">atom</a>) (a : A) (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E (x ~ a) &lt;-&gt; x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_app_1"></a>disjoint_app_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (E ++ F) G -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_app_2"></a>disjoint_app_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (E ++ F) G -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> F G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_app_3"></a>disjoint_app_3 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E G -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> F G -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (E ++ F) G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_app_l"></a>disjoint_app_l :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (E ++ F) G &lt;-&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E G /\ <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> F G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_app_r"></a>disjoint_app_r :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> G (E ++ F) &lt;-&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E G /\ <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> F G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_map_1"></a>disjoint_map_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B C (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)) (f : A -&gt; C),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E) F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_map_2"></a>disjoint_map_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B C (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)) (f : A -&gt; C),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E) F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_map_l"></a>disjoint_map_l :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B C (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)) (f : A -&gt; C),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E) F &lt;-&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.disjoint_map_r"></a>disjoint_map_r :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B C (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)) (F : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*B)) (f : A -&gt; C),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> F (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E) &lt;-&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E F.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.BasicDisjointFacts">BasicDisjointFacts</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab31"></a><h2 class="section">Basic facts about <code>uniq</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemmas are facts about <code>uniq</code> with respect to the
+      basic functions (<code>one</code>, <code>app</code>, and <code>map</code>) that can be used to
+      build association lists. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.UniqProperties"></a>UniqProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.UniqProperties.A"></a>A <a name="ENVIRONMENT.UniqProperties.B"></a>B : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.UniqProperties.f"></a>f : A -&gt; B.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.UniqProperties.x"></a>x : <a class="idref" href="Atom.html#atom">atom</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.UniqProperties.b"></a>b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.UniqProperties.E"></a>E <a name="ENVIRONMENT.UniqProperties.F"></a>F <a name="ENVIRONMENT.UniqProperties.G"></a>G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_one"></a>uniq_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (x ~ b).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_app_1"></a>uniq_app_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (E ++ F) -&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_app_2"></a>uniq_app_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (E ++ F) -&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_app_3"></a>uniq_app_3 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (E ++ F) -&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_app_4"></a>uniq_app_4 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (E ++ F).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_app"></a>uniq_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (E ++ F) &lt;-&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> E /\ <a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> F /\ <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint">disjoint</a> E F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_map_1"></a>uniq_map_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_map_2"></a>uniq_map_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_map"></a>uniq_map :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E) &lt;-&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.UniqProperties">UniqProperties</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_one_l">disjoint_one_l</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_one_r">disjoint_one_r</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_app_l">disjoint_app_l</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_app_r">disjoint_app_r</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_map_l">disjoint_map_l</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_map_r">disjoint_map_r</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq_app">uniq_app</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq_map">uniq_map</a><br/>
+&nbsp;&nbsp;: rewr_uniq.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab32"></a><h2 class="section">The <code>solve_uniq</code> tactic</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+This tactic attempts to solve goals about <code>uniq</code>.  Given its
+      definition, it's likely to work only when the hypotheses in the
+      goal already contain all the relevant <code>uniq</code> propositions.
+      Thus, the tactic may not be generally useful.  It is useful,
+      however, for proving facts about <code>uniq</code> such as the ones below.
+
+<br/><br/>
+      Implementation note: The second <code>simpl_env</code> in the definition
+      is because of <code>disjoint_one_{l,r}</code>.  The "<code>|| fail</code>" at the end
+      is so that in the case of failure, the error message reported to
+      the user is not the one from <code>atomsetdec</code>. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> solve_uniq :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try trivial;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_uniq <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intuition (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto <span class="keyword">using</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq_nil">uniq_nil</a>, <a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq_one">uniq_one</a> ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite -&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.disjoint_sym">disjoint_sym</a>; auto) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(unfold disjoint <span class="keyword">in</span> *; atomsetdec))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|| fail.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab33"></a><h2 class="section">Facts about <code>uniq</code></h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.UniqDerived"></a>UniqDerived.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.UniqDerived.A"></a>A : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.UniqDerived.x"></a>x <a name="ENVIRONMENT.UniqDerived.y"></a>y : <a class="idref" href="Atom.html#atom">atom</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.UniqDerived.a"></a>a <a name="ENVIRONMENT.UniqDerived.b"></a>b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.UniqDerived.E"></a>E <a name="ENVIRONMENT.UniqDerived.F"></a>F <a name="ENVIRONMENT.UniqDerived.G"></a>G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_cons"></a>uniq_cons :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> ((x, a) :: E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_insert_mid"></a>uniq_insert_mid :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (G ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> (G ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (G ++ (x ~ a) ++ E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_remove_mid"></a>uniq_remove_mid :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (E ++ F ++ G) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (E ++ G).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.uniq_map_app_l"></a>uniq_map_app_l : forall (f : A -&gt; A),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (F ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f F ++ E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.fresh_mid_tail"></a>fresh_mid_tail :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (F ++ (x ~ a) ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.fresh_mid_head"></a>fresh_mid_head :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (F ++ (x ~ a) ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.UniqDerived">UniqDerived</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab34"></a><h2 class="section">Basic facts about <code>binds</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemmas are facts about <code>binds</code> with respect to the
+      basic functions (<code>one</code> and <code>app</code>) that can be used to build
+      association lists.
+
+<br/><br/>
+      Note: <code>map</code> is treated further below. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.BindsProperties"></a>BindsProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.BindsProperties.A"></a>A : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.BindsProperties.x"></a>x <a name="ENVIRONMENT.BindsProperties.y"></a>y : <a class="idref" href="Atom.html#atom">atom</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.BindsProperties.a"></a>a <a name="ENVIRONMENT.BindsProperties.b"></a>b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.BindsProperties.E"></a>E <a name="ENVIRONMENT.BindsProperties.F"></a>F <a name="ENVIRONMENT.BindsProperties.G"></a>G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_nil"></a>binds_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> &lt;-&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_one_1"></a>binds_one_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a = b -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (y ~ b).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_one_2"></a>binds_one_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (y ~ b) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = y.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_one_3"></a>binds_one_3 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (y ~ b) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a = b.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_one"></a>binds_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (y ~ b) &lt;-&gt; x = y /\ a = b.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_app_1"></a>binds_app_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (E ++ F).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_app_2"></a>binds_app_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (E ++ F).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_app_3"></a>binds_app_3 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (E ++ F) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E \/ <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_app"></a>binds_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (E ++ F) &lt;-&gt; <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E \/ <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a F.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.BindsProperties">BindsProperties</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_nil">binds_nil</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_one">binds_one</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_app">binds_app</a> : rewr_binds.<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_nil">binds_nil</a> <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_one">binds_one</a> : rewr_binds_uniq.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab35"></a><h2 class="section">Additional lemmas and tactics for working with <code>binds</code></h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.MoreBindsProperties"></a>MoreBindsProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.MoreBindsProperties.A"></a>A : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.MoreBindsProperties.x"></a>x <a name="ENVIRONMENT.MoreBindsProperties.y"></a>y : <a class="idref" href="Atom.html#atom">atom</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.MoreBindsProperties.a"></a>a <a name="ENVIRONMENT.MoreBindsProperties.b"></a>b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.MoreBindsProperties.E"></a>E <a name="ENVIRONMENT.MoreBindsProperties.F"></a>F <a name="ENVIRONMENT.MoreBindsProperties.G"></a>G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_dom_contradiction"></a>binds_dom_contradiction: forall (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_app_uniq"></a>binds_app_uniq :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (E ++ F) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (E ++ F) &lt;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E /\ x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> F) \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a F /\ x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E)).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.MoreBindsProperties">MoreBindsProperties</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_app_uniq">binds_app_uniq</a> <span class="keyword">using</span> solve_uniq : rewr_binds_uniq.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>apply_binds_dom_contradiction</code> tactic solves a goal by
+      applying the <code>binds_dom_contradiction</code> lemma.  The tactic
+      succeeds only if the the hypotheses of the lemma are immediately
+      satisfied. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> apply_binds_dom_contradiction :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> ?x ?a ?E, J : ?x `notin` (<a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> ?E) |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> by apply (@<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_dom_contradiction">binds_dom_contradiction</a> _ _ _ _ H J);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> ?x ?a ?E, J : ?x `<span class="keyword">in</span>` (<a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> ?E) -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> by apply (@<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds_dom_contradiction">binds_dom_contradiction</a> _ _ _ _ H J);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>solve_binds</code> tactic attempts to solve goals about <code>binds</code>.
+      Given its definition, it's likely to work only when the
+      hypotheses in the goal already contain all the relevant <code>binds</code>
+      propositions.  Thus, the tactic may not be generally useful.  It
+      is useful, however, for proving facts about <code>binds</code> such as the
+      ones below. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> solve_binds :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_binds <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intuition (auto || atomsetdec || apply_binds_dom_contradiction)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|| fail.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactics <code>analyze_binds</code> and <code>analyze_binds_uniq</code> tactics
+      take as an argument a hypotheses about <code>binds</code> and perform a
+      case analysis based on the structure of the association list.
+      In the case of <code>analyze_binds_uniq</code>, the analysis is performed
+      assuming that the association list is <code>uniq</code>.  The lemmas
+      <code>binds_app</code> and <code>binds_app_uniq</code> are examples of such case
+      analysis.
+
+<br/><br/>
+      Implementation notes:
+
+<br/><br/>
+
+<ul>
+<li> The initial calls to <code>simpl_env</code> put the relevant
+          association lists into normal form.
+
+</li>
+<li> In the case of <code>binds_app_uniq</code>, we assert that the
+          association list is <code>uniq</code>.  This enables the <code>autorewrite</code>
+          step to succeed.
+
+</li>
+<li> Rather than work on <code>H</code> itself, we copy it and work on the
+          copy.  Thus, in instances where the analysis leaves unsolved
+          subgoals, it is still possible to see the original
+          hypothesis.
+
+</li>
+<li> The rest of the tactic breaks apart the copy of H and tries
+          several simple means for solving the resulting subgoals. 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> analyze_binds H :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> type of H <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> ?x ?a ?E =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> J := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose proof H <span class="keyword">as</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_binds <span class="keyword">in</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try (progress decompose [and or] J; clear J);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try solve [trivial | discriminate | intuition | atomsetdec]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> analyze_binds_uniq H :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> type of H <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> ?x ?a ?E =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : <a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> ?E |- _ =&gt; idtac<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; assert (<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> E); [ try solve_uniq | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> J := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose proof H <span class="keyword">as</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_binds_uniq <span class="keyword">in</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try (progress decompose [and or] J; clear J);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try solve [trivial | discriminate | intuition | atomsetdec]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab36"></a><h2 class="section">Facts about <code>binds</code></h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> <a name="ENVIRONMENT.BindsDerived"></a>BindsDerived.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.BindsDerived.A"></a>A <a name="ENVIRONMENT.BindsDerived.B"></a>B : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.BindsDerived.f"></a>f : A -&gt; B.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.BindsDerived.x"></a>x <a name="ENVIRONMENT.BindsDerived.y"></a>y : <a class="idref" href="Atom.html#atom">atom</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.BindsDerived.a"></a>a <a name="ENVIRONMENT.BindsDerived.b"></a>b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> <a name="ENVIRONMENT.BindsDerived.E"></a>E <a name="ENVIRONMENT.BindsDerived.F"></a>F <a name="ENVIRONMENT.BindsDerived.G"></a>G : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_dec"></a>binds_dec :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall a b : A, {a = b} + {a &lt;&gt; b}) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E} + {~ <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E}.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_lookup_dec"></a>binds_lookup_dec :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#decidable">decidable</a> (exists a, <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_lookup_dec_specif"></a>binds_lookup_dec_specif :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{a : A | <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E} + (forall a, ~ <a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_map"></a>binds_map :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x (f a) (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_map_inv"></a>binds_map_inv :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall a b, f a = f b -&gt; a = b) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x (f a) (<a class="idref" href="AtomEnv.html#ENVIRONMENT.map">map</a> f E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_weaken"></a>binds_weaken :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (E ++ G) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (E ++ F ++ G).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_mid_eq"></a>binds_mid_eq :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (F ++ (x ~ b) ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (F ++ (x ~ b) ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a = b.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_remove_mid"></a>binds_remove_mid :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (F ++ (y ~ b) ++ G) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x &lt;&gt; y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a (F ++ G).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_In"></a>binds_In : forall x a (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#atom">atom</a>*A)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `<span class="keyword">in</span>` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.binds_unique"></a>binds_unique :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x b E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a = b.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.fresh_app_l"></a>fresh_app_l :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (F ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="ENVIRONMENT.fresh_app_r"></a>fresh_app_r :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.uniq">uniq</a> (F ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="AtomEnv.html#ENVIRONMENT.binds">binds</a> x a F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="AtomEnv.html#ENVIRONMENT.dom">dom</a> E.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT.BindsDerived">BindsDerived</a>.<br/>
+
+<br/>
+<span class="keyword">End</span> <a class="idref" href="AtomEnv.html#ENVIRONMENT">ENVIRONMENT</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab37"></a><h1 class="section">Module instantiation</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We can use our implementation of association lists (in <code>AssocList</code>) to
+    implement a module with the above signature.   Note that the tactics
+    provided end in <code>_env</code>, not <code>_alist</code> as the implementation of
+    <code>AssocList.Make</code> might suggest.  (Tactics do not need to agree between a
+    module's signature and its implementaiton.) 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="AtomEnvImpl"></a>AtomEnvImpl : <a class="idref" href="AtomEnv.html#ENVIRONMENT">ENVIRONMENT</a> := <a class="idref" href="AssocList.html#">AssocList.Make</a> <a class="idref" href="Atom.html#">AtomImpl</a> <a class="idref" href="AtomSet.html#">AtomSetImpl</a>.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

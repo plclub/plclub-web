@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>FSetWeakNotin</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library FSetWeakNotin</h1>
+
+<code>
+<br/>
+</code>
+
+<div class="doc">
+Lemmas and tactics for working with and solving goals related to
+    non-membership in finite sets.  The main tactic of interest here
+    is <code>solve_notin</code>.
+
+<br/><br/>
+    Implicit arguments are declared by default in this library. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> FSetWeakInterface.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab60"></a><h1 class="section">Implementation</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="Notin"></a>Notin (<span class="keyword">Import</span> X : FSetWeakInterface.S).<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab61"></a><h2 class="section">Facts about set non-membership</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.notin_empty"></a>notin_empty : forall x,<br/>
+&nbsp;&nbsp;~ In x empty.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.notin_union"></a>notin_union : forall x E F,<br/>
+&nbsp;&nbsp;~ In x E -&gt; ~ In x F -&gt; ~ In x (union E F).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_union"></a>elim_notin_union : forall x E F,<br/>
+&nbsp;&nbsp;~ In x (union E F) -&gt; (~ In x E) /\ (~ In x F).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.notin_singleton"></a>notin_singleton : forall x y,<br/>
+&nbsp;&nbsp;~ E.eq x y -&gt; ~ In x (singleton y).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_singleton"></a>elim_notin_singleton : forall x y,<br/>
+&nbsp;&nbsp;~ In x (singleton y) -&gt; ~ E.eq x y.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_singleton'"></a>elim_notin_singleton' : forall x y,<br/>
+&nbsp;&nbsp;~ In x (singleton y) -&gt; x &lt;&gt; y.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.notin_add"></a>notin_add : forall x y F,<br/>
+&nbsp;&nbsp;~ E.eq y x -&gt; ~ In x F -&gt; ~ In x (add y F).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_add"></a>elim_notin_add : forall x y F,<br/>
+&nbsp;&nbsp;~ In x (add y F) -&gt; ~ E.eq y x /\ ~ In x F.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.elim_notin_add'"></a>elim_notin_add' : forall x y F,<br/>
+&nbsp;&nbsp;~ In x (add y F) -&gt; y &lt;&gt; x /\ ~ In x F.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab62"></a><h2 class="section">Tactics</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>simpl_notin_hyps</code> destructs all hypotheses of the form
+    <code>(~ In x E)</code>, where <code>E</code> is built using only <code>empty</code>, <code>add</code>,
+    <code>union</code>, and <code>singleton</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> simpl_notin_hyps :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: In ?x ?E -&gt; False |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change (~ In x E) <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_notin_hyps<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: ~ In _ empty |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_notin_hyps<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: ~ In ?x (union ?E ?F) |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (@elim_notin_union x E F H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_notin_hyps<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: ~ In ?x (singleton ?y) |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> F1 := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> F2 := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (F1 := @elim_notin_singleton x y H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (F2 := @elim_notin_singleton' x y H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_notin_hyps<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: ~ In ?x (add ?y ?F) |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (@elim_notin_add x y F H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (@elim_notin_add' x y F H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_notin_hyps<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idtac<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>solve_notin</code> solves goals of them form <code>(x &lt;&gt; y)</code> and
+    <code>(~ In x E)</code> that are provable from hypotheses of the form
+    destructed by <code>simpl_notin_hyps</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> solve_notin :=<br/>
+&nbsp;&nbsp;simpl_notin_hyps;<br/>
+&nbsp;&nbsp;repeat (progress (  apply notin_empty<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| apply notin_union<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| apply notin_singleton<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| apply notin_add));<br/>
+&nbsp;&nbsp;solve [ trivial | congruence | intuition auto ].<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab63"></a><h2 class="section">Examples and test cases</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+These examples and test cases are not meant to be exhaustive. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_1"></a>test_solve_notin_1 : forall x E F G,<br/>
+&nbsp;&nbsp;~ In x (union E F) -&gt; ~ In x G -&gt; ~ In x (union E G).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_2"></a>test_solve_notin_2 : forall x y E F G,<br/>
+&nbsp;&nbsp;~ In x (union E (union (singleton y) F)) -&gt; ~ In x G -&gt;<br/>
+&nbsp;&nbsp;~ In x (singleton y) /\ ~ In y (singleton x).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_3"></a>test_solve_notin_3 : forall x y,<br/>
+&nbsp;&nbsp;~ E.eq x y -&gt; ~ In x (singleton y) /\ ~ In y (singleton x).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_4"></a>test_solve_notin_4 : forall x y E F G,<br/>
+&nbsp;&nbsp;~ In x (union E (union (singleton x) F)) -&gt; ~ In y G.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_5"></a>test_solve_notin_5 : forall x y E F,<br/>
+&nbsp;&nbsp;~ In x (union E (union (singleton y) F)) -&gt; ~ In y E -&gt;<br/>
+&nbsp;&nbsp;~ E.eq y x /\ ~ E.eq x y.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Notin.test_solve_notin_6"></a>test_solve_notin_6 : forall x y E,<br/>
+&nbsp;&nbsp;~ In x (add y E) -&gt; ~ E.eq x y /\ ~ In x E.<br/>
+
+<br/>
+<span class="keyword">End</span> Notin.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

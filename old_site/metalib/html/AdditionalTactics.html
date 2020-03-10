@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>AdditionalTactics</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library AdditionalTactics</h1>
+
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+A library of additional tactics. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#">List</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Strings.String.html#">String</a>.<br/>
+<span class="keyword">Open</span> <span class="keyword">Scope</span> string_scope.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab1"></a><h1 class="section">Extensions and variations of standard tactics</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+"<code>unsimpl E</code>" replaces all occurence of <code>X</code> by <code>E</code>, where <code>X</code> is
+    the result that tactic <code>simpl</code> would give when used to evaluate
+    <code>E</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "unsimpl" constr(E) :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> F := (eval simpl <span class="keyword">in</span> E) <span class="keyword">in</span> change F <span class="keyword">with</span> E.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The following tactics call the <code>(e)apply</code> tactic with the first
+    hypothesis that succeeds, "first" meaning the hypothesis that
+    comes earliest in the context, i.e., higher up in the list. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> apply_first_hyp :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> reverse goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H : _ |- _ =&gt; apply H<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Ltac</span> eapply_first_hyp :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> reverse goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H : _ |- _ =&gt; eapply H<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab2"></a><h1 class="section">Variations on <code>auto</code></h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>auto*</code> and <code>eauto*</code> tactics are intended to be "stronger"
+    versions of the <code>auto</code> and <code>eauto</code> tactics.  Similar to <code>auto</code> and
+    <code>eauto</code>, they each take an optional "depth" argument.
+
+<br/><br/>
+    Implementation note: if we declare these tactics using a single
+    string, e.g., "auto*", then the resulting tactics are unusable
+    since they fail to parse. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "auto" "*" :=<br/>
+&nbsp;&nbsp;try solve [ congruence | auto | intuition auto ].<br/>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "auto" "*" integer(n) :=<br/>
+&nbsp;&nbsp;try solve [ congruence | auto n | intuition (auto n) ].<br/>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "eauto" "*" :=<br/>
+&nbsp;&nbsp;try solve [ congruence | eauto | intuition eauto ].<br/>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "eauto" "*" integer(n) :=<br/>
+&nbsp;&nbsp;try solve [ congruence | eauto n | intuition (eauto n) ].<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab3"></a><h1 class="section">Delineating cases in proofs</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab4"></a><h2 class="section">Tactic definitions</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> move_to_top x :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> reverse goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| H : _ |- _ =&gt; try move x after H<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "assert_eq" ident(x) constr(v) :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> H := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;assert (x = v) <span class="keyword">as</span> H by reflexivity;<br/>
+&nbsp;&nbsp;clear H.<br/>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "Case_aux" ident(x) constr(name) :=<br/>
+&nbsp;&nbsp;first [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;set (x := name); move_to_top x<br/>
+&nbsp;&nbsp;| assert_eq x name<br/>
+&nbsp;&nbsp;| fail 1 "because we are working on a different case." ].<br/>
+
+<br/>
+<span class="keyword">Ltac</span> Case name := Case_aux case name.<br/>
+<span class="keyword">Ltac</span> SCase name := Case_aux subcase name.<br/>
+<span class="keyword">Ltac</span> SSCase name := Case_aux subsubcase name.<br/>
+<span class="keyword">Ltac</span> SSSCase name := Case_aux subsubsubcase name.<br/>
+<span class="keyword">Ltac</span> SSSSCase name := Case_aux subsubsubsubcase name.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab5"></a><h2 class="section">Example</h2>
+
+
+<br/><br/>
+    One mode of use for the above tactics is to wrap Coq's <code>induction</code>
+    tactic such that it automatically inserts "case" markers into each
+    branch of the proof.  For example:
+
+<br/><br/>
+<pre>
+ Tactic Notation "induction" "nat" ident(n) :=
+   induction n; [ Case "O" | Case "S" ].
+ Tactic Notation "sub" "induction" "nat" ident(n) :=
+   induction n; [ SCase "O" | SCase "S" ].
+ Tactic Notation "sub" "sub" "induction" "nat" ident(n) :=
+   induction n; [ SSCase "O" | SSCase "S" ].
+</pre>
+
+<br/><br/>
+    If you use such customized versions of the induction tactics, then
+    the <code>Case</code> tactic will verify that you are working on the case
+    that you think you are.  You may also use the <code>Case</code> tactic with
+    the standard version of <code>induction</code>, in which case no verification
+    is done. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab6"></a><h1 class="section">Tactics for working with lists and proof contexts</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>ltac_map</code> applies a unary, non-dependently typed function <code>F</code> to
+    everything in the context such that the application type checks.
+    The tactic returns a <code>list</code> containing the results of the
+    applications.
+
+<br/><br/>
+    Implementation note: The check for duplicates in the accumulator
+    (<code><span class="keyword">match</span> acc <span class="keyword">with</span> ...</code>) is necessary to ensure that the tactic does
+    not go into an infinite loop. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> ltac_map F :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> rec map acc :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : ?S |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> FH := constr:(F H) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> acc <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| context [FH] =&gt; fail 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; map (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">List.cons</a> FH acc)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; acc<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">match</span> type of F <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| ?A -&gt; ?B =&gt; <span class="keyword">let</span> res := map (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">List.nil</a> B) <span class="keyword">in</span> (eval simpl <span class="keyword">in</span> res)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>ltac_remove_dups</code> takes a <code>list</code> and removes duplicate items from
+    it.  The supplied list must, after simplification via <code>simpl</code>, be
+    built from only <code>nil</code> and <code>cons</code>.  Duplicates are recognized only
+    "up to syntax," i.e., the limitations of Ltac's <code>context</code>
+    check. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> ltac_remove_dups xs :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> rec remove xs acc :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> xs <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">List.nil</a> =&gt; acc<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">List.cons</a> ?x ?xs =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> acc <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| context [x] =&gt; remove xs acc<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; remove xs (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#cons">List.cons</a> x acc)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">match</span> type of xs <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">List.list</a> ?A =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> xs := (eval simpl <span class="keyword">in</span> xs) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> xs := remove xs (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">List.nil</a> A) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval simpl <span class="keyword">in</span> (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#rev">List.rev</a> xs)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>ltac_fold_and_simpl</code> is a wrapper for <code>List.fold_right</code> that does
+    some preliminary simplification and removal of duplicates on the
+    supplied list. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> ltac_fold_and_simpl f start xs :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> xs := (eval simpl <span class="keyword">in</span> xs) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> xs := ltac_remove_dups xs <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> xs := eval simpl <span class="keyword">in</span> (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#fold_right">List.fold_right</a> f start xs) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;xs.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

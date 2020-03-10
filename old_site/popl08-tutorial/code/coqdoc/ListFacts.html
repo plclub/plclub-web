@@ -1,0 +1,392 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>ListFacts</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library ListFacts</h1>
+
+<code>
+</code>
+
+<div class="doc">
+Assorted facts about lists.
+
+<br/><br/>
+    Author: Brian Aydemir.
+
+<br/><br/>
+    Implicit arguments are declared by default in this library. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Set</span> <span class="keyword">Implicit</span> <span class="keyword">Arguments</span>.<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Eqdep_dec.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> List.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> SetoidList.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Sorting.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Relations.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab63"></a><h1 class="section">List membership</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="not_in_cons"></a>not_in_cons :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Type</span>) (ys : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A) x y,<br/>
+&nbsp;&nbsp;x &lt;&gt; y -&gt; ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x ys -&gt; ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x (y :: ys).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction ys; simpl; intuition.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="not_In_app"></a>not_In_app :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Type</span>) (xs ys : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A) x,<br/>
+&nbsp;&nbsp;~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x xs -&gt; ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x ys -&gt; ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x (xs ++ ys).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros A xs ys x H J K.<br/>
+&nbsp;&nbsp;destruct (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#in_app_or">in_app_or</a> _ _ _ K); auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="elim_not_In_cons"></a>elim_not_In_cons :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Type</span>) (y : A) (ys : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A) (x : A),<br/>
+&nbsp;&nbsp;~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x (y :: ys) -&gt; x &lt;&gt; y /\ ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x ys.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros. simpl <span class="keyword">in</span> *. auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="elim_not_In_app"></a>elim_not_In_app :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Type</span>) (xs ys : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A) (x : A),<br/>
+&nbsp;&nbsp;~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x (xs ++ ys) -&gt; ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x xs /\ ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x ys.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;split; auto <span class="keyword">using</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#in_or_app">in_or_app</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab64"></a><h1 class="section">List inclusion</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="incl_nil"></a>incl_nil :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Type</span>) (xs : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A), <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> xs.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold incl.<br/>
+&nbsp;&nbsp;intros A xs a H; inversion H.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="incl_trans"></a>incl_trans :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Type</span>) (xs ys zs : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A),<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> xs ys -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> ys zs -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> xs zs.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold incl; firstorder.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="In_incl"></a>In_incl :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Type</span>) (x : A) (ys zs : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A),<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x ys -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> ys zs -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x zs.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold incl; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="elim_incl_cons"></a>elim_incl_cons :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Type</span>) (x : A) (xs zs : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A),<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> (x :: xs) zs -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x zs /\ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> xs zs.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold incl. auto <span class="keyword">with</span> datatypes.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="elim_incl_app"></a>elim_incl_app :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Type</span>) (xs ys zs : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A),<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> (xs ++ ys) zs -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> xs zs /\ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#incl">incl</a> ys zs.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold incl. auto <span class="keyword">with</span> datatypes.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab65"></a><h1 class="section">Setoid facts</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="InA_iff_In"></a>InA_iff_In :<br/>
+&nbsp;&nbsp;forall (A : <span class="keyword">Set</span>) x xs, <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) x xs &lt;-&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a> x xs.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;split. 2:auto <span class="keyword">using</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#In_InA">In_InA</a>.<br/>
+&nbsp;&nbsp;induction xs <span class="keyword">as</span> [ | y ys IH ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros H. inversion H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros H. inversion H; subst; auto <span class="keyword">with</span> datatypes.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab66"></a><h1 class="section">Equality proofs for lists</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> EqRectList.<br/>
+
+<br/>
+<span class="keyword">Variable</span> A : <span class="keyword">Type</span>.<br/>
+<span class="keyword">Variable</span> eq_A_dec : forall (x y : A), {x = y} + {x &lt;&gt; y}.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="eq_rect_eq_list"></a>eq_rect_eq_list :<br/>
+&nbsp;&nbsp;forall (p : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A) (Q : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A -&gt; <span class="keyword">Type</span>) (x : Q p) (h : p = p),<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq_rect">eq_rect</a> p Q x p h = x.<br/>
+<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Eqdep_dec.html#K_dec">K_dec</a> <span class="keyword">with</span> (p := h)...<br/>
+&nbsp;&nbsp;decide equality. destruct (eq_A_dec a a0)...<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">End</span> EqRectList.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab67"></a><h1 class="section">Decidable sorting and uniqueness of proofs</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> DecidableSorting.<br/>
+
+<br/>
+<span class="keyword">Variable</span> A : <span class="keyword">Set</span>.<br/>
+<span class="keyword">Variable</span> leA : <a class="idref" href="http://coq.inria.fr/library/Coq.Relations.Relation_Definitions.html#relation">relation</a> A.<br/>
+<span class="keyword">Hypothesis</span> leA_dec : forall x y, {leA x y} + {~ leA x y}.<br/>
+
+<br/>
+<span class="keyword">Theorem</span> <a name="lelistA_dec"></a>lelistA_dec :<br/>
+&nbsp;&nbsp;forall a xs, {<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#lelistA">lelistA</a> leA a xs} + {~ <a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#lelistA">lelistA</a> leA a xs}.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction xs <span class="keyword">as</span> [ | x xs IH ]; auto <span class="keyword">with</span> datatypes.<br/>
+&nbsp;&nbsp;destruct (leA_dec a x); auto <span class="keyword">with</span> datatypes.<br/>
+&nbsp;&nbsp;right. intros J. inversion J. auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Theorem</span> <a name="sort_dec"></a>sort_dec :<br/>
+&nbsp;&nbsp;forall xs, {<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#sort">sort</a> leA xs} + {~ <a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#sort">sort</a> leA xs}.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction xs <span class="keyword">as</span> [ | x xs IH ]; auto <span class="keyword">with</span> datatypes.<br/>
+&nbsp;&nbsp;destruct IH; destruct (<a class="idref" href="ListFacts.html#DecidableSorting.lelistA_dec">lelistA_dec</a> x xs); auto <span class="keyword">with</span> datatypes.<br/>
+&nbsp;&nbsp;right. intros K. inversion K. auto.<br/>
+&nbsp;&nbsp;right. intros K. inversion K. auto.<br/>
+&nbsp;&nbsp;right. intros K. inversion K. auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Section</span> UniqueSortingProofs.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hypothesis</span> eq_A_dec : forall (x y : A), {x = y} + {x &lt;&gt; y}.<br/>
+&nbsp;&nbsp;<span class="keyword">Hypothesis</span> leA_unique : forall (x y : A) (p q : leA x y), p = q.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Scheme</span> lelistA_ind' := Induction for lelistA Sort <span class="keyword">Prop</span>.<br/>
+&nbsp;&nbsp;<span class="keyword">Scheme</span> sort_ind' := Induction for sort Sort <span class="keyword">Prop</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Theorem</span> <a name="lelistA_unique"></a>lelistA_unique :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;forall (x : A) (xs : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A) (p q : <a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#lelistA">lelistA</a> leA x xs), p = q.<br/>
+&nbsp;&nbsp;<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;induction p <span class="keyword">using</span> <a class="idref" href="ListFacts.html#DecidableSorting.UniqueSortingProofs.lelistA_ind'">lelistA_ind'</a>; intros q.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;replace (<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#nil_leA">nil_leA</a> leA x) <span class="keyword">with</span> (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq_rect">eq_rect</a> _ (<span class="keyword">fun</span> xs =&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#lelistA">lelistA</a> leA x xs)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#nil_leA">nil_leA</a> leA x) _ (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#refl_equal">refl_equal</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> A)))...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;generalize (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#refl_equal">refl_equal</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> A)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pattern (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> A) at 1 3 4 6, q. case q; [ | intros; discriminate ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros. rewrite <a class="idref" href="ListFacts.html#eq_rect_eq_list">eq_rect_eq_list</a>...<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;replace (<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#cons_leA">cons_leA</a> leA x b l l0) <span class="keyword">with</span> (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq_rect">eq_rect</a> _ (<span class="keyword">fun</span> xs =&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#lelistA">lelistA</a> leA x xs)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#cons_leA">cons_leA</a> leA x b l l0) _ (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#refl_equal">refl_equal</a> (b :: l)))...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;generalize (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#refl_equal">refl_equal</a> (b :: l)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pattern (b :: l) at 1 3 4 6, q. case q; [ intros; discriminate | ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros. inversion e; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="ListFacts.html#eq_rect_eq_list">eq_rect_eq_list</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite (leA_unique l0 l2)...<br/>
+&nbsp;&nbsp;<span class="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Theorem</span> <a name="sort_unique"></a>sort_unique :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;forall (xs : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> A) (p q : <a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#sort">sort</a> leA xs), p = q.<br/>
+&nbsp;&nbsp;<span class="keyword">Proof</span> <span class="keyword">with</span> auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;induction p <span class="keyword">using</span> <a class="idref" href="ListFacts.html#DecidableSorting.UniqueSortingProofs.sort_ind'">sort_ind'</a>; intros q.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;replace (<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#nil_sort">nil_sort</a> leA) <span class="keyword">with</span> (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq_rect">eq_rect</a> _ (<span class="keyword">fun</span> xs =&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#sort">sort</a> leA xs)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#nil_sort">nil_sort</a> leA) _ (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#refl_equal">refl_equal</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> A)))...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;generalize (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#refl_equal">refl_equal</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> A)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pattern (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> A) at 1 3 4 6, q. case q; [ | intros; discriminate ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros. rewrite <a class="idref" href="ListFacts.html#eq_rect_eq_list">eq_rect_eq_list</a>...<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;replace (<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#cons_sort">cons_sort</a> p l0) <span class="keyword">with</span> (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq_rect">eq_rect</a> _ (<span class="keyword">fun</span> xs =&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#sort">sort</a> leA xs)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#cons_sort">cons_sort</a> p l0) _ (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#refl_equal">refl_equal</a> (a :: l)))...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;generalize (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#refl_equal">refl_equal</a> (a :: l)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pattern (a :: l) at 1 3 4 6, q. case q; [ intros; discriminate | ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros. inversion e; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite <a class="idref" href="ListFacts.html#eq_rect_eq_list">eq_rect_eq_list</a>...<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="ListFacts.html#DecidableSorting.UniqueSortingProofs.lelistA_unique">lelistA_unique</a> l0 l2).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite (IHp s)...<br/>
+&nbsp;&nbsp;<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">End</span> UniqueSortingProofs.<br/>
+<span class="keyword">End</span> DecidableSorting.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab68"></a><h1 class="section">Equality on sorted lists</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> Equality_ext.<br/>
+
+<br/>
+<span class="keyword">Variable</span> A : <span class="keyword">Set</span>.<br/>
+<span class="keyword">Variable</span> ltA : <a class="idref" href="http://coq.inria.fr/library/Coq.Relations.Relation_Definitions.html#relation">relation</a> A.<br/>
+<span class="keyword">Hypothesis</span> ltA_trans : forall x y z, ltA x y -&gt; ltA y z -&gt; ltA x z.<br/>
+<span class="keyword">Hypothesis</span> ltA_not_eqA : forall x y, ltA x y -&gt; x &lt;&gt; y.<br/>
+<span class="keyword">Hypothesis</span> ltA_eqA : forall x y z, ltA x y -&gt; y = z -&gt; ltA x z.<br/>
+<span class="keyword">Hypothesis</span> eqA_ltA : forall x y z, x = y -&gt; ltA y z -&gt; ltA x z.<br/>
+
+<br/>
+<span class="keyword">Hint</span> Resolve ltA_trans.<br/>
+<span class="keyword">Hint</span> <span class="keyword">Immediate</span> ltA_eqA eqA_ltA.<br/>
+
+<br/>
+<span class="keyword">Notation</span> Inf := (<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#lelistA">lelistA</a> ltA).<br/>
+<span class="keyword">Notation</span> Sort := (<a class="idref" href="http://coq.inria.fr/library/Coq.Sorting.Sorting.html#sort">sort</a> ltA).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="not_InA_if_Sort_Inf"></a>not_InA_if_Sort_Inf :<br/>
+&nbsp;&nbsp;forall xs a, Sort xs -&gt; Inf a xs -&gt; ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a xs.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction xs <span class="keyword">as</span> [ | x xs IH ]; intros a Hsort Hinf H.<br/>
+&nbsp;&nbsp;inversion H.<br/>
+&nbsp;&nbsp;inversion H; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Hinf; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (x &lt;&gt; x) by auto; intuition.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Hsort; inversion Hinf; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (Inf a xs) by eauto <span class="keyword">using</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InfA_ltA">InfA_ltA</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a xs) by auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Sort_eq_head"></a>Sort_eq_head :<br/>
+&nbsp;&nbsp;forall x xs y ys,<br/>
+&nbsp;&nbsp;Sort (x :: xs) -&gt;<br/>
+&nbsp;&nbsp;Sort (y :: ys) -&gt;<br/>
+&nbsp;&nbsp;(forall a, <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a (x :: xs) &lt;-&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a (y :: ys)) -&gt;<br/>
+&nbsp;&nbsp;x = y.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x xs y ys SortXS SortYS H.<br/>
+&nbsp;&nbsp;inversion SortXS; inversion SortYS; subst.<br/>
+&nbsp;&nbsp;assert (Q3 : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) x (y :: ys)) by firstorder.<br/>
+&nbsp;&nbsp;assert (Q4 : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) y (x :: xs)) by firstorder.<br/>
+&nbsp;&nbsp;inversion Q3; subst; auto.<br/>
+&nbsp;&nbsp;inversion Q4; subst; auto.<br/>
+&nbsp;&nbsp;assert (ltA y x) by (refine (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#SortA_InfA_InA">SortA_InfA_InA</a> _ _ _ _ _ H6 H7 H1); auto).<br/>
+&nbsp;&nbsp;assert (ltA x y) by (refine (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#SortA_InfA_InA">SortA_InfA_InA</a> _ _ _ _ _ H2 H3 H4); auto).<br/>
+&nbsp;&nbsp;assert (y &lt;&gt; y) by eauto.<br/>
+&nbsp;&nbsp;intuition.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="Sort_InA_eq_ext"></a>Sort_InA_eq_ext :<br/>
+&nbsp;&nbsp;forall xs ys,<br/>
+&nbsp;&nbsp;Sort xs -&gt;<br/>
+&nbsp;&nbsp;Sort ys -&gt;<br/>
+&nbsp;&nbsp;(forall a, <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a xs &lt;-&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a ys) -&gt;<br/>
+&nbsp;&nbsp;xs = ys.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction xs <span class="keyword">as</span> [ | x xs IHxs ]; induction ys <span class="keyword">as</span> [ | y ys IHys ];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros SortXS SortYS H; auto.<br/>
+<br/>
+&nbsp;&nbsp;assert (Q : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) y <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>) by firstorder.<br/>
+&nbsp;&nbsp;inversion Q.<br/>
+<br/>
+&nbsp;&nbsp;assert (Q : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) x <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>) by firstorder.<br/>
+&nbsp;&nbsp;inversion Q.<br/>
+<br/>
+&nbsp;&nbsp;inversion SortXS; inversion SortYS; subst.<br/>
+&nbsp;&nbsp;assert (x = y) by eauto <span class="keyword">using</span> <a class="idref" href="ListFacts.html#Equality_ext.Sort_eq_head">Sort_eq_head</a>.<br/>
+&nbsp;&nbsp;cut (forall a, <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a xs &lt;-&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a ys).<br/>
+&nbsp;&nbsp;intros. assert (xs = ys) by auto. subst. auto.<br/>
+&nbsp;&nbsp;intros a; split; intros L.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (Q2 : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a (y :: ys)) by firstorder.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Q2; subst; auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (Q5 : ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) y xs) by auto <span class="keyword">using</span> <a class="idref" href="ListFacts.html#Equality_ext.not_InA_if_Sort_Inf">not_InA_if_Sort_Inf</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (Q2 : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) a (x :: xs)) by firstorder.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Q2; subst; auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert (Q5 : ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a> A) y ys) by auto <span class="keyword">using</span> <a class="idref" href="ListFacts.html#Equality_ext.not_InA_if_Sort_Inf">not_InA_if_Sort_Inf</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">End</span> Equality_ext.<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

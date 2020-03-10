@@ -1,0 +1,1119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>PennFSetDecide</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library PennFSetDecide</h1>
+
+<code>
+
+<br/>
+
+<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+This file implements a decision procedure for a certain
+    class of propositions involving finite sets.  
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#">Decidable</a> <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.DecidableTypeEx.html#">DecidableTypeEx</a> <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetFacts.html#">FSetFacts</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+First, a version for Weak Sets 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="WDecide"></a>WDecide (E : <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.DecidableType.html#">DecidableType</a>)(<span class="keyword">Import</span> M : <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetInterface.html#">WSfun</a> <a class="idref" href="PennFSetDecide.html#">E</a>).<br/>
+&nbsp;<span class="keyword">Module</span> <a name="F"></a>F := <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetFacts.html#">FSetFacts.WFacts</a> <a class="idref" href="PennFSetDecide.html#">E</a> <a class="idref" href="PennFSetDecide.html#">M</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab58"></a><h1 class="section">Overview</h1>
+
+    This functor defines the tactic <code>fsetdec</code>, which will
+    solve any valid goal of the form
+<pre>
+    forall s1 ... sn,
+    forall x1 ... xm,
+    P1 -&gt; ... -&gt; Pk -&gt; P
+</pre>
+
+<br/><br/>
+    where <code>P</code>'s are defined by the grammar:
+<pre>
+
+P ::=
+| Q
+| Empty F
+| Subset F F'
+| Equal F F'
+
+Q ::=
+| E.eq X X'
+| In X F
+| Q /\ Q'
+| Q \/ Q'
+| Q -&gt; Q'
+| Q &lt;-&gt; Q'
+| ~ Q
+| True
+| False
+
+F ::=
+| S
+| empty
+| singleton X
+| add X F
+| remove X F
+| union F F'
+| inter F F'
+| diff F F'
+
+X ::= x1 | ... | xm
+S ::= s1 | ... | sn
+
+</pre>
+
+<br/><br/>
+The tactic will also work on some goals that vary slightly from
+the above form:
+
+<ul>
+<li> The variables and hypotheses may be mixed in any order and may
+  have already been introduced into the context.  Moreover,
+  there may be additional, unrelated hypotheses mixed in (these
+  will be ignored).
+
+</li>
+<li> A conjunction of hypotheses will be handled as easily as
+  separate hypotheses, i.e., <code>P1 /\ P2 -&gt; P</code> can be solved iff
+  <code>P1 -&gt; P2 -&gt; P</code> can be solved.
+
+</li>
+<li> <code>fsetdec</code> should solve any goal if the FSet-related hypotheses
+  are contradictory.
+
+</li>
+<li> <code>fsetdec</code> will first perform any necessary zeta and beta
+  reductions and will invoke <code>subst</code> to eliminate any Coq
+  equalities between finite sets or their elements.
+
+</li>
+<li> If <code>E.eq</code> is convertible with Coq's equality, it will not
+  matter which one is used in the hypotheses or conclusion.
+
+</li>
+<li> The tactic can solve goals where the finite sets or set
+  elements are expressed by Coq terms that are more complicated
+  than variables.  However, non-local definitions are not
+  expanded, and Coq equalities between non-variable terms are
+  not used.  For example, this goal will be solved:
+<pre>
+    forall (f : t -&gt; t),
+    forall (g : elt -&gt; elt),
+    forall (s1 s2 : t),
+    forall (x1 x2 : elt),
+    Equal s1 (f s2) -&gt;
+    E.eq x1 (g (g x2)) -&gt;
+    In x1 s1 -&gt;
+    In (g (g x2)) (f s2)
+</pre>
+
+</li>
+</ul>
+
+<br/><br/>
+  This one will not be solved:
+<pre>
+    forall (f : t -&gt; t),
+    forall (g : elt -&gt; elt),
+    forall (s1 s2 : t),
+    forall (x1 x2 : elt),
+    Equal s1 (f s2) -&gt;
+    E.eq x1 (g x2) -&gt;
+    In x1 s1 -&gt;
+    g x2 = g (g x2) -&gt;
+    In (g (g x2)) (f s2)
+</pre>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab59"></a><h1 class="section">Facts and Tactics for Propositional Logic</h1>
+
+      These lemmas and tactics are in a module so that they do
+      not affect the namespace if you import the enclosing
+      module <code>Decide</code>. 
+</div>
+<code>
+&nbsp;&nbsp;<span class="keyword">Module</span> <a name="FSetLogicalFacts"></a>FSetLogicalFacts.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#">Decidable</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Setoids.Setoid.html#">Setoid</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab60"></a><h2 class="section">Lemmas and Tactics About Decidable Propositions</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab61"></a><h2 class="section">Propositional Equivalences Involving Negation</h2>
+
+        These are all written with the unfolded form of
+        negation, since I am not sure if setoid rewriting will
+        always perform conversion. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab62"></a><h2 class="section">Tactics for Negations</h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "fold" "any" "not" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold (~ P) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold (~ P)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>push not <span class="keyword">using</span> db</code> will pushes all negations to the
+        leaves of propositions in the goal, using the lemmas in
+        <code>db</code> to assist in checking the decidability of the
+        propositions involved.  If <code><span class="keyword">using</span> db</code> is omitted, then
+        <code>core</code> will be used.  Additional versions are provided
+        to manipulate the hypotheses or the hypotheses and goal
+        together.
+
+<br/><br/>
+        XXX: This tactic and the similar subsequent ones should
+        have been defined using <code>autorewrite</code>. However, dealing
+        with multiples rewrite sites and side-conditions is 
+        done more cleverly with the following explicit 
+        analysis of goals. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> or_not_l_iff P Q tac := <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#or_not_l_iff_1">or_not_l_iff_1</a> P Q) by tac) || <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#or_not_l_iff_2">or_not_l_iff_2</a> P Q) by tac).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> or_not_r_iff P Q tac := <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#or_not_r_iff_1">or_not_r_iff_1</a> P Q) by tac) || <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#or_not_r_iff_2">or_not_r_iff_2</a> P Q) by tac).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> or_not_l_iff_in P Q H tac := <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#or_not_l_iff_1">or_not_l_iff_1</a> P Q) <span class="keyword">in</span> H by tac) || <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#or_not_l_iff_2">or_not_l_iff_2</a> P Q) <span class="keyword">in</span> H by tac).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> or_not_r_iff_in P Q H tac := <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#or_not_r_iff_1">or_not_r_iff_1</a> P Q) <span class="keyword">in</span> H by tac) || <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#or_not_r_iff_2">or_not_r_iff_2</a> P Q) <span class="keyword">in</span> H by tac).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" "using" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> dec := solve_decidable <span class="keyword">using</span> db <span class="keyword">in</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not, iff;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a> -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_true_iff">not_true_iff</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_false_iff">not_false_iff</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_not_iff">not_not_iff</a> P) by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#contrapositive">contrapositive</a> P Q) by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) \/ ?Q] =&gt; or_not_l_iff P Q dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P \/ (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] =&gt; or_not_r_iff P Q dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; ?Q] =&gt; rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#imp_not_l">imp_not_l</a> P Q) by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P \/ ?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_or_iff">not_or_iff</a> P Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P /\ ?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_and_iff">not_and_iff</a> P Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; ?Q) -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_imp_iff">not_imp_iff</a> P Q) by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold any not.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">using</span> core.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"push" "not" "in" "*" "|-" "using" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> dec := solve_decidable <span class="keyword">using</span> db <span class="keyword">in</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not, iff <span class="keyword">in</span> * |-;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a> -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt; rewrite <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_true_iff">not_true_iff</a> <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt; rewrite <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_false_iff">not_false_iff</a> <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_not_iff">not_not_iff</a> P) <span class="keyword">in</span> H by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#contrapositive">contrapositive</a> P Q) <span class="keyword">in</span> H by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) \/ ?Q] |- _ =&gt; or_not_l_iff_in P Q H dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P \/ (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] |- _ =&gt; or_not_r_iff_in P Q H dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; ?Q] |- _ =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#imp_not_l">imp_not_l</a> P Q) <span class="keyword">in</span> H by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P \/ ?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt; rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_or_iff">not_or_iff</a> P Q) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P /\ ?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt; rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_and_iff">not_and_iff</a> P Q) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; ?Q) -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_imp_iff">not_imp_iff</a> P Q) <span class="keyword">in</span> H by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold any not.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" "in" "*" "|-"  :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">in</span> * |- <span class="keyword">using</span> core.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" "in" "*" "using" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">using</span> db; push not <span class="keyword">in</span> * |- <span class="keyword">using</span> db.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "push" "not" "in" "*" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">in</span> * <span class="keyword">using</span> core.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+A simple test case to see how this works.  
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetLogicalFacts.test_push"></a>test_push : forall P Q R : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#decidable">decidable</a> P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#decidable">decidable</a> Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ ~ P) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ (P /\ Q) -&gt; ~ R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((P /\ Q) \/ ~ R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ (P /\ Q) \/ R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(R \/ ~ (P /\ Q)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ R \/ (P /\ Q)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ P -&gt; R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ ((R -&gt; P) \/ (Q -&gt; R))) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ (P /\ R)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ (P -&gt; R)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a>.<br/>
+<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>pull not <span class="keyword">using</span> db</code> will pull as many negations as
+        possible toward the top of the propositions in the goal,
+        using the lemmas in <code>db</code> to assist in checking the
+        decidability of the propositions involved.  If <code><span class="keyword">using</span>
+        db</code> is omitted, then <code>core</code> will be used.  Additional
+        versions are provided to manipulate the hypotheses or
+        the hypotheses and goal together. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" "using" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> dec := solve_decidable <span class="keyword">using</span> db <span class="keyword">in</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not, iff;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a> -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_true_iff">not_true_iff</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_false_iff">not_false_iff</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_not_iff">not_not_iff</a> P) by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#contrapositive">contrapositive</a> P Q) by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) \/ ?Q] =&gt; or_not_l_iff P Q dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P \/ (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] =&gt; or_not_r_iff P Q dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; ?Q] =&gt; rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#imp_not_l">imp_not_l</a> P Q) by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) /\ (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_or_iff">not_or_iff</a> P Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P -&gt; ?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] =&gt; rewrite &lt;- (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_and_iff">not_and_iff</a> P Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [?P /\ (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] =&gt; rewrite &lt;- (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_imp_iff">not_imp_iff</a> P Q) by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context [(?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) /\ ?P] =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_imp_rev_iff">not_imp_rev_iff</a> P Q) by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold any not.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pull not <span class="keyword">using</span> core.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"pull" "not" "in" "*" "|-" "using" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> dec := solve_decidable <span class="keyword">using</span> db <span class="keyword">in</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold not, iff <span class="keyword">in</span> * |-;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a> -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt; rewrite <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_true_iff">not_true_iff</a> <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt; rewrite <a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_false_iff">not_false_iff</a> <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_not_iff">not_not_iff</a> P) <span class="keyword">in</span> H by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#contrapositive">contrapositive</a> P Q) <span class="keyword">in</span> H by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) \/ ?Q] |- _ =&gt; or_not_l_iff_in P Q H dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P \/ (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] |- _ =&gt; or_not_r_iff_in P Q H dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt; ?Q] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#imp_not_l">imp_not_l</a> P Q) <span class="keyword">in</span> H by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?P -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) /\ (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_or_iff">not_or_iff</a> P Q) <span class="keyword">in</span> H <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P -&gt; ?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>] |- _ =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_and_iff">not_and_iff</a> P Q) <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [?P /\ (?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>)] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_imp_iff">not_imp_iff</a> P Q) <span class="keyword">in</span> H by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: context [(?Q -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) /\ ?P] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- (<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#not_imp_rev_iff">not_imp_rev_iff</a> P Q) <span class="keyword">in</span> H by dec<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold any not.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" "in" "*" "|-"  :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pull not <span class="keyword">in</span> * |- <span class="keyword">using</span> core.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" "in" "*" "using" ident(db) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pull not <span class="keyword">using</span> db; pull not <span class="keyword">in</span> * |- <span class="keyword">using</span> db.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "pull" "not" "in" "*" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pull not <span class="keyword">in</span> * <span class="keyword">using</span> core.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+A simple test case to see how this works.  
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetLogicalFacts.test_pull"></a>test_pull : forall P Q R : <span class="keyword">Prop</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#decidable">decidable</a> P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#decidable">decidable</a> Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ ~ P) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ (P /\ Q) -&gt; ~ R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((P /\ Q) \/ ~ R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ (P /\ Q) \/ R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(R \/ ~ (P /\ Q)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ R \/ (P /\ Q)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ P -&gt; R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ (R -&gt; P) /\ ~ (Q -&gt; R)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ P \/ ~ R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(P /\ ~ R) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ R /\ P) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a>.<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="PennFSetDecide.html#FSetLogicalFacts">FSetLogicalFacts</a>.<br/>
+&nbsp;&nbsp;<span class="keyword">Import</span> FSetLogicalFacts.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab63"></a><h1 class="section">Auxiliary Tactics</h1>
+
+      Again, these lemmas and tactics are in a module so that
+      they do not affect the namespace if you import the
+      enclosing module <code>Decide</code>.  
+</div>
+<code>
+&nbsp;&nbsp;<span class="keyword">Module</span> <a name="FSetDecideAuxiliary"></a>FSetDecideAuxiliary.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab64"></a><h2 class="section">Generic Tactics</h2>
+
+        We begin by defining a few generic, useful tactics. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<code><span class="keyword">if</span> t <span class="keyword">then</span> t1 <span class="keyword">else</span> t2</code> executes <code>t</code> and, if it does not
+        fail, then <code>t1</code> will be applied to all subgoals
+        produced.  If <code>t</code> fails, then <code>t2</code> is executed. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"if" tactic(t)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"then" tactic(t1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"else" tactic(t2) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;first [ t; first [ t1 | fail 2 ] | t2 ].<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>prop P holds by t</code> succeeds (but does not modify the
+        goal or context) if the proposition <code>P</code> can be proved by
+        <code>t</code> in the current context.  Otherwise, the tactic
+        fails. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "prop" constr(P) "holds" "by" tactic(t) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> H := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert P <span class="keyword">as</span> H by t;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+This tactic acts just like <code>assert ... by ...</code> but will
+        fail if the context already contains the proposition. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "assert" "new" constr(e) "by" tactic(t) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: e |- _ =&gt; fail 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; assert e by t<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>subst++</code> is similar to <code>subst</code> except that
+
+<ul>
+<li> it never fails (as <code>subst</code> does on recursive
+          equations),
+
+</li>
+<li> it substitutes locally defined variable for their
+          definitions,
+
+</li>
+<li> it performs beta reductions everywhere, which may
+          arise after substituting a locally defined function
+          for its definition.
+        
+</li>
+</ul>
+
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "subst" "++" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| x : _ |- _ =&gt; subst x<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cbv zeta beta <span class="keyword">in</span> *.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>decompose records</code> calls <code>decompose record H</code> on every
+        relevant hypothesis <code>H</code>. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "decompose" "records" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: _ |- _ =&gt; progress (decompose record H); clear H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab65"></a><h2 class="section">Discarding Irrelevant Hypotheses</h2>
+
+        We will want to clear the context of any
+        non-FSet-related hypotheses in order to increase the
+        speed of the tactic.  To do this, we will need to be
+        able to decide which are relevant.  We do this by making
+        a simple inductive definition classifying the
+        propositions of interest. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Inductive</span> <a name="WDecide.FSetDecideAuxiliary.FSet_elt_Prop"></a>FSet_elt_Prop : <span class="keyword">Prop</span> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.eq_Prop"></a>eq_Prop : forall (S : <span class="keyword">Set</span>) (x y : S),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (x = y)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.eq_elt_prop"></a>eq_elt_prop : forall x y,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (<a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x y)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.In_elt_prop"></a>In_elt_prop : forall x s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (<a class="idref" href="PennFSetDecide.html#M.In">In</a> x s)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.True_elt_prop"></a>True_elt_prop :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.False_elt_prop"></a>False_elt_prop :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.conj_elt_prop"></a>conj_elt_prop : forall P Q,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (P /\ Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.disj_elt_prop"></a>disj_elt_prop : forall P Q,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (P \/ Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.impl_elt_prop"></a>impl_elt_prop : forall P Q,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop Q -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (P -&gt; Q)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.not_elt_prop"></a>not_elt_prop : forall P,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_elt_Prop (~ P).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Inductive</span> <a name="WDecide.FSetDecideAuxiliary.FSet_Prop"></a>FSet_Prop : <span class="keyword">Prop</span> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.elt_FSet_Prop"></a>elt_FSet_Prop : forall P,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#WDecide.FSetDecideAuxiliary.FSet_elt_Prop">FSet_elt_Prop</a> P -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_Prop P<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.Empty_FSet_Prop"></a>Empty_FSet_Prop : forall s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_Prop (<a class="idref" href="PennFSetDecide.html#M.Empty">Empty</a> s)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.Subset_FSet_Prop"></a>Subset_FSet_Prop : forall s1 s2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_Prop (<a class="idref" href="PennFSetDecide.html#M.Subset">Subset</a> s1 s2)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="WDecide.FSetDecideAuxiliary.Equal_FSet_Prop"></a>Equal_FSet_Prop : forall s1 s2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FSet_Prop (<a class="idref" href="PennFSetDecide.html#M.Equal">Equal</a> s1 s2).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Here is the tactic that will throw away hypotheses that
+        are not useful (for the intended scope of the <code>fsetdec</code>
+        tactic). 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Hint</span> Constructors FSet_elt_Prop FSet_Prop : FSet_Prop.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> discard_nonFSet :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decompose records;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : ?P |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> prop (<a class="idref" href="PennFSetDecide.html#WDecide.FSetDecideAuxiliary.FSet_Prop">FSet_Prop</a> P) holds by<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(auto 100 <span class="keyword">with</span> FSet_Prop)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span> fail<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span> clear H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab66"></a><h2 class="section">Turning Set Operators into Propositional Connectives</h2>
+
+        The lemmas from <code>FSetFacts</code> will be used to break down
+        set operations into propositional formulas built over
+        the predicates <code>In</code> and <code>E.eq</code> applied only to
+        variables.  We are going to use them with <code>autorewrite</code>.
+        
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#WDecide.F.empty_iff">F.empty_iff</a> <a class="idref" href="PennFSetDecide.html#WDecide.F.singleton_iff">F.singleton_iff</a> <a class="idref" href="PennFSetDecide.html#WDecide.F.add_iff">F.add_iff</a> <a class="idref" href="PennFSetDecide.html#WDecide.F.remove_iff">F.remove_iff</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#WDecide.F.union_iff">F.union_iff</a> <a class="idref" href="PennFSetDecide.html#WDecide.F.inter_iff">F.inter_iff</a> <a class="idref" href="PennFSetDecide.html#WDecide.F.diff_iff">F.diff_iff</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: set_simpl.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab67"></a><h2 class="section">Decidability of FSet Propositions</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>In</code> is decidable. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideAuxiliary.dec_In"></a>dec_In : forall x s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#decidable">decidable</a> (<a class="idref" href="PennFSetDecide.html#M.In">In</a> x s).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>E.eq</code> is decidable. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideAuxiliary.dec_eq"></a>dec_eq : forall (x y : <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.Decidable.html#decidable">decidable</a> (<a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x y).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The hint database <code>FSet_decidability</code> will be given to
+        the <code>push_neg</code> tactic from the module <code>Negation</code>. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Hint</span> <span class="keyword">Resolve</span> <a class="idref" href="PennFSetDecide.html#WDecide.FSetDecideAuxiliary.dec_In">dec_In</a> <a class="idref" href="PennFSetDecide.html#WDecide.FSetDecideAuxiliary.dec_eq">dec_eq</a> : FSet_decidability.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab68"></a><h2 class="section">Normalizing Propositions About Equality</h2>
+
+        We have to deal with the fact that <code>E.eq</code> may be
+        convertible with Coq's equality.  Thus, we will find the
+        following tactics useful to replace one form with the
+        other everywhere. 
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The next tactic, <code>Logic_eq_to_E_eq</code>, mentions the term
+        <code>E.t</code>; thus, we must ensure that <code>E.t</code> is used in favor
+        of any other convertible but syntactically distinct
+        term. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> change_to_E_t :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : ?T |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change T <span class="keyword">with</span> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a> <span class="keyword">in</span> H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| J : _ |- _ =&gt; progress (change T <span class="keyword">with</span> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a> <span class="keyword">in</span> J)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- _ =&gt; progress (change T <span class="keyword">with</span> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span> )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall x : ?T, _ |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change T <span class="keyword">with</span> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a> <span class="keyword">in</span> H);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| J : _ |- _ =&gt; progress (change T <span class="keyword">with</span> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a> <span class="keyword">in</span> J)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- _ =&gt; progress (change T <span class="keyword">with</span> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span> )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+These two tactics take us from Coq's built-in equality
+        to <code>E.eq</code> (and vice versa) when possible. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> Logic_eq_to_E_eq :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: _ |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">Logic.eq</a> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>) <span class="keyword">with</span> <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> <span class="keyword">in</span> H)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">Logic.eq</a> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>) <span class="keyword">with</span> <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> E_eq_to_Logic_eq :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: _ |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> <span class="keyword">with</span> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">Logic.eq</a> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>) <span class="keyword">in</span> H)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;progress (change <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> <span class="keyword">with</span> (@<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">Logic.eq</a> <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+This tactic works like the built-in tactic <code>subst</code>, but
+        at the level of set element equality (which may not be
+        the convertible with Coq's equality). 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> substFSet :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> ?x ?y |- _ =&gt; rewrite H <span class="keyword">in</span> *; clear H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab69"></a><h2 class="section">Considering Decidability of Base Propositions</h2>
+
+        This tactic adds assertions about the decidability of
+        <code>E.eq</code> and <code>In</code> to the context.  This is necessary for
+        the completeness of the <code>fsetdec</code> tactic.  However, in
+        order to minimize the cost of proof search, we should be
+        careful to not add more than we need.  Once negations
+        have been pushed to the leaves of the propositions, we
+        only need to worry about decidability for those base
+        propositions that appear in a negated form. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> assert_decidability :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(** We actually don't want these rules to fire <span class="keyword">if</span> the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;syntactic context <span class="keyword">in</span> the patterns below is trivially<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;empty, but we'll just do some clean-up at the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;afterward. <br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab70"></a><h2 class="section">Handling <code>Empty</code>, <code>Subset</code>, and <code>Equal</code></h2>
+
+        This tactic instantiates universally quantified
+        hypotheses (which arise from the unfolding of <code>Empty</code>,
+        <code>Subset</code>, and <code>Equal</code>) for each of the set element
+        expressions that is involved in some membership or
+        equality fact.  Then it throws away those hypotheses,
+        which should no longer be needed. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> inst_FSet_hypotheses :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>, _,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_ : context [ <a class="idref" href="PennFSetDecide.html#M.In">In</a> ?x _ ] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>, _<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|- context [ <a class="idref" href="PennFSetDecide.html#M.In">In</a> ?x _ ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>, _,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_ : context [ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> ?x _ ] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>, _<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|- context [ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> ?x _ ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>, _,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_ : context [ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> _ ?x ] |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>, _<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|- context [ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> _ ?x ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> P := type of (H x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert new P by (exact (H x))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : forall a : <a class="idref" href="PennFSetDecide.html#E.t">E.t</a>, _ |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab71"></a><h2 class="section">The Core <code>fsetdec</code> Auxiliary Tactics</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Here is the crux of the proof search.  Recursion through
+        <code>intuition</code>!  (This will terminate if I correctly
+        understand the behavior of <code>intuition</code>.) 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> fsetdec_rec :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try (<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H: <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> ?x ?x -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> |- _ =&gt; destruct H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(reflexivity ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;contradiction ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(progress substFSet; intuition fsetdec_rec)).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+If we add <code>unfold Empty, Subset, Equal <span class="keyword">in</span> *; intros;</code> to
+        the beginning of this tactic, it will satisfy the same
+        specification as the <code>fsetdec</code> tactic; however, it will
+        be much slower than necessary without the pre-processing
+        done by the wrapper tactic <code>fsetdec</code>. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Ltac</span> fsetdec_body :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst_FSet_hypotheses;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> set_simpl <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;push not <span class="keyword">in</span> * <span class="keyword">using</span> FSet_decidability;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;substFSet;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert_decidability;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto <span class="keyword">using</span> <a class="idref" href="PennFSetDecide.html#E.eq_refl">E.eq_refl</a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(intuition fsetdec_rec) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fail 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"because the goal is beyond the scope of this tactic".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="PennFSetDecide.html#FSetDecideAuxiliary">FSetDecideAuxiliary</a>.<br/>
+&nbsp;&nbsp;<span class="keyword">Import</span> FSetDecideAuxiliary.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab72"></a><h1 class="section">The <code>fsetdec</code> Tactic</h1>
+
+      Here is the top-level tactic (the only one intended for
+      clients of this library).  It's specification is given at
+      the top of the file. 
+</div>
+<code>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> fsetdec :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(** We first unfold any occurrences of [iff]. <br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab73"></a><h1 class="section">Examples</h1>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Module</span> <a name="FSetDecideTestCases"></a>FSetDecideTestCases.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_eq_trans_1"></a>test_eq_trans_1 : forall x y z s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ ~ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> z y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> z s.<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_eq_trans_2"></a>test_eq_trans_2 : forall x y z r s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x (<a class="idref" href="PennFSetDecide.html#M.singleton">singleton</a> y) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> z r -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ ~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> z (<a class="idref" href="PennFSetDecide.html#M.add">add</a> y r) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> z s.<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_eq_neq_trans_1"></a>test_eq_neq_trans_1 : forall w x y z s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x w -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ ~ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> y z -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> w s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> w (<a class="idref" href="PennFSetDecide.html#M.remove">remove</a> z s).<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_eq_neq_trans_2"></a>test_eq_neq_trans_2 : forall w x y z r1 r2 s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x (<a class="idref" href="PennFSetDecide.html#M.singleton">singleton</a> w) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> x r1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x (<a class="idref" href="PennFSetDecide.html#M.add">add</a> y r1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> y r2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> y (<a class="idref" href="PennFSetDecide.html#M.remove">remove</a> z r2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> w s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> w (<a class="idref" href="PennFSetDecide.html#M.remove">remove</a> z s).<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_In_singleton"></a>test_In_singleton : forall x,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x (<a class="idref" href="PennFSetDecide.html#M.singleton">singleton</a> x).<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_add_In"></a>test_add_In : forall x y s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x (<a class="idref" href="PennFSetDecide.html#M.add">add</a> y s) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x s.<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_Subset_add_remove"></a>test_Subset_add_remove : forall x s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s [&lt;=] (<a class="idref" href="PennFSetDecide.html#M.add">add</a> x (<a class="idref" href="PennFSetDecide.html#M.remove">remove</a> x s)).<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_eq_disjunction"></a>test_eq_disjunction : forall w x y z,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> w (<a class="idref" href="PennFSetDecide.html#M.add">add</a> x (<a class="idref" href="PennFSetDecide.html#M.add">add</a> y (<a class="idref" href="PennFSetDecide.html#M.singleton">singleton</a> z))) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> w x \/ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> w y \/ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> w z.<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_not_In_disj"></a>test_not_In_disj : forall x y s1 s2 s3 s4,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> x (<a class="idref" href="PennFSetDecide.html#M.union">union</a> s1 (<a class="idref" href="PennFSetDecide.html#M.union">union</a> s2 (<a class="idref" href="PennFSetDecide.html#M.union">union</a> s3 (<a class="idref" href="PennFSetDecide.html#M.add">add</a> y s4)))) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ (<a class="idref" href="PennFSetDecide.html#M.In">In</a> x s1 \/ <a class="idref" href="PennFSetDecide.html#M.In">In</a> x s4 \/ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> y x).<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_not_In_conj"></a>test_not_In_conj : forall x y s1 s2 s3 s4,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> x (<a class="idref" href="PennFSetDecide.html#M.union">union</a> s1 (<a class="idref" href="PennFSetDecide.html#M.union">union</a> s2 (<a class="idref" href="PennFSetDecide.html#M.union">union</a> s3 (<a class="idref" href="PennFSetDecide.html#M.add">add</a> y s4)))) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> x s1 /\ ~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> x s4 /\ ~ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> y x.<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_iff_conj"></a>test_iff_conj : forall a x s s',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="PennFSetDecide.html#M.In">In</a> a s' &lt;-&gt; <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x a \/ <a class="idref" href="PennFSetDecide.html#M.In">In</a> a s) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="PennFSetDecide.html#M.In">In</a> a s' &lt;-&gt; <a class="idref" href="PennFSetDecide.html#M.In">In</a> a (<a class="idref" href="PennFSetDecide.html#M.add">add</a> x s)).<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_set_ops_1"></a>test_set_ops_1 : forall x q r s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="PennFSetDecide.html#M.singleton">singleton</a> x) [&lt;=] s -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.Empty">Empty</a> (<a class="idref" href="PennFSetDecide.html#M.union">union</a> q r) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.Empty">Empty</a> (<a class="idref" href="PennFSetDecide.html#M.inter">inter</a> (<a class="idref" href="PennFSetDecide.html#M.diff">diff</a> s q) (<a class="idref" href="PennFSetDecide.html#M.diff">diff</a> s r)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> x s.<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.eq_chain_test"></a>eq_chain_test : forall x1 x2 x3 x4 s1 s2 s3 s4,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.Empty">Empty</a> s1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x2 (<a class="idref" href="PennFSetDecide.html#M.add">add</a> x1 s1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x3 s2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> x3 (<a class="idref" href="PennFSetDecide.html#M.remove">remove</a> x2 s2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#M.In">In</a> x4 s3 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x4 (<a class="idref" href="PennFSetDecide.html#M.add">add</a> x3 s3) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x1 s4 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.Subset">Subset</a> (<a class="idref" href="PennFSetDecide.html#M.add">add</a> x4 s4) s4.<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test_too_complex"></a>test_too_complex : forall x y z r s,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="PennFSetDecide.html#M.In">In</a> x (<a class="idref" href="PennFSetDecide.html#M.singleton">singleton</a> y) -&gt; r [&lt;=] s) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> z r -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> z s.<br/>
+</code>
+
+<div class="doc">
+<code>fsetdec</code> is not intended to solve this directly. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.function_test_1"></a>function_test_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (f : <a class="idref" href="PennFSetDecide.html#M.t">t</a> -&gt; <a class="idref" href="PennFSetDecide.html#M.t">t</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (g : <a class="idref" href="PennFSetDecide.html#M.elt">elt</a> -&gt; <a class="idref" href="PennFSetDecide.html#M.elt">elt</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (s1 s2 : <a class="idref" href="PennFSetDecide.html#M.t">t</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (x1 x2 : <a class="idref" href="PennFSetDecide.html#M.elt">elt</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.Equal">Equal</a> s1 (f s2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x1 (g (g x2)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x1 s1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> (g (g x2)) (f s2).<br/>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.function_test_2"></a>function_test_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (f : <a class="idref" href="PennFSetDecide.html#M.t">t</a> -&gt; <a class="idref" href="PennFSetDecide.html#M.t">t</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (g : <a class="idref" href="PennFSetDecide.html#M.elt">elt</a> -&gt; <a class="idref" href="PennFSetDecide.html#M.elt">elt</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (s1 s2 : <a class="idref" href="PennFSetDecide.html#M.t">t</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (x1 x2 : <a class="idref" href="PennFSetDecide.html#M.elt">elt</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.Equal">Equal</a> s1 (f s2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x1 (g x2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x1 s1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g x2 = g (g x2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> (g (g x2)) (f s2).<br/>
+</code>
+
+<div class="doc">
+<code>fsetdec</code> is not intended to solve this directly. 
+</div>
+<code>
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="WDecide.FSetDecideTestCases.test"></a>test :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (f : <a class="idref" href="PennFSetDecide.html#M.t">t</a> -&gt; <a class="idref" href="PennFSetDecide.html#M.t">t</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (s : <a class="idref" href="PennFSetDecide.html#M.t">t</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (x y : <a class="idref" href="PennFSetDecide.html#M.elt">elt</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x (<a class="idref" href="PennFSetDecide.html#M.add">add</a> y (f s)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <a class="idref" href="PennFSetDecide.html#E.eq">E.eq</a> x y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="PennFSetDecide.html#M.In">In</a> x (f s).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> <a class="idref" href="PennFSetDecide.html#FSetDecideTestCases">FSetDecideTestCases</a>.<br/>
+
+<br/>
+<span class="keyword">End</span> <a class="idref" href="PennFSetDecide.html#WDecide">WDecide</a>.<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetInterface.html#">FSetInterface</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Now comes a special version dedicated to full sets. For this 
+    one, only one argument <code>(M:S)</code> is necessary. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="Decide"></a>Decide (M : <a class="idref" href="http://coq.inria.fr/library/Coq.FSets.FSetInterface.html#">S</a>).<br/>
+&nbsp;&nbsp;<span class="keyword">Module</span> <a name="D"></a>D:=<a class="idref" href="http://coq.inria.fr/library/Coq.Logic.DecidableTypeEx.html#">OT_as_DT</a> <a class="idref" href="PennFSetDecide.html#E">M.E</a>.<br/>
+&nbsp;&nbsp;<span class="keyword">Module</span> <a name="WD"></a>WD := <a class="idref" href="PennFSetDecide.html#WDecide">WDecide</a> <a class="idref" href="PennFSetDecide.html#D">D</a> <a class="idref" href="PennFSetDecide.html#">M</a>.<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> fsetdec := WD.fsetdec.<br/>
+<span class="keyword">End</span> <a class="idref" href="PennFSetDecide.html#Decide">Decide</a>.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

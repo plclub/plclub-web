@@ -1,0 +1,12 @@
+AdditionalTactics.vo: AdditionalTactics.v
+AssocList.vo: AssocList.v AdditionalTactics.vo ListFacts.vo FSetWeakDecide.vo
+Atom.vo: Atom.v
+AtomEnv.vo: AtomEnv.v AdditionalTactics.vo ListFacts.vo FSetWeakDecide.vo AssocList.vo Atom.vo AtomSet.vo
+AtomSet.vo: AtomSet.v AdditionalTactics.vo Atom.vo FSetWeakDecide.vo FSetWeakNotin.vo ListFacts.vo
+FSetWeakDecide.vo: FSetWeakDecide.v
+FSetWeakNotin.vo: FSetWeakNotin.v
+ListFacts.vo: ListFacts.v AdditionalTactics.vo
+Metatheory.vo: Metatheory.v AdditionalTactics.vo Atom.vo AtomSet.vo AtomEnv.vo ListFacts.vo
+CoqIntro.vo: CoqIntro.v
+STLC.vo: STLC.v Metatheory.vo
+STLCsol.vo: STLCsol.v Metatheory.vo

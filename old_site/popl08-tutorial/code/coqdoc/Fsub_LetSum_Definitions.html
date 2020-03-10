@@ -1,0 +1,863 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>Fsub_LetSum_Definitions</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Fsub_LetSum_Definitions</h1>
+
+<code>
+</code>
+
+<div class="doc">
+Definition of Fsub (System F with subtyping).
+
+<br/><br/>
+    Authors: Brian Aydemir and Arthur Charguéraud, with help from
+    Aaron Bohannon, Jeffrey Vaughan, and Dimitrios Vytiniotis.
+
+<br/><br/>
+    Table of contents:
+
+<ul>
+<li> <a href="#syntax">Syntax (pre-terms)</a>
+
+</li>
+<li> <a href="#open">Opening</a>
+
+</li>
+<li> <a href="#lc">Local closure</a>
+
+</li>
+<li> <a href="#env">Environments</a>
+
+</li>
+<li> <a href="#wf">Well-formedness</a>
+
+</li>
+<li> <a href="#sub">Subtyping</a>
+
+</li>
+<li> <a href="#typing_doc">Typing</a>
+
+</li>
+<li> <a href="#values">Values</a>
+
+</li>
+<li> <a href="#reduction">Reduction</a>
+
+</li>
+<li> <a href="#auto">Automation</a>
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Export</span> <a class="modref" href="Metatheory.html">Metatheory</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab251"></a><h1 class="section"><a name="syntax"></a> Syntax (pre-terms)</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We use a locally nameless representation for Fsub, where bound
+    variables are represented as natural numbers (de Bruijn indices)
+    and free variables are represented as <code>atom</code>s.  The type <code>atom</code>,
+    defined in the <code>Atom</code> library, represents names: there are
+    infinitely many atoms, equality is decidable on atoms, and it is
+    possible to generate an atom fresh for any given finite set of
+    atoms.
+
+<br/><br/>
+    We say that the definitions below define pre-types (<code>typ</code>) and
+    pre-expressions (<code>exp</code>), collectively pre-terms, since the
+    datatypes admit terms, such as <code>(typ_all typ_top (typ_bvar 3))</code>,
+    where indices are unbound.  A term is locally closed when it
+    contains no unbound indices.
+
+<br/><br/>
+    Note that indices for bound type variables are distinct from
+    indices for bound expression variables.  We make this explicit in
+    the definitions below of the opening operations. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="typ"></a>typ : <span class="keyword">Set</span> :=<br/>
+&nbsp;&nbsp;| <a name="typ_top"></a>typ_top : typ<br/>
+&nbsp;&nbsp;| <a name="typ_bvar"></a>typ_bvar : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a> -&gt; typ<br/>
+&nbsp;&nbsp;| <a name="typ_fvar"></a>typ_fvar : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a> -&gt; typ<br/>
+&nbsp;&nbsp;| <a name="typ_arrow"></a>typ_arrow : typ -&gt; typ -&gt; typ<br/>
+&nbsp;&nbsp;| <a name="typ_all"></a>typ_all : typ -&gt; typ -&gt; typ<br/>
+&nbsp;&nbsp;| <a name="typ_sum"></a>typ_sum : typ -&gt; typ -&gt; typ<br/>
+.<br/>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="exp"></a>exp : <span class="keyword">Set</span> :=<br/>
+&nbsp;&nbsp;| <a name="exp_bvar"></a>exp_bvar : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a> -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="exp_fvar"></a>exp_fvar : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a> -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="exp_abs"></a>exp_abs : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; exp -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="exp_app"></a>exp_app : exp -&gt; exp -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="exp_tabs"></a>exp_tabs : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; exp -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="exp_tapp"></a>exp_tapp : exp -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="exp_let"></a>exp_let : exp -&gt; exp -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="exp_inl"></a>exp_inl : exp -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="exp_inr"></a>exp_inr : exp -&gt; exp<br/>
+&nbsp;&nbsp;| <a name="exp_case"></a>exp_case : exp -&gt; exp -&gt; exp -&gt; exp<br/>
+.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We declare the constructors for indices and variables to be
+    coercions.  For example, if Coq sees a <code>nat</code> where it expects an
+    <code>exp</code>, it will implicitly insert an application of <code>exp_bvar</code>;
+    similar behavior happens for <code>atom</code>s.  Thus, we may write
+    <code>(exp_abs typ_top (exp_app 0 x))</code> instead of <code>(exp_abs typ_top
+    (exp_app (exp_bvar 0) (exp_fvar x)))</code>. 
+</div>
+<code>
+
+<br/>
+Coercion typ_bvar : nat &gt;-&gt; typ.<br/>
+Coercion typ_fvar : atom &gt;-&gt; typ.<br/>
+Coercion exp_bvar : nat &gt;-&gt; exp.<br/>
+Coercion exp_fvar : atom &gt;-&gt; exp.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab252"></a><h1 class="section"><a name="open"></a> Opening terms</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Opening replaces an index with a term.  This operation is required
+    if we wish to work only with locally closed terms when going under
+    binders (e.g., the typing rule for <code>exp_abs</code>).  It also
+    corresponds to informal substitution for a bound variable, which
+    occurs in the rule for beta reduction.
+
+<br/><br/>
+    We need to define three functions for opening due the syntax of
+    Fsub, and we name them according to the following convention.
+
+<ul>
+<li> <code>tt</code>: Denotes an operation involving types appearing in types.
+
+</li>
+<li> <code>te</code>: Denotes an operation involving types appearing in
+        expressions.
+
+</li>
+<li> <code>ee</code>: Denotes an operation involving expressions appearing in
+        expressions.
+
+</li>
+</ul>
+
+<br/><br/>
+    The notation used below for decidable equality on atoms and
+    natural numbers (e.g., <code>K === J</code>) is defined in the <code>Metatheory</code>
+    library.  The order of arguments to each "open" function is the
+    same.  For example, <code>(open_tt_rec K U T)</code> can be read as
+    "substitute <code>U</code> for index <code>K</code> in <code>T</code>."
+
+<br/><br/>
+    Note that we assume that <code>U</code> is locally closed (and similarly for
+    the other opening functions).  This assumption simplifies the
+    implementations of opening by letting us avoid shifting.  Since
+    bound variables are indices, there is no need to rename variables
+    to avoid capture.  Finally, we assume that these functions are
+    initially called with index zero and that zero is the only unbound
+    index in the term.  This eliminates the need to possibly subtract
+    one in the case of indices. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="open_tt_rec"></a>open_tt_rec (K : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a>) (U : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>) (T : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>)  {struct T} : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> T <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_top">typ_top</a> =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_top">typ_top</a><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_bvar">typ_bvar</a> J =&gt; <span class="keyword">if</span> K === J <span class="keyword">then</span> U <span class="keyword">else</span> (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_bvar">typ_bvar</a> J)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> T1 T2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> (open_tt_rec K U T1) (open_tt_rec K U T2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> T1 T2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> (open_tt_rec K U T1) (open_tt_rec (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> K) U T2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> T1 T2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> (open_tt_rec K U T1) (open_tt_rec K U T2)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="open_te_rec"></a>open_te_rec (K : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a>) (U : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>) (e : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a>) {struct e} : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> e <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> V e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a>  (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> K U V)  (open_te_rec K U e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a>  (open_te_rec K U e1) (open_te_rec K U e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> V e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> K U V)  (open_te_rec (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> K) U e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1 V =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> (open_te_rec K U e1) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> K U V)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> (open_te_rec K U e1) (open_te_rec K U e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> (open_te_rec K U e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> (open_te_rec K U e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3 =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> (open_te_rec K U e1) (open_te_rec K U e2) (open_te_rec K U e3)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="open_ee_rec"></a>open_ee_rec (k : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a>) (f : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a>) (e : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a>)  {struct e} : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> e <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i =&gt; <span class="keyword">if</span> k === i <span class="keyword">then</span> f <span class="keyword">else</span> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_bvar">exp_bvar</a> i)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> V e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> V (open_ee_rec (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> k) f e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> (open_ee_rec k f e1) (open_ee_rec k f e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> V e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> V (open_ee_rec k f e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1 V =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> (open_ee_rec k f e1) V<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> (open_ee_rec k f e1) (open_ee_rec (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> k) f e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> (open_ee_rec k f e1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e2 =&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> (open_ee_rec k f e2)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3 =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> (open_ee_rec k f e1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(open_ee_rec (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> k) f e2)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(open_ee_rec (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> k) f e3)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Many common applications of opening replace index zero with an
+    expression or variable.  The following definitions provide
+    convenient shorthands for such uses.  Note that the order of
+    arguments is switched relative to the definitions above.  For
+    example, <code>(open_tt T X)</code> can be read as "substitute the variable
+    <code>X</code> for index <code>0</code> in <code>T</code>" and "open <code>T</code> with the variable <code>X</code>."
+    Recall that the coercions above let us write <code>X</code> in place of
+    <code>(typ_fvar X)</code>, assuming that <code>X</code> is an <code>atom</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="open_tt"></a>open_tt T U := <a class="idref" href="Fsub_LetSum_Definitions.html#open_tt_rec">open_tt_rec</a> 0 U T.<br/>
+<span class="keyword">Definition</span> <a name="open_te"></a>open_te e U := <a class="idref" href="Fsub_LetSum_Definitions.html#open_te_rec">open_te_rec</a> 0 U e.<br/>
+<span class="keyword">Definition</span> <a name="open_ee"></a>open_ee e1 e2 := <a class="idref" href="Fsub_LetSum_Definitions.html#open_ee_rec">open_ee_rec</a> 0 e2 e1.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab253"></a><h1 class="section"><a name="lc"></a> Local closure</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Recall that <code>typ</code> and <code>exp</code> define pre-terms; these datatypes
+    admit terms that contain unbound indices.  A term is locally
+    closed, or syntactically well-formed, when no indices appearing in
+    it are unbound.  The proposition <code>(type T)</code> holds when a type <code>T</code>
+    is locally closed, and <code>(expr e)</code> holds when an expression <code>e</code> is
+    locally closed.
+
+<br/><br/>
+    The inductive definitions below formalize local closure such that
+    the resulting induction principles serve as structural induction
+    principles over (locally closed) types and (locally closed)
+    expressions.  In particular, unlike the situation with pre-terms,
+    there are no cases for indices.  Thus, these induction principles
+    correspond more closely to informal practice than the ones arising
+    from the definitions of pre-terms.
+
+<br/><br/>
+    The interesting cases in the inductive definitions below are those
+    that involve binding constructs, e.g., <code>typ_all</code>.  Intuitively, to
+    check if the pre-term <code>(typ_all T1 T2)</code> is locally closed we much
+    check that <code>T1</code> is locally closed, and that <code>T2</code> is locally closed
+    when opened with a variable.  However, there is a choice as to how
+    many variables to quantify over.  One possibility is to quantify
+    over only one variable ("existential" quantification), as in
+<pre>
+  type_all : forall X T1 T2,
+      type T1 -&gt;
+      type (open_tt T2 X) -&gt;
+      type (typ_all T1 T2)
+</pre>
+  or we could quantify over as many variables as possible ("universal"
+    quantification), as in
+<pre>
+  type_all : forall T1 T2,
+      type T1 -&gt;
+      (forall X : atom, type (open_tt T2 X)) -&gt;
+      type (typ_all T1 T2)
+</pre>
+  It is possible to show that the resulting relations are equivalent.
+    The former makes it easy to build derivations, while the latter
+    provides a strong induction principle.  McKinna and Pollack used
+    both forms of this relation in their work on formalizing Pure Type
+    Systems.
+
+<br/><br/>
+    We take a different approach here and use "cofinite
+    quantification": we quantify over all but finitely many variables.
+    This approach provides a convenient middle ground: we can build
+    derivations reasonably easily and get reasonably strong induction
+    principles.  With some work, one can show that the definitions
+    below are equivalent to ones that use existential, and hence also
+    universal, quantification. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="type"></a>type : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="type_top"></a>type_top :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type <a class="idref" href="Fsub_LetSum_Definitions.html#typ_top">typ_top</a><br/>
+&nbsp;&nbsp;| <a name="type_var"></a>type_var : forall X,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X)<br/>
+&nbsp;&nbsp;| <a name="type_arrow"></a>type_arrow : forall T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type T2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> T1 T2)<br/>
+&nbsp;&nbsp;| <a name="type_all"></a>type_all : forall L T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall X : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, X `notin` L -&gt; type (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> T2 X)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> T1 T2)<br/>
+&nbsp;&nbsp;| <a name="type_sum"></a>type_sum : forall T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type T2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> T1 T2)<br/>
+.<br/>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="expr"></a>expr : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="expr_var"></a>expr_var : forall x,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x)<br/>
+&nbsp;&nbsp;| <a name="expr_abs"></a>expr_abs : forall L T e1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> T -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt; expr (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e1 x)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> T e1)<br/>
+&nbsp;&nbsp;| <a name="expr_app"></a>expr_app : forall e1 e2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2)<br/>
+&nbsp;&nbsp;| <a name="expr_tabs"></a>expr_tabs : forall L T e1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> T -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall X : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, X `notin` L -&gt; expr (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> e1 X)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> T e1)<br/>
+&nbsp;&nbsp;| <a name="expr_tapp"></a>expr_tapp : forall e1 V,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> V -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1 V)<br/>
+&nbsp;&nbsp;| <a name="expr_let"></a>expr_let : forall L e1 e2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt; expr (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e2 x)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2)<br/>
+&nbsp;&nbsp;| <a name="expr_inl"></a>expr_inl : forall e1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1)<br/>
+&nbsp;&nbsp;| <a name="expr_inr"></a>expr_inr : forall e1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e1)<br/>
+&nbsp;&nbsp;| <a name="expr_case"></a>expr_case : forall L e1 e2 e3,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt; expr (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e2 x)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt; expr (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e3 x)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expr (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3)<br/>
+.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="body_e_doc"></a> We also define what it means to be the
+    body of an abstraction, since this simplifies slightly the
+    definition of reduction and subsequent proofs.  It is not strictly
+    necessary to make this definition in order to complete the
+    development. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="body_e"></a>body_e (e : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a>) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> L, forall x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e x).<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab254"></a><h1 class="section"><a name="env"></a> Environments</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+In our presentation of System F with subtyping, we use a single
+    environment for both typing and subtyping assumptions.  We
+    formalize environments by representing them as association lists
+    (lists of pairs of keys and values) whose keys are atoms.
+
+<br/><br/>
+    The <code>Metatheory</code> and <code>Environment</code> libraries provide functions,
+    predicates, tactics, notations and lemmas that simplify working
+    with environments.  The <code>Environment</code> library treats environments
+    as lists of type <code>list (atom * A)</code>.
+
+<br/><br/>
+    Since environments map <code>atom</code>s, the type <code>A</code> should encode whether
+    a particular binding is a typing or subtyping assumption.  Thus,
+    we instantiate <code>A</code> with the type <code>binding</code>, defined below. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="binding"></a>binding : <span class="keyword">Set</span> :=<br/>
+&nbsp;&nbsp;| <a name="bind_sub"></a>bind_sub : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; binding<br/>
+&nbsp;&nbsp;| <a name="bind_typ"></a>bind_typ : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; binding.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+A binding <code>(X, bind_sub T)</code> records that a type variable <code>X</code> is a
+    subtype of <code>T</code>, and a binding <code>(x, bind_typ U)</code> records that an
+    expression variable <code>x</code> has type <code>U</code>.
+
+<br/><br/>
+    We define an abbreviation <code>env</code> for the type of environments, and
+    an abbreviation <code>empty</code> for the empty environment.
+
+<br/><br/>
+    Note: Each instance of <code><span class="keyword">Notation</span></code> below defines an abbreviation
+    since the left-hand side consists of a single identifier that is
+    not in quotes.  These abbreviations are used for both parsing (the
+    left-hand side is equivalent to the right-hand side in all
+    contexts) and printing (the right-hand side is pretty-printed as
+    the left-hand side).  Since <code>nil</code> is normally a polymorphic
+    constructor whose type argument is implicit, we prefix the name
+    with "<code>@</code>" to signal to Coq that we are going to supply arguments
+    to <code>nil</code> explicitly. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> env := (<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * <a class="idref" href="Fsub_LetSum_Definitions.html#binding">binding</a>)).<br/>
+<span class="keyword">Notation</span> empty := (@<a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a> (<a class="idref" href="Atom.html#AtomImpl.atom">atom</a> * <a class="idref" href="Fsub_LetSum_Definitions.html#binding">binding</a>)).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We also define a notation that makes it convenient to write one
+    element lists.  This notation is useful because of our convention
+    for building environments; see the examples below. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> "[ x ]" := (x :: <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<b>Examples:</b> We use a convention where environments are
+    never built using a cons operation <code>((x, a) :: E)</code> where <code>E</code> is
+    non-<code>nil</code>.  This makes the shape of environments more uniform and
+    saves us from excessive fiddling with the shapes of environments.
+    For example, Coq's tactics sometimes distinguish between consing
+    on a new binding and prepending a one element list, even though
+    the two operations are convertible with each other.
+
+<br/><br/>
+    Consider the following environments written in informal notation.
+<pre>
+  1. (empty environment)
+  2. x : T
+  3. x : T, Y &lt;: S
+  4. E, x : T, F
+</pre>
+  In the third example, we have an environment that binds an
+    expression variable <code>x</code> to <code>T</code> and a type variable <code>Y</code> to <code>S</code>.
+    In Coq, we would write these environments as follows.
+<pre>
+  1. empty
+  2. [(x, bind_typ T)]
+  3. [(Y, bind_sub S)] ++ [(x, bind_typ T)]
+  4. F ++ [(x, bind_typ T)] ++ E
+</pre>
+ The symbol "<code>++</code>" denotes list concatenation and associates to the
+    right.  (That notation is defined in Coq's <code>List</code> library.)  Note
+    that in Coq, environments grow on the left, since that is where
+    the head of a list is. 
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab255"></a><h1 class="section"><a name="wf"></a> Well-formedness</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+A type <code>T</code> is well-formed with respect to an environment <code>E</code>,
+    denoted <code>(wf_typ E T)</code>, when <code>T</code> is locally-closed and its free
+    variables are bound in <code>E</code>.  We need this relation in order to
+    restrict the subtyping and typing relations, defined below, to
+    contain only well-formed types.  (This relation is missing in the
+    original statement of the POPLmark Challenge.)
+
+<br/><br/>
+    Note: It is tempting to define the premise of <code>wf_typ_var</code> as <code>(X
+    `<span class="keyword">in</span>` dom E)</code>, since that makes the rule easier to apply (no need
+    to guess an instantiation for <code>U</code>).  Unfortunately, this is
+    incorrect.  We need to check that <code>X</code> is bound as a type-variable,
+    not an expression-variable; <code>(dom E)</code> does not distinguish between
+    the two kinds of bindings. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="wf_typ"></a>wf_typ : env -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="wf_typ_top"></a>wf_typ_top : forall E,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E <a class="idref" href="Fsub_LetSum_Definitions.html#typ_top">typ_top</a><br/>
+&nbsp;&nbsp;| <a name="wf_typ_var"></a>wf_typ_var : forall U E (X : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> X (<a class="idref" href="Fsub_LetSum_Definitions.html#bind_sub">bind_sub</a> U) E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X)<br/>
+&nbsp;&nbsp;| <a name="wf_typ_arrow"></a>wf_typ_arrow : forall E T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E T2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> T1 T2)<br/>
+&nbsp;&nbsp;| <a name="wf_typ_all"></a>wf_typ_all : forall L E T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall X : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, X `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ ([(X, <a class="idref" href="Fsub_LetSum_Definitions.html#bind_sub">bind_sub</a> T1)] ++ E) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> T2 X)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> T1 T2)<br/>
+&nbsp;&nbsp;| <a name="wf_typ_sum"></a>wf_typ_sum : forall E T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E T2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_typ E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> T1 T2)<br/>
+.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+An environment E is well-formed, denoted <code>(wf_env E)</code>, if each
+    atom is bound at most at once and if each binding is to a
+    well-formed type.  This is a stronger relation than the <code>ok</code>
+    relation defined in the <code>Environment</code> library.  We need this
+    relation in order to restrict the subtyping and typing relations,
+    defined below, to contain only well-formed environments.  (This
+    relation is missing in the original statement of the POPLmark
+    Challenge.)  
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="wf_env"></a>wf_env : env -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="wf_env_empty"></a>wf_env_empty :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_env empty<br/>
+&nbsp;&nbsp;| <a name="wf_env_sub"></a>wf_env_sub : forall (E : env) (X : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (T : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_env E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#wf_typ">wf_typ</a> E T -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X `notin` <a class="idref" href="Environment.html#dom">dom</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_env ([(X, <a class="idref" href="Fsub_LetSum_Definitions.html#bind_sub">bind_sub</a> T)] ++ E)<br/>
+&nbsp;&nbsp;| <a name="wf_env_typ"></a>wf_env_typ : forall (E : env) (x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (T : <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_env E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#wf_typ">wf_typ</a> E T -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` <a class="idref" href="Environment.html#dom">dom</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wf_env ([(x, <a class="idref" href="Fsub_LetSum_Definitions.html#bind_typ">bind_typ</a> T)] ++ E).<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab256"></a><h1 class="section"><a name="sub"></a> Subtyping</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The definition of subtyping is straightforward.  It uses the
+    <code>binds</code> relation from the <code>Environment</code> library (in the
+    <code>sub_trans_tvar</code> case) and cofinite quantification (in the
+    <code>sub_all</code> case). 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="sub"></a>sub : env -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="sub_top"></a>sub_top : forall E S,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#wf_env">wf_env</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#wf_typ">wf_typ</a> E S -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E S <a class="idref" href="Fsub_LetSum_Definitions.html#typ_top">typ_top</a><br/>
+&nbsp;&nbsp;| <a name="sub_refl_tvar"></a>sub_refl_tvar : forall E X,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#wf_env">wf_env</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#wf_typ">wf_typ</a> E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X) (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X)<br/>
+&nbsp;&nbsp;| <a name="sub_trans_tvar"></a>sub_trans_tvar : forall U E T X,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> X (<a class="idref" href="Fsub_LetSum_Definitions.html#bind_sub">bind_sub</a> U) E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E U T -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_fvar">typ_fvar</a> X) T<br/>
+&nbsp;&nbsp;| <a name="sub_arrow"></a>sub_arrow : forall E S1 S2 T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E T1 S1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E S2 T2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> S1 S2) (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> T1 T2)<br/>
+&nbsp;&nbsp;| <a name="sub_all"></a>sub_all : forall L E S1 S2 T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E T1 S1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall X : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, X `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub ([(X, <a class="idref" href="Fsub_LetSum_Definitions.html#bind_sub">bind_sub</a> T1)] ++ E) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> S2 X) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> T2 X)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> S1 S2) (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> T1 T2)<br/>
+&nbsp;&nbsp;| <a name="sub_sum"></a>sub_sum : forall E S1 S2 T1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E S1 T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E S2 T2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sub E (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> S1 S2) (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> T1 T2)<br/>
+.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab257"></a><h1 class="section"><a name="typing_doc"></a> Typing</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The definition of typing is straightforward.  It uses the <code>binds</code>
+    relation from the <code>Environment</code> library (in the <code>typing_var</code> case)
+    and cofinite quantification in the cases involving binders (e.g.,
+    <code>typing_abs</code> and <code>typing_tabs</code>). 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="typing"></a>typing : env -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#typ">typ</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="typing_var"></a>typing_var : forall E x T,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#wf_env">wf_env</a> E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Environment.html#binds">binds</a> x (<a class="idref" href="Fsub_LetSum_Definitions.html#bind_typ">bind_typ</a> T) E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_fvar">exp_fvar</a> x) T<br/>
+&nbsp;&nbsp;| <a name="typing_abs"></a>typing_abs : forall L E V e1 T1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing ([(x, <a class="idref" href="Fsub_LetSum_Definitions.html#bind_typ">bind_typ</a> V)] ++ E) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e1 x) T1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> V e1) (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> V T1)<br/>
+&nbsp;&nbsp;| <a name="typing_app"></a>typing_app : forall T1 E e1 e2 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e1 (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_arrow">typ_arrow</a> T1 T2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e2 T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2) T2<br/>
+&nbsp;&nbsp;| <a name="typing_tabs"></a>typing_tabs : forall L E V e1 T1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall X : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, X `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing ([(X, <a class="idref" href="Fsub_LetSum_Definitions.html#bind_sub">bind_sub</a> V)] ++ E) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> e1 X) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> T1 X)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> V e1) (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> V T1)<br/>
+&nbsp;&nbsp;| <a name="typing_tapp"></a>typing_tapp : forall T1 E e1 T T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e1 (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_all">typ_all</a> T1 T2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#sub">sub</a> E T T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1 T) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_tt">open_tt</a> T2 T)<br/>
+&nbsp;&nbsp;| <a name="typing_sub"></a>typing_sub : forall S E e T,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e S -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#sub">sub</a> E S T -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e T<br/>
+&nbsp;&nbsp;| <a name="typing_let"></a>typing_let : forall L T1 T2 e1 e2 E,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e1 T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x, x `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing ([(x, <a class="idref" href="Fsub_LetSum_Definitions.html#bind_typ">bind_typ</a> T1)] ++ E) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e2 x) T2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2) T2<br/>
+&nbsp;&nbsp;| <a name="typing_inl"></a>typing_inl : forall T1 T2 e1 E,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e1 T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#wf_typ">wf_typ</a> E T2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1) (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> T1 T2)<br/>
+&nbsp;&nbsp;| <a name="typing_inr"></a>typing_inr : forall T1 T2 e1 E,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e1 T2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#wf_typ">wf_typ</a> E T1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e1) (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> T1 T2)<br/>
+&nbsp;&nbsp;| <a name="typing_case"></a>typing_case : forall L T1 T2 T e1 e2 e3 E,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E e1 (<a class="idref" href="Fsub_LetSum_Definitions.html#typ_sum">typ_sum</a> T1 T2) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing ([(x, <a class="idref" href="Fsub_LetSum_Definitions.html#bind_typ">bind_typ</a> T1)] ++ E) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e2 x) T) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>, x `notin` L -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing ([(x, <a class="idref" href="Fsub_LetSum_Definitions.html#bind_typ">bind_typ</a> T2)] ++ E) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e3 x) T) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typing E (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3) T<br/>
+.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab258"></a><h1 class="section"><a name="values"></a> Values</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="value"></a>value : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="value_abs"></a>value_abs : forall T e1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> T e1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;value (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> T e1)<br/>
+&nbsp;&nbsp;| <a name="value_tabs"></a>value_tabs : forall T e1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> T e1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;value (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> T e1)<br/>
+&nbsp;&nbsp;| <a name="value_inl"></a>value_inl : forall e1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;value e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;value (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1)<br/>
+&nbsp;&nbsp;| <a name="value_inr"></a>value_inr : forall e1,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;value e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;value (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e1)<br/>
+.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab259"></a><h1 class="section"><a name="reduction"></a> Reduction</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="red"></a>red : <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> -&gt; <a class="idref" href="Fsub_LetSum_Definitions.html#exp">exp</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="red_app_1"></a>red_app_1 : forall e1 e1' e2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red e1 e1' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2) (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1' e2)<br/>
+&nbsp;&nbsp;| <a name="red_app_2"></a>red_app_2 : forall e1 e2 e2',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#value">value</a> e1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red e2 e2' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2) (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> e1 e2')<br/>
+&nbsp;&nbsp;| <a name="red_tapp"></a>red_tapp : forall e1 e1' V,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> V -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red e1 e1' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1 V) (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> e1' V)<br/>
+&nbsp;&nbsp;| <a name="red_abs"></a>red_abs : forall T e1 v2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> T e1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#value">value</a> v2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_app">exp_app</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_abs">exp_abs</a> T e1) v2) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e1 v2)<br/>
+&nbsp;&nbsp;| <a name="red_tabs"></a>red_tabs : forall T1 e1 T2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#expr">expr</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> T1 e1) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#type">type</a> T2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tapp">exp_tapp</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_tabs">exp_tabs</a> T1 e1) T2) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_te">open_te</a> e1 T2)<br/>
+&nbsp;&nbsp;| <a name="red_let_1"></a>red_let_1 : forall e1 e1' e2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red e1 e1' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1 e2) (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> e1' e2)<br/>
+&nbsp;&nbsp;| <a name="red_let"></a>red_let : forall v1 e2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#value">value</a> v1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_let">exp_let</a> v1 e2) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e2 v1)<br/>
+&nbsp;&nbsp;| <a name="red_inl_1"></a>red_inl_1 : forall e1 e1',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red e1 e1' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1) (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> e1')<br/>
+&nbsp;&nbsp;| <a name="red_inr_1"></a>red_inr_1 : forall e1 e1',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red e1 e1' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e1) (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> e1')<br/>
+&nbsp;&nbsp;| <a name="red_case_1"></a>red_case_1 : forall e1 e1' e2 e3,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red e1 e1' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e3 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1 e2 e3) (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> e1' e2 e3)<br/>
+&nbsp;&nbsp;| <a name="red_case_inl"></a>red_case_inl : forall v1 e2 e3,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#value">value</a> v1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e3 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inl">exp_inl</a> v1) e2 e3) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e2 v1)<br/>
+&nbsp;&nbsp;| <a name="red_case_inr"></a>red_case_inr : forall v1 e2 e3,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#value">value</a> v1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Fsub_LetSum_Definitions.html#body_e">body_e</a> e3 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;red (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_case">exp_case</a> (<a class="idref" href="Fsub_LetSum_Definitions.html#exp_inr">exp_inr</a> v1) e2 e3) (<a class="idref" href="Fsub_LetSum_Definitions.html#open_ee">open_ee</a> e3 v1)<br/>
+.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab260"></a><h1 class="section"><a name="auto"></a> Automation</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We declare most constructors as <code><span class="keyword">Hint</span></code>s to be used by the <code>auto</code>
+    and <code>eauto</code> tactics.  We exclude constructors from the subtyping
+    and typing relations that use cofinite quantification.  It is
+    unlikely that <code>eauto</code> will find an instantiation for the finite
+    set <code>L</code>, and in those cases, <code>eauto</code> can take some time to fail.
+    (A priori, this is not obvious.  In practice, one adds as hints
+    all constructors and then later removes some constructors when
+    they cause proof search to take too long.) 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Constructors type expr wf_typ wf_env value red.<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_LetSum_Definitions.html#sub_top">sub_top</a> <a class="idref" href="Fsub_LetSum_Definitions.html#sub_refl_tvar">sub_refl_tvar</a> <a class="idref" href="Fsub_LetSum_Definitions.html#sub_arrow">sub_arrow</a>.<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_LetSum_Definitions.html#sub_sum">sub_sum</a> <a class="idref" href="Fsub_LetSum_Definitions.html#typing_inl">typing_inl</a> <a class="idref" href="Fsub_LetSum_Definitions.html#typing_inr">typing_inr</a>.<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_LetSum_Definitions.html#typing_var">typing_var</a> <a class="idref" href="Fsub_LetSum_Definitions.html#typing_app">typing_app</a> <a class="idref" href="Fsub_LetSum_Definitions.html#typing_tapp">typing_tapp</a> <a class="idref" href="Fsub_LetSum_Definitions.html#typing_sub">typing_sub</a>.<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="Fsub_LetSum_Definitions.html#typing_inl">typing_inl</a> <a class="idref" href="Fsub_LetSum_Definitions.html#typing_inr">typing_inr</a>.<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

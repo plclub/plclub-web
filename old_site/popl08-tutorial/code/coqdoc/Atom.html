@@ -1,0 +1,440 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>Atom</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Atom</h1>
+
+<code>
+</code>
+
+<div class="doc">
+Support for atoms, i.e., objects with decidable equality.  We
+    provide here the ability to generate an atom fresh for any finite
+    collection, e.g., the lemma <code>atom_fresh_for_set</code>, and a tactic to
+    pick an atom fresh for the current proof context.
+
+<br/><br/>
+    Authors: Arthur Charguéraud and Brian Aydemir.
+
+<br/><br/>
+    Implementation note: In older versions of Coq, <code>OrderedTypeEx</code>
+    redefines decimal constants to be integers and not natural
+    numbers.  The following scope declaration is intended to address
+    this issue.  In newer versions of Coq, the declaration should be
+    benign. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> List.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Max.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> OrderedType.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> OrderedTypeEx.<br/>
+<span class="keyword">Open</span> <span class="keyword">Scope</span> nat_scope.<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="FiniteSets.html">FiniteSets</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="FSetDecide.html">FSetDecide</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="FSetNotin.html">FSetNotin</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="ListFacts.html">ListFacts</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab6"></a><h1 class="section">Definition</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Atoms are structureless objects such that we can always generate
+    one fresh from a finite collection.  Equality on atoms is <code>eq</code> and
+    decidable.  We use Coq's module system to make abstract the
+    implementation of atoms.  The <code><span class="keyword">Export</span> AtomImpl</code> line below allows
+    us to refer to the type <code>atom</code> and its properties without having
+    to qualify everything with "<code>AtomImpl.</code>". 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <span class="keyword">Type</span> <a name="ATOM"></a>ATOM.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Parameter</span> <a name="atom"></a>atom : <span class="keyword">Set</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Parameter</span> <a name="atom_fresh_for_list"></a>atom_fresh_for_list :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;forall (xs : <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a> <a class="idref" href="Atom.html#ATOM.atom">atom</a>), {x : <a class="idref" href="Atom.html#ATOM.atom">atom</a> | ~ <a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">List.In</a> x xs}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Declare Module</span> <a name="Atom_as_OT"></a>Atom_as_OT : UsualOrderedType <span class="keyword">with</span> <span class="keyword">Definition</span> <a name="ATOM.Atom_as_OT.t"></a>t := <a class="idref" href="Atom.html#ATOM.atom">atom</a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Parameter</span> <a name="eq_atom_dec"></a>eq_atom_dec : forall x y : <a class="idref" href="Atom.html#ATOM.atom">atom</a>, {x = y} + {x &lt;&gt; y}.<br/>
+
+<br/>
+<span class="keyword">End</span> ATOM.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The implementation of the above interface is hidden for
+    documentation purposes. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="AtomImpl"></a>AtomImpl : ATOM.<br/>
+
+<br/>
+
+<br/>
+<span class="keyword">End</span> AtomImpl.<br/>
+
+<br/>
+<span class="keyword">Export</span> AtomImpl.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab7"></a><h1 class="section">Finite sets of atoms</h1>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab8"></a><h2 class="section">Definitions</h2>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="AtomSet"></a>AtomSet : FiniteSets.S <span class="keyword">with</span> <span class="keyword">Module</span> E := Atom_as_OT :=<br/>
+&nbsp;&nbsp;FiniteSets.Make Atom_as_OT.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The type <code>atoms</code> is the type of finite sets of <code>atom</code>s. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> atoms := <a class="idref" href="Atom.html#AtomSet.F.t">AtomSet.F.t</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Basic operations on finite sets of atoms are available, in the
+    remainder of this file, without qualification.  We use <code><span class="keyword">Import</span></code>
+    instead of <code><span class="keyword">Export</span></code> in order to avoid unnecessary namespace
+    pollution. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Import</span> AtomSet.F.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We instantiate two modules which provide useful lemmas and tactics
+    work working with finite sets of atoms. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> AtomSetDecide := FSetDecide.Decide AtomSet.F.<br/>
+<span class="keyword">Module</span> AtomSetNotin  := FSetNotin.Notin   AtomSet.F.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab9"></a><h2 class="section">Tactics for working with finite sets of atoms</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>fsetdec</code> is a general purpose decision procedure
+    for solving facts about finite sets of atoms. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> fsetdec := try apply <a class="idref" href="Atom.html#AtomSet.eq_if_Equal">AtomSet.eq_if_Equal</a>; AtomSetDecide.fsetdec.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>notin_simpl</code> simplifies all hypotheses of the form <code>(~
+    In x F)</code>, where <code>F</code> is constructed from the empty set, singleton
+    sets, and unions. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> notin_simpl := AtomSetNotin.notin_simpl_hyps.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>notin_solve</code>, solves goals of the form <code>(~ In x F)</code>,
+    where <code>F</code> is constructed from the empty set, singleton sets, and
+    unions.  The goal must be provable from hypothesis of the form
+    simplified by <code>notin_simpl</code>. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> notin_solve := AtomSetNotin.notin_solve.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab10"></a><h2 class="section">Lemmas for working with finite sets of atoms</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We make some lemmas about finite sets of atoms available without
+    qualification by using abbreviations. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Notation</span> eq_if_Equal        := <a class="idref" href="Atom.html#AtomSet.eq_if_Equal">AtomSet.eq_if_Equal</a>.<br/>
+<span class="keyword">Notation</span> notin_empty        := <a class="idref" href="Atom.html#AtomSetNotin.notin_empty">AtomSetNotin.notin_empty</a>.<br/>
+<span class="keyword">Notation</span> notin_singleton    := <a class="idref" href="Atom.html#AtomSetNotin.notin_singleton">AtomSetNotin.notin_singleton</a>.<br/>
+<span class="keyword">Notation</span> notin_singleton_rw := <a class="idref" href="Atom.html#AtomSetNotin.notin_singleton_rw">AtomSetNotin.notin_singleton_rw</a>.<br/>
+<span class="keyword">Notation</span> notin_union        := <a class="idref" href="Atom.html#AtomSetNotin.notin_union">AtomSetNotin.notin_union</a>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab11"></a><h1 class="section">Additional properties</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+One can generate an atom fresh for a given finite set of atoms. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="ATOM.Atom_as_OT.AtomSet.atom_fresh_for_set"></a>atom_fresh_for_set : forall L : atoms, { x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a> | ~ <a class="idref" href="Atom.html#AtomSet.F.In">In</a> x L }.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros L. destruct (<a class="idref" href="Atom.html#AtomImpl.atom_fresh_for_list">atom_fresh_for_list</a> (<a class="idref" href="Atom.html#AtomSet.F.elements">elements</a> L)) <span class="keyword">as</span> [a H].<br/>
+&nbsp;&nbsp;exists a. intros J. contradiction H.<br/>
+&nbsp;&nbsp;rewrite &lt;- <a class="idref" href="ListFacts.html#InA_iff_In">InA_iff_In</a>. auto <span class="keyword">using</span> <a class="idref" href="Atom.html#AtomSet.F.elements_1">elements_1</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab12"></a><h1 class="section">Additional tactics</h1>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab13"></a><h2 class="section"><a name="pick_fresh"></a> Picking a fresh atom</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We define three tactics which, when combined, provide a simple
+    mechanism for picking a fresh atom.  We demonstrate their use
+    below with an example, the <code>example_pick_fresh</code> tactic.
+
+<br/><br/>
+   <code>(gather_atoms_with F)</code> returns the union of <code>(F x)</code>, where <code>x</code>
+   ranges over all objects in the context such that <code>(F x)</code> is
+   well typed.  The return type of <code>F</code> should be <code>atoms</code>.  The
+   complexity of this tactic is due to the fact that there is no
+   support in <code><span class="keyword">Ltac</span></code> for folding a function over the context. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> gather_atoms_with F :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> rec gather V :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| H: ?S |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> FH := constr:(F H) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> V <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Atom.html#AtomSet.F.empty">empty</a> =&gt; gather FH<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| context [FH] =&gt; fail 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; gather (<a class="idref" href="Atom.html#AtomSet.F.union">union</a> FH V)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; V<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span> <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> L := gather empty <span class="keyword">in</span> eval simpl <span class="keyword">in</span> L.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<code>(beautify_fset V)</code> takes a set <code>V</code> built as a union of finite
+    sets and returns the same set with empty sets removed and union
+    operations associated to the right.  Duplicate sets are also
+    removed from the union. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> beautify_fset V :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> rec go Acc E :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> E <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Atom.html#AtomSet.F.union">union</a> ?E1 ?E2 =&gt; <span class="keyword">let</span> Acc1 := go Acc E2 <span class="keyword">in</span> go Acc1 E1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Atom.html#AtomSet.F.empty">empty</a> =&gt; Acc<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| ?E1 =&gt; <span class="keyword">match</span> Acc <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Atom.html#AtomSet.F.empty">empty</a> =&gt; E1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| context [E1] =&gt; Acc<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; constr:(<a class="idref" href="Atom.html#AtomSet.F.union">union</a> E1 Acc)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="keyword">in</span> go empty V.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>(pick fresh Y for L)</code> takes a finite set of atoms <code>L</code>
+    and a fresh name <code>Y</code>, and adds to the context an atom with name
+    <code>Y</code> and a proof that <code>(~ In Y L)</code>, i.e., that <code>Y</code> is fresh for
+    <code>L</code>.  The tactic will fail if <code>Y</code> is already declared in the
+    context. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Tactic Notation</span> "pick" "fresh" ident(Y) "for" constr(L) :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> Fr := fresh "Fr" <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> L := beautify_fset L <span class="keyword">in</span><br/>
+&nbsp;&nbsp;(destruct (<a class="idref" href="Atom.html#atom_fresh_for_set">atom_fresh_for_set</a> L) <span class="keyword">as</span> [Y Fr]).<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab14"></a><h2 class="section">Demonstration</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>example_pick_fresh</code> tactic below illustrates the general
+    pattern for using the above three tactics to define a tactic which
+    picks a fresh atom.  The pattern is as follows:
+
+<ul>
+<li> Repeatedly invoke <code>gather_atoms_with</code>, using functions with
+        different argument types each time.
+
+</li>
+<li> Union together the result of the calls, and invoke
+        <code>(pick fresh ... for ...)</code> with that union of sets. 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Ltac</span> example_pick_fresh Y :=<br/>
+&nbsp;&nbsp;<span class="keyword">let</span> A := gather_atoms_with (<span class="keyword">fun</span> x : atoms =&gt; x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;<span class="keyword">let</span> B := gather_atoms_with (<span class="keyword">fun</span> x : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a> =&gt; <a class="idref" href="Atom.html#AtomSet.F.singleton">singleton</a> x) <span class="keyword">in</span><br/>
+&nbsp;&nbsp;pick fresh Y for (<a class="idref" href="Atom.html#AtomSet.F.union">union</a> A B).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="ATOM.Atom_as_OT.AtomSet.example_pick_fresh_use"></a>example_pick_fresh_use : forall (x y z : <a class="idref" href="Atom.html#AtomImpl.atom">atom</a>) (L1 L2 L3: atoms), <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros x y z L1 L2 L3. example_pick_fresh k.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+At this point in the proof, we have a new atom <code>k</code> and a
+      hypothesis <code>Fr : ~ In k (union L1 (union L2 (union L3 (union
+      (singleton x) (union (singleton y) (singleton z))))))</code>. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;trivial.<br/>
+<span class="keyword">Qed</span>.<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

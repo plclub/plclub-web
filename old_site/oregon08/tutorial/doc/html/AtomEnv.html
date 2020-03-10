@@ -1,0 +1,1078 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>AtomEnv</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library AtomEnv</h1>
+
+<code>
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Decidable.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> FSetWeak.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> List.<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="AdditionalTactics.html">AdditionalTactics</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="ListFacts.html">ListFacts</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="FSetWeakDecide.html">FSetWeakDecide</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="AssocList.html">AssocList</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="Atom.html">Atom</a>.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="AtomSet.html">AtomSet</a>.<br/>
+<span class="keyword">Import</span> AtomSetImpl.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab23"></a><h1 class="section">Signature</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+Note that our library has an implicit convention for the "normal
+    form" of an association list.  This normal form requires that a
+    list be built only from <code>nil</code> (the empty list), <code>one</code> (the
+    singleton list), and <code>app</code> (concatenation).  Additionally,
+    concatenations should be associated to the right and the list
+    should not contain any <code>nil</code> terms, unless it is the empty list
+    itself.
+
+<br/><br/>
+    This allows association lists to be written in a slightly more
+    uniform manner when compared to using both <code>cons</code> and <code>app</code> to
+    build them.  The downsides are that Coq's <code>simpl</code> tactic will
+    simplify instances of <code>one</code> down to <code>cons</code> and that there are
+    instances in which one needs to write association lists that are
+    not in normal form (typically, some concatenation will need to be
+    associated to the left).  The <code>simpl_env</code> and <code>rewrite_env</code>
+    tactics below are designed to minimize the impact of these
+    downsides.
+
+<br/><br/>
+    We have considered other alternative implementations, but the scheme
+    described above seems to work the best in practice. 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <span class="keyword">Type</span> <a name="ENVIRONMENT"></a>ENVIRONMENT.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab24"></a><h2 class="section">Basic definitions</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+This section defines the following basic operations and
+      predicates on association lists.
+
+<br/><br/>
+
+<ul>
+<li> <code>one</code>: Constructs an association list consisting of exactly
+          one binding.
+
+</li>
+<li> <code>map</code>: Maps a function over the values in an association list.
+
+</li>
+<li> <code>dom</code>: Computes the domain of an association list, i.e., the
+          set consisting of its keys.
+
+</li>
+<li> <code>disjoint</code>: Binary predicate that holds when the domains of
+          two association lists are disjoint.
+
+</li>
+<li> <code>binds</code>: Ternary predicate that holds when a key-value pair
+          appears somewhere in an association list.
+
+</li>
+<li> <code>uniq</code>: Unary predicate that holds when an association list
+          binds any given key at most once.  Note that <code>uniq_push</code> is
+          defined in terms of <code>one</code>, due to our normal form for
+          association lists.
+
+</li>
+</ul>
+
+<br/><br/>
+      Implicit arguments are declared by default for these
+      definitions.  We define some local notations to make the
+      definition of <code>uniq</code> easier to read and to be consistent with
+      the notations used in the rest of this library. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> Definitions.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> A B C : <span class="keyword">Type</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Definition</span> <a name="ENVIRONMENT.one"></a>one (C : <span class="keyword">Type</span>) (item : C) : list C := cons item nil.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Definition</span> <a name="ENVIRONMENT.map"></a>map (f : A -&gt; B) (E : list (atom*A)) : list (atom*B) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;List.map (<span class="keyword">fun</span> b =&gt; <span class="keyword">match</span> b <span class="keyword">with</span> (x, a) =&gt; (x, f a) <span class="keyword">end</span>) E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Fixpoint</span> <a name="ENVIRONMENT.dom"></a>dom (A : <span class="keyword">Type</span>) (E : list (atom*A)) {struct E} : atoms :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> E <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| nil =&gt; empty<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| (x, _) :: E' =&gt; add x (dom E')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Definition</span> <a name="ENVIRONMENT.disjoint"></a>disjoint (E : list (atom*A)) (F : list (atom*B)) : <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Subset (inter (dom E) (dom F)) empty.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Definition</span> <a name="ENVIRONMENT.binds"></a>binds (x : atom) (a : A) (E : list (atom*A)) : <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;List.In (x, a) E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x ~ a" := (one (x, a)) (at level 68).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x `notin` E" := (~ AtomSetImpl.In x E) (at level 69).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Inductive</span> <a name="ENVIRONMENT.uniq"></a>uniq : list (atom*A) -&gt; <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a name="ENVIRONMENT.uniq_nil"></a>uniq_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq nil<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a name="ENVIRONMENT.uniq_push"></a>uniq_push : forall x a E,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq ((x ~ a) ++ E).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> Definitions.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab25"></a><h2 class="section">Local notations</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We make a local notation for <code>one</code>, and for operations and
+      predicate on finite sets, in order to make the statements of the
+      lemmas below more readable.  The notations are local so that
+      users of this functor may choose their own notations. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "[ i ]" := (one i).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x ~ T" := (one (x, T)) (at level 68).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "E `union` F" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(AtomSetImpl.union E F) (at level 69, right associativity).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x `<span class="keyword">in</span>` E" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(AtomSetImpl.In x E) (at level 69).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "x `notin` E" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ AtomSetImpl.In x E) (at level 69).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "E [=] F" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(AtomSetImpl.Equal E F) (at level 70, no associativity).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> <span class="keyword">Local</span> "E [&lt;=] F" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(AtomSetImpl.Subset E F) (at level 70, no associativity).<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab26"></a><h2 class="section">List properties</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following block of properties is used mainly for rewriting
+      association lists into the normal form described above.  See the
+      <code>simpl_env</code> and <code>rewrite_env</code> tactics below. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> ListProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> X : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x y : X.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> l l1 l2 l3 : list X.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="cons_app_one"></a>cons_app_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cons x l = [ x ] ++ l.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="cons_app_assoc"></a>cons_app_assoc :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons x l1) ++ l2 = cons x (l1 ++ l2).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="app_assoc"></a>app_assoc :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="app_nil_1"></a>app_nil_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nil ++ l = l.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="app_nil_2"></a>app_nil_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l ++ nil = l.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="in_one"></a>in_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;List.In x [ y ] &lt;-&gt; x = y.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="in_app"></a>in_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;List.In x (l1 ++ l2) &lt;-&gt; List.In x l1 \/ List.In x l2.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> ListProperties.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite cons_app_one cons_app_assoc app_assoc : rewr_list.<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite app_nil_1 app_nil_2 : rewr_list.<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite in_one in_app : rewr_list_in.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The following block of properties is an assortment of
+      structural properties about lists. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> AssortedListProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> X : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x y : X.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> l l1 l2 l3 : list X.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="one_eq_app"></a>one_eq_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ x ] ++ l1 = l2 ++ l3 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exists qs, l2 = x :: qs /\ l1 = qs ++ l3) \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(l2 = nil /\ l3 = x :: l1).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="app_eq_one"></a>app_eq_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l2 ++ l3 = [ x ] ++ l1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(exists qs, l2 = x :: qs /\ l1 = qs ++ l3) \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(l2 = nil /\ l3 = x :: l1).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="nil_neq_one_mid"></a>nil_neq_one_mid :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nil &lt;&gt; l1 ++ [ x ] ++ l2.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="one_mid_neq_nil"></a>one_mid_neq_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l1 ++ [ x ] ++ l2 &lt;&gt; nil.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> AssortedListProperties.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab27"></a><h2 class="section">Properties of <code>map</code> and <code>dom</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemmas are used mainly to simplify applications of
+      <code>map</code> and <code>dom</code> to association lists.  See also the <code>simpl_env</code>
+      and <code>rewrite_env</code> tactics below. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> Properties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> A B : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> f : A -&gt; B.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x : atom.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> E F G : list (atom*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="map_nil"></a>map_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;map f nil = nil.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="map_cons"></a>map_cons :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;map f ((x, b) :: E) = (x, f b) :: map f E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="map_one"></a>map_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;map f (x ~ b) = (x ~ f b).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="map_app"></a>map_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;map f (E ++ F) = map f E ++ map f F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="dom_nil"></a>dom_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(@dom A nil) = empty.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="dom_cons"></a>dom_cons :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dom ((x, b) :: E) [=] singleton x `union` dom E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="dom_one"></a>dom_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dom (x ~ b) [=] singleton x.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="dom_app"></a>dom_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dom (E ++ F) [=] dom E `union` dom F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="dom_map"></a>dom_map :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dom (map f E) [=] dom E.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> Properties.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite map_nil map_cons map_one map_app : rewr_map.<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite dom_nil dom_cons dom_one dom_app dom_map : rewr_dom.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab28"></a><h2 class="section">The <code>simpl_env</code> tactic</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>simpl_env</code> tactic rewrites association lists so that they
+      are in the normal form described above.  Similar to the <code>simpl</code>
+      tactic, we define "<code><span class="keyword">in</span> *</code>" and "<code><span class="keyword">in</span> H</code>" variants of the tactic. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> simpl_env :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_list rewr_list_in rewr_map rewr_dom.<br/>
+&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "simpl_env" "<span class="keyword">in</span>" hyp(H) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_list rewr_list_in rewr_map rewr_dom <span class="keyword">in</span> H.<br/>
+&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "simpl_env" "<span class="keyword">in</span>" "*" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_list rewr_list_in rewr_map rewr_dom <span class="keyword">in</span> *.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab29"></a><h2 class="section">The <code>rewrite_env</code> tactic</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactic <code>(rewrite_env E)</code> replaces an association list in
+      the conclusion of the goal with <code>E</code>.  Suitability for
+      replacement is determined by whether <code>simpl_env</code> can put <code>E</code>
+      and the chosen environment in the same normal form, up to
+      convertibility's in Coq.  We also define an "<code><span class="keyword">in</span> H</code>" variant
+      that performs the replacement in a hypothesis <code>H</code>.  
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "rewrite_env" constr(E) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change x <span class="keyword">with</span> E<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace x <span class="keyword">with</span> E;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | try reflexivity; simpl_env; reflexivity ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Tactic Notation</span> "rewrite_env" constr(E) "<span class="keyword">in</span>" hyp(H) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> type of H <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change x <span class="keyword">with</span> E <span class="keyword">in</span> H<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| context[?x] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace x <span class="keyword">with</span> E <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ | try reflexivity; simpl_env; reflexivity ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab30"></a><h2 class="section">Basic facts about <code>disjoint</code></h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> BasicDisjointFacts.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Implicit</span> Types A B C : <span class="keyword">Type</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_sym_1"></a>disjoint_sym_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E : list (atom*A)) (F : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint E F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint F E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_sym"></a>disjoint_sym :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E : list (atom*A)) (F : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint E F &lt;-&gt; disjoint F E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_one_1"></a>disjoint_one_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (x : atom) (a : A) (F : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (x ~ a) F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_one_2"></a>disjoint_one_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (x : atom) (a : A) (F : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (x ~ a) F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_one_l"></a>disjoint_one_l :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (x : atom) (a : A) (E : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (x ~ a) E &lt;-&gt; x `notin` dom E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_one_r"></a>disjoint_one_r :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (x : atom) (a : A) (E : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint E (x ~ a) &lt;-&gt; x `notin` dom E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_app_1"></a>disjoint_app_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : list (atom*A)) (G : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (E ++ F) G -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint E G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_app_2"></a>disjoint_app_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : list (atom*A)) (G : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (E ++ F) G -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint F G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_app_3"></a>disjoint_app_3 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : list (atom*A)) (G : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint E G -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint F G -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (E ++ F) G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_app_l"></a>disjoint_app_l :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : list (atom*A)) (G : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (E ++ F) G &lt;-&gt; disjoint E G /\ disjoint F G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_app_r"></a>disjoint_app_r :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B (E F : list (atom*A)) (G : list (atom*B)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint G (E ++ F) &lt;-&gt; disjoint E G /\ disjoint F G.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_map_1"></a>disjoint_map_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B C (E : list (atom*A)) (F : list (atom*B)) (f : A -&gt; C),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (map f E) F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint E F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_map_2"></a>disjoint_map_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B C (E : list (atom*A)) (F : list (atom*B)) (f : A -&gt; C),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint E F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (map f E) F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_map_l"></a>disjoint_map_l :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B C (E : list (atom*A)) (F : list (atom*B)) (f : A -&gt; C),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint (map f E) F &lt;-&gt; disjoint E F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="disjoint_map_r"></a>disjoint_map_r :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall A B C (E : list (atom*A)) (F : list (atom*B)) (f : A -&gt; C),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint F (map f E) &lt;-&gt; disjoint E F.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> BasicDisjointFacts.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab31"></a><h2 class="section">Basic facts about <code>uniq</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemmas are facts about <code>uniq</code> with respect to the
+      basic functions (<code>one</code>, <code>app</code>, and <code>map</code>) that can be used to
+      build association lists. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> UniqProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> A B : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> f : A -&gt; B.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x : atom.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> E F G : list (atom*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_one"></a>uniq_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (x ~ b).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_app_1"></a>uniq_app_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (E ++ F) -&gt; uniq E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_app_2"></a>uniq_app_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (E ++ F) -&gt; uniq F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_app_3"></a>uniq_app_3 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (E ++ F) -&gt; disjoint E F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_app_4"></a>uniq_app_4 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disjoint E F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (E ++ F).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_app"></a>uniq_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (E ++ F) &lt;-&gt; uniq E /\ uniq F /\ disjoint E F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_map_1"></a>uniq_map_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (map f E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_map_2"></a>uniq_map_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (map f E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_map"></a>uniq_map :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (map f E) &lt;-&gt; uniq E.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> UniqProperties.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;disjoint_one_l disjoint_one_r<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;disjoint_app_l disjoint_app_r<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;disjoint_map_l disjoint_map_r<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;uniq_app uniq_map<br/>
+&nbsp;&nbsp;: rewr_uniq.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab32"></a><h2 class="section">The <code>solve_uniq</code> tactic</h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+This tactic attempts to solve goals about <code>uniq</code>.  Given its
+      definition, it's likely to work only when the hypotheses in the
+      goal already contain all the relevant <code>uniq</code> propositions.
+      Thus, the tactic may not be generally useful.  It is useful,
+      however, for proving facts about <code>uniq</code> such as the ones below.
+
+<br/><br/>
+      Implementation note: The second <code>simpl_env</code> in the definition
+      is because of <code>disjoint_one_{l,r}</code>.  The "<code>|| fail</code>" at the end
+      is so that in the case of failure, the error message reported to
+      the user is not the one from <code>atomsetdec</code>. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> solve_uniq :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;try trivial;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_uniq <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intuition (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto <span class="keyword">using</span> uniq_nil, uniq_one ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rewrite -&gt; disjoint_sym; auto) ||<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(unfold disjoint <span class="keyword">in</span> *; atomsetdec))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|| fail.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab33"></a><h2 class="section">Facts about <code>uniq</code></h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> UniqDerived.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> A : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x y : atom.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> a b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> E F G : list (atom*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_cons"></a>uniq_cons :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq ((x, a) :: E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_insert_mid"></a>uniq_insert_mid :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (G ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom (G ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (G ++ (x ~ a) ++ E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_remove_mid"></a>uniq_remove_mid :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (E ++ F ++ G) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (E ++ G).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="uniq_map_app_l"></a>uniq_map_app_l : forall (f : A -&gt; A),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (F ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (map f F ++ E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="fresh_mid_tail"></a>fresh_mid_tail :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (F ++ (x ~ a) ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="fresh_mid_head"></a>fresh_mid_head :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (F ++ (x ~ a) ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom E.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> UniqDerived.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab34"></a><h2 class="section">Basic facts about <code>binds</code></h2>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+The following lemmas are facts about <code>binds</code> with respect to the
+      basic functions (<code>one</code> and <code>app</code>) that can be used to build
+      association lists.
+
+<br/><br/>
+      Note: <code>map</code> is treated further below. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> BindsProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> A : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x y : atom.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> a b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> E F G : list (atom*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_nil"></a>binds_nil :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a nil &lt;-&gt; False.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_one_1"></a>binds_one_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a = b -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (y ~ b).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_one_2"></a>binds_one_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (y ~ b) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = y.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_one_3"></a>binds_one_3 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (y ~ b) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a = b.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_one"></a>binds_one :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (y ~ b) &lt;-&gt; x = y /\ a = b.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_app_1"></a>binds_app_1 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (E ++ F).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_app_2"></a>binds_app_2 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (E ++ F).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_app_3"></a>binds_app_3 :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (E ++ F) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a E \/ binds x a F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_app"></a>binds_app :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (E ++ F) &lt;-&gt; binds x a E \/ binds x a F.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> BindsProperties.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite binds_nil binds_one binds_app : rewr_binds.<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite binds_nil binds_one : rewr_binds_uniq.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab35"></a><h2 class="section">Additional lemmas and tactics for working with <code>binds</code></h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> MoreBindsProperties.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> A : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x y : atom.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> a b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> E F G : list (atom*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_dom_contradiction"></a>binds_dom_contradiction: forall (E : list (atom*A)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;False.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_app_uniq"></a>binds_app_uniq :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (E ++ F) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(binds x a (E ++ F) &lt;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(binds x a E /\ x `notin` dom F) \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(binds x a F /\ x `notin` dom E)).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> MoreBindsProperties.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Rewrite binds_app_uniq <span class="keyword">using</span> solve_uniq : rewr_binds_uniq.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>apply_binds_dom_contradiction</code> tactic solves a goal by
+      applying the <code>binds_dom_contradiction</code> lemma.  The tactic
+      succeeds only if the the hypotheses of the lemma are immediately
+      satisfied. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> apply_binds_dom_contradiction :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : binds ?x ?a ?E, J : ?x `notin` (dom ?E) |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert False by apply (@binds_dom_contradiction _ _ _ _ H J);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : binds ?x ?a ?E, J : ?x `<span class="keyword">in</span>` (dom ?E) -&gt; False |- _ =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert False by apply (@binds_dom_contradiction _ _ _ _ H J);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code>solve_binds</code> tactic attempts to solve goals about <code>binds</code>.
+      Given its definition, it's likely to work only when the
+      hypotheses in the goal already contain all the relevant <code>binds</code>
+      propositions.  Thus, the tactic may not be generally useful.  It
+      is useful, however, for proving facts about <code>binds</code> such as the
+      ones below. 
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> solve_binds :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_binds <span class="keyword">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intuition (auto || atomsetdec || apply_binds_dom_contradiction)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|| fail.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The tactics <code>analyze_binds</code> and <code>analyze_binds_uniq</code> tactics
+      take as an argument a hypotheses about <code>binds</code> and perform a
+      case analysis based on the structure of the association list.
+      In the case of <code>analyze_binds_uniq</code>, the analysis is performed
+      assuming that the association list is <code>uniq</code>.  The lemmas
+      <code>binds_app</code> and <code>binds_app_uniq</code> are examples of such case
+      analysis.
+
+<br/><br/>
+      Implementation notes:
+
+<br/><br/>
+
+<ul>
+<li> The initial calls to <code>simpl_env</code> put the relevant
+          association lists into normal form.
+
+</li>
+<li> In the case of <code>binds_app_uniq</code>, we assert that the
+          association list is <code>uniq</code>.  This enables the <code>autorewrite</code>
+          step to succeed.
+
+</li>
+<li> Rather than work on <code>H</code> itself, we copy it and work on the
+          copy.  Thus, in instances where the analysis leaves unsolved
+          subgoals, it is still possible to see the original
+          hypothesis.
+
+</li>
+<li> The rest of the tactic breaks apart the copy of H and tries
+          several simple means for solving the resulting subgoals. 
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> analyze_binds H :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> type of H <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| binds ?x ?a ?E =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> J := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose proof H <span class="keyword">as</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_binds <span class="keyword">in</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try (progress decompose [and or] J; clear J);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try solve [trivial | discriminate | intuition | atomsetdec]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Ltac</span> analyze_binds_uniq H :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> H;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> type of H <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| binds ?x ?a ?E =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> goal <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| H : uniq ?E |- _ =&gt; idtac<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| _ =&gt; assert (uniq E); [ try solve_uniq | ]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span> J := fresh <span class="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose proof H <span class="keyword">as</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite <span class="keyword">with</span> rewr_binds_uniq <span class="keyword">in</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_env <span class="keyword">in</span> J;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try (progress decompose [and or] J; clear J);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try solve [trivial | discriminate | intuition | atomsetdec]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab36"></a><h2 class="section">Facts about <code>binds</code></h2>
+
+</div>
+<code>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> BindsDerived.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> A B : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> f : A -&gt; B.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> x y : atom.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> a b : A.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Variables</span> E F G : list (atom*A).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_dec"></a>binds_dec :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall a b : A, {a = b} + {a &lt;&gt; b}) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{binds x a E} + {~ binds x a E}.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_lookup_dec"></a>binds_lookup_dec :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decidable (exists a, binds x a E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_lookup_dec_specif"></a>binds_lookup_dec_specif :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{a : A | binds x a E} + (forall a, ~ binds x a E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_map"></a>binds_map :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x (f a) (map f E).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_map_inv"></a>binds_map_inv :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(forall a b, f a = f b -&gt; a = b) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x (f a) (map f E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_weaken"></a>binds_weaken :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (E ++ G) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (E ++ F ++ G).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_mid_eq"></a>binds_mid_eq :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (F ++ (x ~ b) ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (F ++ (x ~ b) ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a = b.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_remove_mid"></a>binds_remove_mid :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (F ++ (y ~ b) ++ G) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x &lt;&gt; y -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a (F ++ G).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_In"></a>binds_In : forall x a (E : list (atom*A)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `<span class="keyword">in</span>` dom E.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="binds_unique"></a>binds_unique :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x b E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a = b.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="fresh_app_l"></a>fresh_app_l :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (F ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a E -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom F.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Axiom</span> <a name="fresh_app_r"></a>fresh_app_r :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq (F ++ E) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binds x a F -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x `notin` dom E.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> BindsDerived.<br/>
+
+<br/>
+<span class="keyword">End</span> ENVIRONMENT.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab37"></a><h1 class="section">Module instantiation</h1>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+We can use our implementation of association lists (in <code>AssocList</code>) to
+    implement a module with the above signature.   Note that the tactics
+    provided end in <code>_env</code>, not <code>_alist</code> as the implementation of
+    <code>AssocList.Make</code> might suggest.  (Tactics do not need to agree between a
+    module's signature and its implementaiton.) 
+</div>
+<code>
+
+<br/>
+<span class="keyword">Module</span> <a name="AtomEnvImpl"></a>AtomEnvImpl : ENVIRONMENT := AssocList.Make AtomImpl AtomSetImpl.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

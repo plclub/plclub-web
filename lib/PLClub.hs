@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 {-|
  - Module: PLClub
  - Description: Top-level module for PLClub website
@@ -17,9 +18,16 @@ import           PLClub.HakyllExtra
 (<!>) = composeRoutes
 thenRoute = composeRoutes
 
+config :: Configuration
+config = defaultConfiguration
+  { deployCommand =
+      "ssh plclub@eniac \"tar -zc -f html-$(date '+%F').tar.gz html\";\
+      \ rsync -vr _site/ plclub@eniac:html"
+  }
+  
 --------------------------------------------------------------------------------
 application :: IO ()
-application = hakyll $ do
+application = hakyllWith config $ do
     match "img/**" $ do
         route   idRoute
         compile copyFileCompiler
@@ -45,26 +53,6 @@ application = hakyll $ do
 
     --people tags
     ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
-    
-    create ["people.html"] $ 
-        rulesExtraDependencies [tagsDependency ptags] $ do
-            route   $ idRoute <!> canonizeRoute
-            compile $ do
-                let faculty = (unbindList 4) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
-                let students = (unbindList 4) <$> loadTag ptags "student" :: Compiler [[Item String]]
-                let postdocs = (unbindList 4) <$> loadTag ptags "postdoc" :: Compiler [[Item String]]
-                let alum = (unbindList 4) <$> loadTag ptags "alum" :: Compiler [[Item String]]
-                let peopleGroupCtx = 
-                        nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
-                        nestedListField "studentGroup" "student" siteContext students`mappend`
-                        nestedListField "postdocGroup" "postdoc" siteContext postdocs`mappend`
-                        nestedListField "alumGroup"    "alum"    siteContext alum    `mappend`
-                        constField "title" "People"            `mappend`
-                        siteContext
-                makeItem ""
-                    >>= loadAndApplyTemplate "templates/people.html" peopleGroupCtx
-                    >>= loadAndApplyTemplate "templates/default.html" siteContext 
-                    >>= relativizeUrls
 
     create ["papers.html"] $ do
         route   $ idRoute <!> canonizeRoute
@@ -95,20 +83,19 @@ application = hakyll $ do
                 >>= loadAndApplyTemplate "templates/default.html" meetingsCtx
                 >>= relativizeUrls
 
+    match "old_site/**" $ do
+      route   $ routeTail <!> htaccessHackRoute
+      compile $ copyFileCompiler
+        
+        
+
     match "index.html" $ do
         rulesExtraDependencies [tagsDependency ptags] $ do
             route idRoute
             compile $ do
                 meetings <- recentFirst =<< loadAll "meetings/*"
-                let faculty = (unbindList 3) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
-                let students = (unbindList 3) <$> loadTag ptags "student" :: Compiler [[Item String]]
-                let postdocs = (unbindList 4) <$> loadTag ptags "postdoc" :: Compiler [[Item String]]
-                let alum = (unbindList 4) <$> loadTag ptags "alum" :: Compiler [[Item String]]
                 let indexCtx =
-                        nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
-                        nestedListField "studentGroup" "student" siteContext students`mappend`
-                        nestedListField "postdocGroup" "postdoc" siteContext postdocs`mappend`
-                        nestedListField "alumGroup"    "alum"    siteContext alum    `mappend`
+                        peopleContext ptags `mappend`
                         listField "meetings" siteContext (return meetings) `mappend`
                         recentPapersContext `mappend`
                         constField "title" "Home"                `mappend`
@@ -126,3 +113,16 @@ unbindList :: Int -> [a] -> [[a]]
 unbindList _ [] = []
 unbindList n as =
     (take n as):(unbindList n $ drop n as)
+
+peopleContext :: Tags -> Context String
+peopleContext ptags = 
+  let faculty  = (unbindList 3) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
+      students = (unbindList 3) <$> loadTag ptags "student" :: Compiler [[Item String]]
+      postdocs = (unbindList 3) <$> loadTag ptags "postdoc" :: Compiler [[Item String]]
+      alum'    = loadTag ptags "alum" :: Compiler [Item String]
+      alum     = reverse <$> (sortByM getYear =<< alum')
+  in
+    nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
+    nestedListField "studentGroup" "student" siteContext students`mappend`
+    nestedListField "postdocGroup" "postdoc" siteContext postdocs`mappend`
+    listField "alum" siteContext alum

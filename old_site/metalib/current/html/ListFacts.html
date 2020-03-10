@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>ListFacts</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library ListFacts</h1>
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+Assorted facts about lists that are not in Coq's standard library.
+
+<br/><br/>
+    Implicit arguments are declared by default in this library. 
+</div>
+<div class="code">
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#">Coq.Lists.List</a></span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="library"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#">Coq.Lists.SetoidList</a></span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Open</span> <span class="id" type="keyword">Scope</span> <span class="id" type="var">list_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab46"></a><h1 class="section">List structure</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="lemma"><a name="cons_eq_app">cons_eq_app</a></span> : ∀ (<span class="id" type="var">A</span> : <span class="id" type="keyword">Type</span>) (<span class="id" type="var">z</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">xs</span> <span class="id" type="var">ys</span> <span class="id" type="var">zs</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">A</span>),<br/>
+&nbsp;&nbsp;<span class="id" type="var">z</span> :: <span class="id" type="var">zs</span> = <span class="id" type="var">xs</span> ++ <span class="id" type="var">ys</span> →<br/>
+&nbsp;&nbsp;(∃ <span class="id" type="var">qs</span>, <span class="id" type="var">xs</span> = <span class="id" type="var">z</span> :: <span class="id" type="var">qs</span> ∧ <span class="id" type="var">zs</span> = <span class="id" type="var">qs</span> ++ <span class="id" type="var">ys</span>) ∨<br/>
+&nbsp;&nbsp;(<span class="id" type="var">xs</span> = <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> ∧ <span class="id" type="var">ys</span> = <span class="id" type="var">z</span> :: <span class="id" type="var">zs</span>).<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="lemma"><a name="app_eq_cons">app_eq_cons</a></span> : ∀ (<span class="id" type="var">A</span> : <span class="id" type="keyword">Type</span>) (<span class="id" type="var">z</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">xs</span> <span class="id" type="var">ys</span> <span class="id" type="var">zs</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">A</span>),<br/>
+&nbsp;&nbsp;<span class="id" type="var">xs</span> ++ <span class="id" type="var">ys</span> = <span class="id" type="var">z</span> :: <span class="id" type="var">zs</span> →<br/>
+&nbsp;&nbsp;(∃ <span class="id" type="var">qs</span>, <span class="id" type="var">xs</span> = <span class="id" type="var">z</span> :: <span class="id" type="var">qs</span> ∧ <span class="id" type="var">zs</span> = <span class="id" type="var">qs</span> ++ <span class="id" type="var">ys</span>) ∨<br/>
+&nbsp;&nbsp;(<span class="id" type="var">xs</span> = <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> ∧ <span class="id" type="var">ys</span> = <span class="id" type="var">z</span> :: <span class="id" type="var">zs</span>).<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="lemma"><a name="nil_eq_app">nil_eq_app</a></span> : ∀ (<span class="id" type="var">A</span> : <span class="id" type="keyword">Type</span>) (<span class="id" type="var">xs</span> <span class="id" type="var">ys</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">A</span>),<br/>
+&nbsp;&nbsp;<span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> = <span class="id" type="var">xs</span> ++ <span class="id" type="var">ys</span> →<br/>
+&nbsp;&nbsp;<span class="id" type="var">xs</span> = <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span> ∧ <span class="id" type="var">ys</span> = <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="lemma"><a name="app_cons_not_nil">app_cons_not_nil</a></span> : ∀ (<span class="id" type="var">A</span> : <span class="id" type="keyword">Type</span>) (<span class="id" type="var">y</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">xs</span> <span class="id" type="var">ys</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">A</span>),<br/>
+&nbsp;&nbsp;<span class="id" type="var">xs</span> ++ <span class="id" type="var">y</span> :: <span class="id" type="var">ys</span> ≠ <span class="id" type="constructor"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#nil">nil</a></span>.<br/>
+<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab47"></a><h1 class="section">List membership</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="lemma"><a name="In_map">In_map</a></span> : ∀ (<span class="id" type="var">A</span> <span class="id" type="var">B</span> : <span class="id" type="keyword">Type</span>) (<span class="id" type="var">xs</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">A</span>) (<span class="id" type="var">x</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">f</span> : <span class="id" type="var">A</span> → <span class="id" type="var">B</span>),<br/>
+&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">xs</span> →<br/>
+&nbsp;&nbsp;<span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id" type="var">f</span> <span class="id" type="var">x</span>) (<span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#map">map</a></span> <span class="id" type="var">f</span> <span class="id" type="var">xs</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab48"></a><h1 class="section">Setoid facts</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="lemma"><a name="InA_In">InA_In</a></span> : ∀ (<span class="id" type="var">A</span> : <span class="id" type="keyword">Type</span>) (<span class="id" type="var">x</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">xs</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">A</span>),<br/>
+&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a></span> (@<span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a></span> <span class="id" type="var">_</span>) <span class="id" type="var">x</span> <span class="id" type="var">xs</span> → <span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">xs</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="lemma"><a name="InA_iff_In">InA_iff_In</a></span> : ∀ (<span class="id" type="var">A</span> : <span class="id" type="keyword">Type</span>) (<span class="id" type="var">x</span> : <span class="id" type="var">A</span>) (<span class="id" type="var">xs</span> : <span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#list">list</a></span> <span class="id" type="var">A</span>),<br/>
+&nbsp;&nbsp;<span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.SetoidList.html#InA">InA</a></span> (@<span class="id" type="inductive"><a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq">eq</a></span> <span class="id" type="var">_</span>) <span class="id" type="var">x</span> <span class="id" type="var">xs</span> ↔ <span class="id" type="definition"><a class="idref" href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id" type="var">x</span> <span class="id" type="var">xs</span>.<br/>
+</div>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>ListFacts</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library ListFacts</h1>
+
+<code>
+<br/>
+</code>
+
+<div class="doc">
+Assorted facts about lists.
+
+<br/><br/>
+    Implicit arguments are declared by default in this library. 
+</div>
+<code>
+
+<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Eqdep_dec.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> List.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Omega.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> SetoidList.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Sorting.<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> Relations.<br/>
+
+<br/>
+<span class="keyword">Require</span> <span class="keyword">Import</span> <a class="modref" href="AdditionalTactics.html">AdditionalTactics</a>.<br/>
+
+<br/>
+<span class="keyword">Open</span> <span class="keyword">Scope</span> list_scope.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab64"></a><h1 class="section">List structure</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="cons_eq_app"></a>cons_eq_app : forall (A : <span class="keyword">Type</span>) (z : A) (xs ys zs : list A),<br/>
+&nbsp;&nbsp;z :: zs = xs ++ ys -&gt;<br/>
+&nbsp;&nbsp;(exists qs, xs = z :: qs /\ zs = qs ++ ys) \/<br/>
+&nbsp;&nbsp;(xs = nil /\ ys = z :: zs).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="app_eq_cons"></a>app_eq_cons : forall (A : <span class="keyword">Type</span>) (z : A) (xs ys zs : list A),<br/>
+&nbsp;&nbsp;xs ++ ys = z :: zs -&gt;<br/>
+&nbsp;&nbsp;(exists qs, xs = z :: qs /\ zs = qs ++ ys) \/<br/>
+&nbsp;&nbsp;(xs = nil /\ ys = z :: zs).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="nil_eq_app"></a>nil_eq_app : forall (A : <span class="keyword">Type</span>) (xs ys : list A),<br/>
+&nbsp;&nbsp;nil = xs ++ ys -&gt;<br/>
+&nbsp;&nbsp;xs = nil /\ ys = nil.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="nil_neq_cons_app"></a>nil_neq_cons_app : forall (A : <span class="keyword">Type</span>) (y : A) (xs ys : list A),<br/>
+&nbsp;&nbsp;nil &lt;&gt; xs ++ y :: ys.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab65"></a><h1 class="section">List membership</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="not_in_cons"></a>not_in_cons : forall (A : <span class="keyword">Type</span>) (ys : list A) x y,<br/>
+&nbsp;&nbsp;x &lt;&gt; y -&gt;<br/>
+&nbsp;&nbsp;~ In x ys -&gt;<br/>
+&nbsp;&nbsp;~ In x (y :: ys).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="not_In_app"></a>not_In_app : forall (A : <span class="keyword">Type</span>) (xs ys : list A) x,<br/>
+&nbsp;&nbsp;~ In x xs -&gt;<br/>
+&nbsp;&nbsp;~ In x ys -&gt;<br/>
+&nbsp;&nbsp;~ In x (xs ++ ys).<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="elim_not_In_cons"></a>elim_not_In_cons : forall (A : <span class="keyword">Type</span>) (y : A) (ys : list A) (x : A),<br/>
+&nbsp;&nbsp;~ In x (y :: ys) -&gt;<br/>
+&nbsp;&nbsp;x &lt;&gt; y /\ ~ In x ys.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="elim_not_In_app"></a>elim_not_In_app : forall (A : <span class="keyword">Type</span>) (xs ys : list A) (x : A),<br/>
+&nbsp;&nbsp;~ In x (xs ++ ys) -&gt;<br/>
+&nbsp;&nbsp;~ In x xs /\ ~ In x ys.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab66"></a><h1 class="section">List inclusion</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="incl_nil"></a>incl_nil : forall (A : <span class="keyword">Type</span>) (xs : list A),<br/>
+&nbsp;&nbsp;incl nil xs.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="In_incl"></a>In_incl : forall (A : <span class="keyword">Type</span>) (x : A) (ys zs : list A),<br/>
+&nbsp;&nbsp;In x ys -&gt;<br/>
+&nbsp;&nbsp;incl ys zs -&gt;<br/>
+&nbsp;&nbsp;In x zs.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="elim_incl_cons"></a>elim_incl_cons : forall (A : <span class="keyword">Type</span>) (x : A) (xs zs : list A),<br/>
+&nbsp;&nbsp;incl (x :: xs) zs -&gt;<br/>
+&nbsp;&nbsp;In x zs /\ incl xs zs.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="elim_incl_app"></a>elim_incl_app : forall (A : <span class="keyword">Type</span>) (xs ys zs : list A),<br/>
+&nbsp;&nbsp;incl (xs ++ ys) zs -&gt;<br/>
+&nbsp;&nbsp;incl xs zs /\ incl ys zs.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab67"></a><h1 class="section">Setoid facts</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="InA_iff_In"></a>InA_iff_In : forall (A : <span class="keyword">Set</span>) (x : A) (xs : list A),<br/>
+&nbsp;&nbsp;InA (@eq A) x xs &lt;-&gt; In x xs.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab68"></a><h1 class="section">Equality proofs for lists</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> EqRectList.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Variable</span> A : <span class="keyword">Type</span>.<br/>
+&nbsp;&nbsp;<span class="keyword">Variable</span> eq_A_dec : forall (x y : A), {x = y} + {x &lt;&gt; y}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="eq_rect_eq_list"></a>eq_rect_eq_list :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;forall (p : list A) (Q : list A -&gt; <span class="keyword">Type</span>) (x : Q p) (h : p = p),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eq_rect p Q x p h = x.<br/>
+
+<br/>
+<span class="keyword">End</span> EqRectList.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab69"></a><h1 class="section">Decidable sorting and uniqueness of proofs</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> DecidableSorting.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Variable</span> A : <span class="keyword">Set</span>.<br/>
+&nbsp;&nbsp;<span class="keyword">Variable</span> leA : relation A.<br/>
+&nbsp;&nbsp;<span class="keyword">Hypothesis</span> leA_dec : forall x y, {leA x y} + {~ leA x y}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Theorem</span> <a name="lelistA_dec"></a>lelistA_dec : forall a xs,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{lelistA leA a xs} + {~ lelistA leA a xs}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Theorem</span> <a name="sort_dec"></a>sort_dec : forall xs,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{sort leA xs} + {~ sort leA xs}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Section</span> UniqueSortingProofs.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Hypothesis</span> eq_A_dec : forall (x y : A), {x = y} + {x &lt;&gt; y}.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Hypothesis</span> leA_unique : forall (x y : A) (p q : leA x y), p = q.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Scheme</span> lelistA_ind' := Induction for lelistA Sort <span class="keyword">Prop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Scheme</span> sort_ind' := Induction for sort Sort <span class="keyword">Prop</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Theorem</span> <a name="lelistA_unique"></a>lelistA_unique :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (x : A) (xs : list A) (p q : lelistA leA x xs), p = q.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Theorem</span> <a name="sort_unique"></a>sort_unique :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall (xs : list A) (p q : sort leA xs), p = q.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">End</span> UniqueSortingProofs.<br/>
+<span class="keyword">End</span> DecidableSorting.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab70"></a><h1 class="section">Equality on sorted lists</h1>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Section</span> Equality_ext.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Variable</span> A : <span class="keyword">Set</span>.<br/>
+&nbsp;&nbsp;<span class="keyword">Variable</span> ltA : relation A.<br/>
+&nbsp;&nbsp;<span class="keyword">Hypothesis</span> ltA_trans : forall x y z, ltA x y -&gt; ltA y z -&gt; ltA x z.<br/>
+&nbsp;&nbsp;<span class="keyword">Hypothesis</span> ltA_not_eqA : forall x y, ltA x y -&gt; x &lt;&gt; y.<br/>
+&nbsp;&nbsp;<span class="keyword">Hypothesis</span> ltA_eqA : forall x y z, ltA x y -&gt; y = z -&gt; ltA x z.<br/>
+&nbsp;&nbsp;<span class="keyword">Hypothesis</span> eqA_ltA : forall x y z, x = y -&gt; ltA y z -&gt; ltA x z.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> Resolve ltA_trans.<br/>
+&nbsp;&nbsp;<span class="keyword">Hint</span> <span class="keyword">Immediate</span> ltA_eqA eqA_ltA.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> Inf := (lelistA ltA).<br/>
+&nbsp;&nbsp;<span class="keyword">Notation</span> Sort := (sort ltA).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="not_InA_if_Sort_Inf"></a>not_InA_if_Sort_Inf : forall xs a,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Sort xs -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Inf a xs -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;~ InA (@eq A) a xs.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Sort_eq_head"></a>Sort_eq_head : forall x xs y ys,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Sort (x :: xs) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Sort (y :: ys) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(forall a, InA (@eq A) a (x :: xs) &lt;-&gt; InA (@eq A) a (y :: ys)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;x = y.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="keyword">Lemma</span> <a name="Sort_InA_eq_ext"></a>Sort_InA_eq_ext : forall xs ys,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Sort xs -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Sort ys -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(forall a, InA (@eq A) a xs &lt;-&gt; InA (@eq A) a ys) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;xs = ys.<br/>
+
+<br/>
+<span class="keyword">End</span> Equality_ext.<br/>
+</code>
+<hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

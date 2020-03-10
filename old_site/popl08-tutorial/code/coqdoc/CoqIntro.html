@@ -1,0 +1,3928 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>CoqIntro</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library CoqIntro</h1>
+
+<code>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab72"></a><h1 class="section">Coq for POPL Folk</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+A streamlined interactive tutorial on fundamentals of Coq,
+    focusing on a minimal set of features needed for developing
+    programming language metatheory.
+
+<br/><br/>
+    Mostly developed by Aaron Bohannon, with help from Benjamin
+    Pierce, Dimitrios Vytiniotis, and Steve Zdancewic.
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab73"></a><h1 class="section">Contents</h1>
+
+
+<ul>
+<li> Getting Started
+
+</li>
+<li> Definitions
+
+</li>
+<li> Proofs
+
+<ul>
+<li> Working with Implication and Universal Quantification
+
+</li>
+<li> Working with Definitions
+
+</li>
+<li> Working with Conjunction and Disjunction
+
+</li>
+<li> Reasoning by Cases and Induction
+
+</li>
+<li> Working with Existential Quantification
+
+</li>
+<li> Working with Negation
+
+</li>
+<li> Working with Equality
+
+</li>
+<li> Reasoning by Inversion
+
+</li>
+<li> Additional Important Tactics
+
+</li>
+<li> Basic Automation
+
+</li>
+<li> Functions and Conversion
+
+</li>
+</ul>
+
+</li>
+<li> Solutions to Exercises
+
+</li>
+</ul>
+
+</div>
+<code>
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab74"></a><h1 class="section">Getting Started</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+To get started...
+
+<br/><br/>
+
+<ul>
+<li> Install Coq (from the Download page of the main Coq web
+       site)
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li> Install an IDE: either CoqIDE (from the same page) or
+       Proof General (use Google to find it).
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li> Which should you choose?  Their command sets are similar,
+       so basically the trade-offs are simple:
+
+<ul>
+<li> Proof General is an extension of Emacs (or XEmacs,
+            if you prefer), while CoqIDE uses a simpler
+            point-and-click model of editing.
+
+</li>
+<li> PG is pretty easy to install; CoqIDE is very easy
+            to install if you can find a pre-built version for
+            the OS you are running on but can be a little tricky
+            to build from scratch because it has lots of
+            dependencies.
+
+</li>
+</ul>
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li> Familiarize yourself with the most important commands
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li>
+<ul>
+<li> If you are using PG, try this:
+
+<ul>
+<li> Open this file and check that the mode line says
+                something like "coq Holes Scripting"
+
+</li>
+<li> Go down a few pages and do C-C C-return.  Notice
+                that the part of the file above the cursor
+                changes color (and becomes read-only),
+                indicating that it has been sent to Coq.
+
+</li>
+<li> Come back here and do C-C C-return again
+
+</li>
+<li> You now know all you really need to navigate in
+                this file and send parts of it to Coq, but there
+                are some other navigation commands that are
+                sometimes more convenient.  To see a couple
+                more, do C-C C-n several times and observe the
+                result; then do C-C C-u a couple of times and
+                observe the result.
+
+</li>
+</ul>
+
+</li>
+</ul>
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li>
+<ul>
+<li> If you are using CoqIDE, try this:
+
+<ul>
+<li> Open this file.
+
+</li>
+<li> Scroll down a few pages.
+
+</li>
+<li> Hover the mouse over each the buttons at the top
+                of the window; this will make the "tool tips"
+                appear so you can see which is which.
+
+</li>
+<li> Press the "Go to cursor" button.  Observe what
+                happens. 
+
+</li>
+<li> Press the forward and backward buttons a few
+                times.  Observe.
+
+</li>
+<li> Scroll back to here again and start reading.
+
+</li>
+</ul>
+
+</li>
+</ul>
+
+</li>
+</ul>
+
+<br/><br/>
+
+<ul>
+<li> Open the Coq reference manual (from the Documentation
+       page of the Coq web site) in a web browser.  Spend 30
+       seconds looking over the table of contents to get an idea
+       what's there.  (There is no need to actually read
+       anything now.)
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab75"></a><h1 class="section">Definitions</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+In this file, we will be working with a very simple language
+    of expressions over natural numbers and booleans.  First we
+    need to define the datatype of terms.
+
+<br/><br/>
+    The <code><span class="keyword">Inductive</span></code> keyword defines a new inductive type.  We
+    name our new type <code>tm</code> and declare that <code>tm</code> lives in the
+    sort <code><span class="keyword">Set</span></code>.  Types in <code><span class="keyword">Set</span></code> are datatypes, which can be used
+    just like those in standard programming languages.  After
+    the inductive definition, the global environment contains
+    the name of the newly defined type, along with the names of
+    all of the constructors.  Coq also automatically defines a
+    few operators for eliminating values of the new type
+    (<code>tm_rec</code>, <code>tm_ind</code>, etc.); we can ignore these for the time
+    being, since we will not need to use them directly.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="tm"></a>tm : <span class="keyword">Set</span> :=<br/>
+| <a name="tm_true"></a>tm_true : tm<br/>
+| <a name="tm_false"></a>tm_false : tm<br/>
+| <a name="tm_if"></a>tm_if : tm -&gt; tm -&gt; tm -&gt; tm<br/>
+| <a name="tm_zero"></a>tm_zero : tm<br/>
+| <a name="tm_succ"></a>tm_succ : tm -&gt; tm<br/>
+| <a name="tm_pred"></a>tm_pred : tm -&gt; tm<br/>
+| <a name="tm_iszero"></a>tm_iszero : tm -&gt; tm.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Next, we want to designate some of our <code>tm</code> expressions as
+    "values" in our object language.  Mathematically, the
+    property of being a value is a unary relation over <code>tm</code>s.
+    The definition of the unary relation <code>value</code> will be built
+    from the definition of two auxiliary relations: <code>bvalue</code> for
+    the set of boolean values and <code>nvalue</code> for the set of
+    numerical values.
+
+<br/><br/>
+    We define n-ary relations in Coq much as we do on paper --
+    by giving a set of inference rules that can be used to
+    justify the membership of a tuple in the relation.  The
+    definition of such an inference system also uses the keyword
+    <code><span class="keyword">Inductive</span></code>.  Although this is exactly the same device we
+    used to build the set <code>tm</code>, in this case we want to do
+    something slightly different:  we will be using it to
+    inductively defining the structures (derivation trees) that
+    justify the membership of a tuple in a relation, rather than
+    directly defining a set inductively.  These derivation trees
+    will need to be given a dependent type in order to ensure
+    that only correct derivation trees can be built.  It is
+    possible to view their type as a datatype such as <code>tm</code>;
+    however, it is more natural to interpret it as a
+    proposition, so it will be declared to live in <code><span class="keyword">Prop</span></code>
+    instead of <code><span class="keyword">Set</span></code>.  <code><span class="keyword">Prop</span></code> is parallel to <code><span class="keyword">Set</span></code> in the sort
+    hierarchy, but types in <code><span class="keyword">Prop</span></code> can be thought of as logical
+    propositions rather than datatypes.  The inhabitants of
+    types in <code><span class="keyword">Prop</span></code> can be thought of as proofs rather than
+    programs.
+
+<br/><br/>
+    The unary relations <code>bvalue</code> and <code>nvalue</code> are defined by
+    very simple inference systems, each having just two rules.
+    After defining these inference systems, <code>bvalue</code> and
+    <code>nvalue</code> will each be a family of types indexed by elements
+    of <code>tm</code>.  We can build inhabitants of some (but not all) of
+    the types in these families with the constructors from our
+    inductive definition.  Semantically, we consider the
+    proposition <code>bvalue t</code> to be true if it is inhabited and
+    false if it is not.  (It is worth noting at this point that,
+    by default, Coq's logic is constructive and <code>P \/ not P</code> is
+    provable for some <code>P</code> but not for others.  However, it is
+    sound to add the law of the excluded middle as an axiom, if
+    desired.)
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="bvalue"></a>bvalue : <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <span class="keyword">Prop</span> := <br/>
+| <a name="b_true"></a>b_true : bvalue <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> <br/>
+| <a name="b_false"></a>b_false : bvalue <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="nvalue"></a>nvalue : <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+| <a name="n_zero"></a>n_zero : nvalue <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a><br/>
+| <a name="n_succ"></a>n_succ : forall t,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;nvalue t -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;nvalue (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+The <code><span class="keyword">Definition</span></code> keyword is used for defining non-recursive
+    functions (including 0-ary functions, i.e., constants).
+    Here we define the unary predicate <code>value</code> using disjunction
+    on propositions (written <code>\/</code>).
+
+<br/><br/>
+    Note: It is not actually necessary to provide the types of
+    the arguments nor the return type when they can easily be
+    inferred; for example, the annotations <code>: tm</code> and <code>: <span class="keyword">Prop</span></code>
+    are optional here.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="value"></a>value (t : <a class="idref" href="CoqIntro.html#tm">tm</a>) : <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bvalue">bvalue</a> t \/ <a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Having defined <code>tm</code>s and <code>value</code>s, we can define a
+    call-by-value operational semantics of our language by
+    giving a definition of the single-step evaluation of one
+    term to another.  We give this as an inductively defined
+    binary relation.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="eval"></a>eval : <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+| <a name="e_iftrue"></a>e_iftrue : forall t2 t3,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> t2 t3) t2<br/>
+| <a name="e_iffalse"></a>e_iffalse : forall t2 t3,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> t2 t3) t3<br/>
+| <a name="e_if"></a>e_if : forall t1 t1' t2 t3,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval t1 t1' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3) (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1' t2 t3)<br/>
+| <a name="e_succ"></a>e_succ : forall t t',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval t t' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t) (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t')<br/>
+| <a name="e_predzero"></a>e_predzero :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a>) <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a><br/>
+| <a name="e_predsucc"></a>e_predsucc : forall t,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t)) t<br/>
+| <a name="e_pred"></a>e_pred : forall t t',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval t t' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t) (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t')<br/>
+| <a name="e_iszerozero"></a>e_iszerozero :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a>) <a class="idref" href="CoqIntro.html#tm_true">tm_true</a><br/>
+| <a name="e_iszerosucc"></a>e_iszerosucc : forall t,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t)) <a class="idref" href="CoqIntro.html#tm_false">tm_false</a><br/>
+| <a name="e_iszero"></a>e_iszero : forall t t',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval t t' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t) (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t').<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+We define multi-step evaluation with the relation
+    <code>eval_many</code>.  This relation includes all of the pairs of
+    terms that are connected by sequences of evaluation steps.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="eval_many"></a>eval_many : <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+| <a name="m_refl"></a>m_refl : forall t,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval_many t t<br/>
+| <a name="m_step"></a>m_step : forall t t' u,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval_many t' u -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval_many t u.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab76"></a><h3 class="section">Exercise</h3>
+
+    Multi-step evaluation is often defined as the "reflexive,
+    transitive closure" of single-step evaluation.  Write an
+    inductively defined relation <code>eval_rtc</code> that corresponds to
+    that verbal description.
+
+<br/><br/>
+    In case you get stuck or need a hint, you can find solutions
+    to all the exercises near the bottom of the file.  
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+A term is a <code>normal_form</code> if there is no term to which it
+    can step.  Note the concrete syntax for negation and
+    existential quantification in the definition below.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="normal_form"></a>normal_form (t : <a class="idref" href="CoqIntro.html#tm">tm</a>) : <span class="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;~ <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> t', <a class="idref" href="CoqIntro.html#eval">eval</a> t t'.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab77"></a><h3 class="section">Exercise</h3>
+
+    Sometimes it is more convenient to use a big-step semantics
+    for a language.  Add the remaining constructors to finish
+    the inductive definition <code>full_eval</code> for the big-step
+    semantics that corresponds to the small-step semantics
+    defined by <code>eval</code>.  Build the inference rules so that
+    <code>full_eval t v</code> logically implies both <code>eval_many t v</code> and
+    <code>value v</code>.  In order to do this, you may need to add the
+    premise <code>nvalue v</code> to the appropriate cases.
+
+<br/><br/>
+    Hint: You should end up with a total of 8 cases.
+
+<br/><br/>
+<pre>
+Inductive full_eval : tm -&gt; tm -&gt; Prop :=
+| f_value : forall v,
+    value v -&gt;
+    full_eval v v
+| f_iftrue : forall t1 t2 t3 v,
+    full_eval t1 tm_true -&gt;
+    full_eval t2 v -&gt;
+    full_eval (tm_if t1 t2 t3) v
+| f_succ : forall t v,
+    nvalue v -&gt;
+    full_eval t v -&gt;
+    full_eval (tm_succ t) (tm_succ v).
+</pre>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab78"></a><h3 class="section">Tip</h3>
+
+    If you want to see the type of an identifier <code>x</code>, you can
+    use the command <code>Check x.</code>  If you want to see the
+    definition of an identifier <code>x</code>, you can use the command
+    <code><span class="keyword">Print</span> x.</code>
+
+</div>
+<code>
+Check <a class="idref" href="CoqIntro.html#tm_if">tm_if</a>.<br/>
+Check <a class="idref" href="CoqIntro.html#m_step">m_step</a>.<br/>
+Check <a class="idref" href="CoqIntro.html#value">value</a>.<br/>
+<span class="keyword">Print</span> value.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab79"></a><h1 class="section">Proofs</h1>
+
+</div>
+<code>
+<br/>
+</code>
+
+<div class="doc">
+A proposition and its proof are both represented as terms in
+    the calculus of inductive constructions, which is
+    syntactically very small.
+
+<br/><br/>
+    Proof terms are most easily built interactively, using
+    tactics to manipulate a proof state.  A proof state consists
+    of a set of goals (propositions or types for which you must
+    produce an inhabitant), each with a context of hypotheses
+    (inhabitants of propositions or types you are allowed to
+    use).  A proof state begins initially with one goal (the
+    statement of the lemma you are tying to prove) and no
+    hypotheses.  A goal can be solved, and thereby eliminated,
+    when it exactly matches one of hypotheses in the context.  A
+    proof is completed when all goals are solved.
+
+<br/><br/>
+    Tactics can be used for forward reasoning (which, roughly
+    speaking, means modifying the hypotheses of a context while
+    leaving the goal unchanged) or backward reasoning (replacing
+    the current goal with one or more new goals in simpler
+    contexts).  Given the level of detail required in a formal
+    proof, it would be ridiculously impractical to complete a
+    proof using forward reasoning alone.  However it is usually
+    both possible and practical to complete a proof using
+    backward reasoning alone.  Therefore, we focus almost
+    exclusively on backward reasoning in this tutorial.  Of
+    course, most people naturally a significant amount of
+    forward reasoning in their thinking process, so it may take
+    you a while to become accustomed to getting by without it.
+
+<br/><br/>
+    We use the keyword <code><span class="keyword">Lemma</span></code> to state a new proposition we
+    wish to prove.  (<code><span class="keyword">Theorem</span></code> and <code><span class="keyword">Fact</span></code> are exact synonyms for
+    <code><span class="keyword">Lemma</span></code>.)  The keyword <code><span class="keyword">Proof</span></code>, immediately following the
+    statement of the proposition, indicates the beginning of a
+    proof script.  A proof script is a sequence of tactic
+    expressions, each concluding with a "<code>.</code>".  Once all of the
+    goals are solved, we use the keyword <code><span class="keyword">Qed</span></code> to record the
+    completed proof.  If the proof is incomplete, we may tell
+    Coq to accept the lemma on faith by using <code>Admitted</code> instead
+    of <code><span class="keyword">Qed</span></code>.
+
+<br/><br/>
+    We now proceed to introduce the specific proof tactics.
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab80"></a><h2 class="section">Working with Implication and Universal Quantification</h2>
+
+
+<ul>
+<li> <code>intros</code>
+
+</li>
+<li> <code>apply</code>
+
+</li>
+<li> <code>apply <span class="keyword">with</span> (x := ...)</code>
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab81"></a><h3 class="section">Example</h3>
+
+    The tactic <code>intros x1 ... xn</code> moves antecedents and
+    universally quantified variables from the goal into the
+    context as hypotheses.  The tactic <code>apply</code> is complementary
+    to <code>intros</code>.  If the conclusion (the part following the
+    rightmost arrow) of a constructor, hypothesis, or lemma <code>e</code>
+    matches our current goal, then <code>apply e</code> will replace the
+    goal with a new goal for each premise/antecedent of <code>e</code>.  If
+    <code>e</code> has no premises, then the current goal is solved.  Using
+    <code>apply</code> allows us to build a proof tree from the bottom up.
+    In the following example, our proof script will effectively
+    build the following proof tree:
+
+<br/><br/>
+<pre>
+                        nvalue t
+             ---------------------------- (e_predsucc)
+             eval (tm_pred (tm_succ t)) t
+    ------------------------------------------------ (e_succ)
+    eval (tm_succ (tm_pred (tm_succ t))) (tm_succ t)
+</pre>
+
+<br/><br/>
+    Step through the proof to see how this tree is constructed.
+    For each tactic, we give the corresponding statement in a
+    written proof.  (The uses of <code>Check</code> are inessential.)
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="e_succ_pred_succ"></a>e_succ_pred_succ : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t))) (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t).<br/>
+<span class="keyword">Proof</span>.<br/>
+</code>
+
+<div class="doc">
+Let <code>t</code> be a <code>tm</code>. 
+</div>
+<code>
+&nbsp;&nbsp;intros t.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Assume that <code>t</code> is an <code>nvalue</code> (and let's call that
+      assumption <code>Hn</code> for future reference). 
+</div>
+<code>
+&nbsp;&nbsp;intros Hn.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+By <code>e_succ</code>, in order to prove our conclusion, it suffices
+      to prove that <code>eval (tm_pred (tm_succ t)) t</code>. 
+</div>
+<code>
+&nbsp;&nbsp;Check <a class="idref" href="CoqIntro.html#e_succ">e_succ</a>.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_succ">e_succ</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+That, in turn, can be shown by <code>e_predsucc</code>, if we are
+      able to show that <code>nvalue t</code>. 
+</div>
+<code>
+&nbsp;&nbsp;Check <a class="idref" href="CoqIntro.html#e_predsucc">e_predsucc</a>.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_predsucc">e_predsucc</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+But, in fact, we assumed <code>nvalue t</code>. 
+</div>
+<code>
+&nbsp;&nbsp;apply Hn.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab82"></a><h3 class="section">Hint for PG users</h3>
+
+    If you place the cursor after <code><span class="keyword">Proof</span>.</code> and do C-c C-return,
+    you'll notice that the window displaying Coq's responses is
+    (annoyingly) empty, instead of showing what is to be proved.
+    The reason for this is that, actually, a different buffer is
+    being displayed!  (To see this, do C-c C-n and C-c C-u a few
+    times and notice that the buffer name in the mode line
+    changes.)  You can use C-c C-p to switch the display back
+    from the *response* buffer to the *goals* buffer.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab83"></a><h3 class="section">Example</h3>
+
+    Now consider, for a moment, the rule <code>m_step</code>:
+
+<br/><br/>
+<pre>
+    eval t t'  eval_many t' u
+    ------------------------- (m_step)
+          eval_many t u
+</pre>
+
+<br/><br/>
+    If we have a goal such as <code>eval_many e1 e2</code>, we should be
+    able to use <code>apply m_step</code> in order to replace it with the
+    goals <code>eval e1 t'</code> and <code>eval_many t' e2</code>.  But what exactly
+    is <code>t'</code> here?  When and how is it chosen?  It stands to
+    reason the conclusion is justified if we can come up with
+    any <code>t'</code> for which the premises can be justified.
+
+<br/><br/>
+    Now we note that, in the Coq syntax for the type of
+    <code>m_step</code>, all three variables <code>t</code>, <code>t'</code>, and <code>u</code> are
+    universally quantified.  The tactic <code>apply m_step</code> will use
+    pattern matching between our goal and the conclusion of
+    <code>m_step</code> to find the only possible instantiation of <code>t</code> and
+    <code>u</code>.  However, <code>apply m_step</code> will raise an error since it
+    does not know how it should instantiate <code>t'</code>.  In this case,
+    the <code>apply</code> tactic takes a <code><span class="keyword">with</span></code> clause that allows us to
+    provide this instantiation.  This is demonstrated in the
+    proof below.  (Note that the use of this feature means that
+    our proof scripts are not invariant under alpha-equivalence
+    on the types of our constructors and lemmas.  If this is a
+    concern, there are other means of achieving the same result
+    in a way that is compatible with alpha-conversion.  See the
+    next example.)
+
+<br/><br/>
+    Observe how this works in the proof script below.  The proof
+    tree here gives a visual representation of the proof term we
+    are going to construct and the proof script has again been
+    annotated with the steps in English.
+
+<br/><br/>
+<pre>
+    Letting   s = tm_succ
+              p = tm_pred
+            lem = e_succ_pred_succ,
+
+            nvalue t
+    - - - - - - - - - - - - (lem) --------------------- (m_refl)
+    eval (s (p (s t))) (s t)      eval_many (s t) (s t)
+    --------------------------------------------------- (m_step)
+                eval_many (s (p (s t))) (s t)
+</pre>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_succ_pred_succ"></a>m_succ_pred_succ : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t))) (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t).<br/>
+<span class="keyword">Proof</span>.<br/>
+</code>
+
+<div class="doc">
+Let <code>t</code> be a <code>tm</code>, and assume <code>nvalue t</code>. 
+</div>
+<code>
+&nbsp;&nbsp;intros t Hn.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+By <code>m_step</code>, to show our conclusion, it suffices to find
+      some <code>t'</code> for which
+        <code>eval (tm_succ (tm_pred (tm_succ t))) t'</code>
+      and
+        <code>eval t' (tm_succ t)</code>.
+      Let us choose <code>t'</code> to be <code>tm_succ t</code>. 
+</div>
+<code>
+&nbsp;&nbsp;Check <a class="idref" href="CoqIntro.html#m_step">m_step</a>.<br/>
+&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_step">m_step</a> <span class="keyword">with</span> (t' := <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+By the lemma <code>e_succ_pred_succ</code>, to show
+          <code>eval (tm_succ (tm_pred (tm_succ t))) (tm_succ t)</code>,
+        it suffices to show <code>nvalue t</code>. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;Check <a class="idref" href="CoqIntro.html#e_succ_pred_succ">e_succ_pred_succ</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_succ_pred_succ">e_succ_pred_succ</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+And, in fact, we assumed <code>nvluae t</code>. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;apply Hn.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Moreover, by the rule <code>m_refl</code>, we also may conclude
+        <code>eval (tm_succ t) (tm_succ t)</code>. 
+</div>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;Check <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab84"></a><h3 class="section">Example</h3>
+
+    Coq is built around the Curry-Howard correspondence.
+    Proofs of universally quantified propositions are functions
+    that take the witness of the quantifier as an argument.
+    Similarly, proofs of implications are functions that take
+    one proof as an argument and return another proof.  Observe
+    the types of the following terms.
+
+</div>
+<code>
+
+<br/>
+Check (<a class="idref" href="CoqIntro.html#e_succ_pred_succ">e_succ_pred_succ</a>).<br/>
+Check (<a class="idref" href="CoqIntro.html#e_succ_pred_succ">e_succ_pred_succ</a> <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a>).<br/>
+Check (<a class="idref" href="CoqIntro.html#n_zero">n_zero</a>).<br/>
+Check (<a class="idref" href="CoqIntro.html#e_succ_pred_succ">e_succ_pred_succ</a> <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> <a class="idref" href="CoqIntro.html#n_zero">n_zero</a>).<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab85"></a><h3 class="section">Example</h3>
+
+    Any tactic like <code>apply</code> that takes the name of a constructor
+    or lemma as an argument can just as easily be given a more
+    complicated expression as an argument.  Thus, we may use
+    function application to construct proof objects on the fly
+    in these cases.  Observe how this technique can be used to
+    rewrite the proof of the previous lemma.
+
+<br/><br/>
+    Although, we have eliminated one use of <code>apply</code>, this is not
+    necessarily an improvement over the previous proof.
+    However, there are cases where this technique is quite
+    valuable.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_succ_pred_succ_alt"></a>m_succ_pred_succ_alt : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t))) (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t Hn.<br/>
+
+<br/>
+&nbsp;&nbsp;Check <a class="idref" href="CoqIntro.html#m_step">m_step</a>.<br/>
+&nbsp;&nbsp;apply (<a class="idref" href="CoqIntro.html#m_step">m_step</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Check <a class="idref" href="CoqIntro.html#e_succ_pred_succ">e_succ_pred_succ</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="CoqIntro.html#e_succ_pred_succ">e_succ_pred_succ</a> t Hn).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Check <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply (<a class="idref" href="CoqIntro.html#m_refl">m_refl</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t)).<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab86"></a><h3 class="section">Hint for PG users</h3>
+
+    By default, the "." key is "electric" -- it inserts a period
+    _and_ causes the material up to the cursor to be sent to
+    Coq.  If you find this behavior annoying, it can be toggled
+    by doing "C-c .".
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab87"></a><h3 class="section">Exercise</h3>
+
+    Write a proof script to prove the following lemma, based
+    upon the proof given in English.
+
+<br/><br/>
+    Note: The lemma and the next should be useful in later
+    proofs.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_one"></a>m_one : forall t1 t2,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t1 t2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t1 t2.<br/>
+<span class="keyword">Proof</span>.<br/>
+</code>
+
+<div class="doc">
+Let <code>t1</code> and <code>t2</code> be terms, and assume <code>eval t1 t2</code>.  We
+      may conclude <code>eval_many t1 t2</code> by <code>m_step</code> if we can find
+      a term <code>t'</code> such that <code>eval t1 t'</code> and <code>eval_many t' t2</code>.
+      We will choose <code>t'</code> to be <code>t2</code>.  Now we can show
+      <code>eval t1 t2</code> by our assumption, and we can show
+      <code>eval_many t2 t2</code> by <code>m_refl</code>. 
+</div>
+<code>
+
+<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab88"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_two"></a>m_two : forall t1 t2 t3,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t1 t2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t2 t3 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t1 t3.<br/>
+<span class="keyword">Proof</span>.<br/>
+</code>
+
+<div class="doc">
+Let <code>t1</code>, <code>t2</code>, and <code>t3</code> be terms.  Assume <code>eval t1 t2</code>
+      and <code>eval t2 t3</code>.  By <code>m_step</code>, we may conclude that
+      <code>eval_many t1 t3</code> if we can find a term <code>t'</code> such that
+      <code>eval t1 t'</code> and <code>eval_many t' t3</code>.  Let's choose <code>t'</code> to
+      be <code>t2</code>.  We know <code>eval t1 t2</code> holds by assumption.  In
+      the other case, by the lemma <code>m_one</code>, to show <code>eval_many
+      t2 t3</code>, it suffices to show <code>eval t2 t3</code>, which is one of
+      our assumptions.  
+</div>
+<code>
+
+<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab89"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_iftrue_step"></a>m_iftrue_step : forall t t1 t2 u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t1 u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t t1 t2) u.<br/>
+<span class="keyword">Proof</span>.<br/>
+</code>
+
+<div class="doc">
+Let <code>t</code>, <code>t1</code>, <code>t2</code>, and <code>u</code> be terms.  Assume that
+      <code>eval t tm_true</code> and <code>eval_many t1 u</code>.  To show
+      <code>eval_many (tm_if t t1 t2) u</code>, by <code>m_step</code>, it suffices to
+      find a <code>t'</code> for which <code>eval (tm_if t t1 t2) t'</code> and
+      <code>eval_many t' u</code>.  Let us choose <code>t'</code> to be
+      <code>tm_if tm_true t1 t2</code>.  Now we can use <code>e_if</code> to show that
+      <code>eval (tm_if t t1 t2) (tm_if tm_true t1 t2)</code> if we can
+      show <code>eval t tm_true</code>, which is actually one of our
+      assumptions.  Moreover, using <code>m_step</code> once more, we can
+      show <code>eval_many (tm_if tm_true t1 t2) u</code> where <code>t'</code> is
+      chosen to be <code>t1</code>.  Doing so leaves us to show
+      <code>eval (tm_if tm_true t1 t2) t1</code> and <code>eval_many t1 u</code>.  The
+      former holds by <code>e_iftrue</code> and the latter holds by
+      assumption. 
+</div>
+<code>
+
+<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab90"></a><h2 class="section">Working with Definitions</h2>
+
+
+<ul>
+<li> <code>unfold</code>
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab91"></a><h3 class="section">Example</h3>
+
+    There is a notion of equivalence on Coq terms that arises
+    from the conversion rules of the underlying calculus of
+    constructions.  It is sometimes useful to be able to replace
+    one term in a proof with an equivalent one.  For instance,
+    we may want to replace a defined name with its definition.
+    This sort of replacement can be done the tactic <code>unfold</code>.
+    This tactic can be used to manipulate the goal or the
+    hypotheses.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Definition</span> <a name="strongly_diverges"></a>strongly_diverges t :=<br/>
+&nbsp;&nbsp;forall u, <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u -&gt; ~ <a class="idref" href="CoqIntro.html#normal_form">normal_form</a> u.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="unfold_example"></a>unfold_example : forall t t',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#strongly_diverges">strongly_diverges</a> t -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#strongly_diverges">strongly_diverges</a> t'.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t t' Hd He.<br/>
+&nbsp;&nbsp;&nbsp;unfold strongly_diverges. intros u Hm.<br/>
+&nbsp;&nbsp;&nbsp;unfold strongly_diverges <span class="keyword">in</span> Hd.<br/>
+&nbsp;&nbsp;&nbsp;apply Hd. apply <a class="idref" href="CoqIntro.html#m_step">m_step</a> <span class="keyword">with</span> (t' := t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply Hm.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab92"></a><h3 class="section">Exercise</h3>
+
+    In reality, many tactics will perform conversion
+    automatically as necessary.  Try removing the uses of
+    <code>unfold</code> from the above proof to check which ones were
+    necessary.
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab93"></a><h2 class="section">Working with Conjunction and Disjunction</h2>
+
+
+<ul>
+<li> <code>split</code>
+
+</li>
+<li> <code>left</code>
+
+</li>
+<li> <code>right</code>
+
+</li>
+<li> <code>destruct</code> (for conjunction and disjunction)
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab94"></a><h3 class="section">Example</h3>
+
+    If <code>H</code> is the name of a conjunctive hypothesis, then
+    <code>destruct H <span class="keyword">as</span> p</code> will replace the hypothesis <code>H</code> with its
+    components using the names in the pattern <code>p</code>.  Observe the
+    pattern in the example below.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_two_conj"></a>m_two_conj : forall t t' t'',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' /\ <a class="idref" href="CoqIntro.html#eval">eval</a> t' t'' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t''.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t t' t'' H.<br/>
+&nbsp;&nbsp;&nbsp;destruct H <span class="keyword">as</span> [ He1 He2 ].<br/>
+&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_two">m_two</a> <span class="keyword">with</span> (t2 := t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab95"></a><h3 class="section">Example</h3>
+
+    Patterns may be nested to break apart nested structures.
+    Note that infix conjunction is right-associative, which is
+    significant when trying to write nested patterns.  We will
+    later see how to use <code>destruct</code> on many different sorts of
+    hypotheses.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_three_conj"></a>m_three_conj : forall t t' t'' t''',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' /\ <a class="idref" href="CoqIntro.html#eval">eval</a> t' t'' /\ <a class="idref" href="CoqIntro.html#eval">eval</a> t'' t''' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t'''.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t t' t'' t''' H.<br/>
+&nbsp;&nbsp;&nbsp;destruct H <span class="keyword">as</span> [ He1 [ He2 He3 ] ].<br/>
+&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_step">m_step</a> <span class="keyword">with</span> (t' := t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_two">m_two</a> <span class="keyword">with</span> (t2 := t'').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply He2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply He3.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab96"></a><h3 class="section">Example</h3>
+
+    If your goal is a conjunction, use <code>split</code> to break it apart
+    into two separate subgoals.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_three"></a>m_three : forall t t' t'' t''',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t' t'' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t'' t''' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t'''.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t t' t'' t''' He1 He2 He3.<br/>
+&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_three_conj">m_three_conj</a> <span class="keyword">with</span> (t' := t') (t'' := t'').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply He2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply He3.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab97"></a><h3 class="section">Exercise</h3>
+
+    Hint: You might find lemma <code>m_three</code> useful here.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_if_iszero_conj"></a>m_if_iszero_conj : forall v t2 t2' t3 t3',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v /\ <a class="idref" href="CoqIntro.html#eval">eval</a> t2 t2' /\ <a class="idref" href="CoqIntro.html#eval">eval</a> t3 t3' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a>) t2 t3) t2' /\<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> v)) t2 t3) t3'.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab98"></a><h3 class="section">Example</h3>
+
+    If the goal is a disjunction, we can use the <code>left</code> or
+    <code>right</code> tactics to solve it by proving the left or right 
+    side of the conclusion.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="true_and_succ_zero_values"></a>true_and_succ_zero_values :<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> /\ <a class="idref" href="CoqIntro.html#value">value</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a>).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold value. split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;left. apply <a class="idref" href="CoqIntro.html#b_true">b_true</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right. apply <a class="idref" href="CoqIntro.html#n_succ">n_succ</a>. apply <a class="idref" href="CoqIntro.html#n_zero">n_zero</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab99"></a><h3 class="section">Example</h3>
+
+    If we have a disjunction in the context, we can use
+    <code>destruct</code> to reason by cases on the hypothesis.  Note the
+    syntax of the associated pattern.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="e_if_true_or_false"></a>e_if_true_or_false : forall t1 t2,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t1 <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> \/ <a class="idref" href="CoqIntro.html#eval">eval</a> t1 <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t2) t2.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t1 t2 H. destruct H <span class="keyword">as</span> [ He1 | He2 ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_two">m_two</a> <span class="keyword">with</span> (t2 := <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> t2 t2).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_iftrue">e_iftrue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_two">m_two</a> <span class="keyword">with</span> (t2 := <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> t2 t2).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply He2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_iffalse">e_iffalse</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab100"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="two_values"></a>two_values : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> t /\ <a class="idref" href="CoqIntro.html#value">value</a> u -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bvalue">bvalue</a> t \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bvalue">bvalue</a> u \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t /\ <a class="idref" href="CoqIntro.html#nvalue">nvalue</a> u).<br/>
+<span class="keyword">Proof</span>.<br/>
+</code>
+
+<div class="doc">
+We know <code>value t</code> and <code>value u</code>, which means either
+      <code>bvalue t</code> or <code>nvalue t</code>, and either <code>bvalue u</code> or
+      <code>nvalue u</code>.  Consider the case in which
+      <code>bvalue t</code> holds. Then one of the disjuncts of our
+      conclusion is proved.  Next, consider the case in which
+      <code>nvalue t</code> holds.  Now consider the subcase where
+      <code>bvalue u</code> holds. ... 
+</div>
+<code>
+
+<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab101"></a><h3 class="section">Example</h3>
+
+    <code>destruct</code> can be used on propositions with implications.
+    This will have the effect of performing <code>destruct</code> on the
+    conclusion of the implication, while leaving the hypotheses
+    of the implication as additional subgoals.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="destruct_example"></a>destruct_example : forall bv t t' t'',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bvalue">bvalue</a> bv -&gt;<br/>
+&nbsp;&nbsp;(<a class="idref" href="CoqIntro.html#value">value</a> bv -&gt; <a class="idref" href="CoqIntro.html#eval">eval</a> t t' /\ <a class="idref" href="CoqIntro.html#eval">eval</a> t' t'') -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t''.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros bv t t' t'' Hbv H. destruct H <span class="keyword">as</span> [ H1 H2 ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">Show</span> 2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold value. left. apply Hbv.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_two">m_two</a> <span class="keyword">with</span> (t2 := t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab102"></a><h3 class="section">Tip</h3>
+
+    After applying a tactic that introduces multiple subgoals,
+    it is sometimes useful to see not only the subgoals
+    themselves but also their hypotheses.  Adding the command
+    <code><span class="keyword">Show</span> n.</code> to your proof script to cause Coq to display the
+    nth subgoal in full.
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab103"></a><h2 class="section">Reasoning by Cases and Induction</h2>
+
+
+<ul>
+<li> <code>destruct</code> (for inductively defined propositions)
+
+</li>
+<li> <code>induction</code>
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab104"></a><h3 class="section">Example</h3>
+
+    Use <code>destruct</code> to reason by cases on an inductively defined
+    datatype or proposition.
+
+<br/><br/>
+    Note: It is possible to supply <code>destruct</code> with a pattern in
+    these instances also.  However, the patterns become
+    increasingly complex for bigger inductive definitions; so it
+    is often more practical to omit the pattern (thereby letting
+    Coq choose the names of the terms and hypotheses in each
+    case), in spite of the fact that this adds an element of
+    fragility to the proof script (since the proof script will
+    mention names that were system-generated).
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="e_iszero_nvalue"></a>e_iszero_nvalue : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> v) <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> \/<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> v) <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v Hn. destruct Hn.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;left. apply <a class="idref" href="CoqIntro.html#e_iszerozero">e_iszerozero</a>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right. apply <a class="idref" href="CoqIntro.html#e_iszerosucc">e_iszerosucc</a>. apply Hn.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab105"></a><h3 class="section">Example</h3>
+
+    You can use <code>induction</code> to reason by induction on an
+    inductively defined datatype or proposition.  This is the
+    same as <code>destruct</code>, except that it also introduces an
+    induction hypothesis in the inductive cases.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_iszero"></a>m_iszero : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t) (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> u).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u Hm. induction Hm.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_step">m_step</a> <span class="keyword">with</span> (t' := <a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_iszero">e_iszero</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHm.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab106"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_trans"></a>m_trans : forall t t' u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t' u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u.<br/>
+<span class="keyword">Proof</span>.<br/>
+</code>
+
+<div class="doc">
+We proceed by induction on the derivation of
+      <code>eval_many t t'</code>.
+      Case <code>m_refl</code>: Since <code>t</code> and <code>t'</code> must be the same, our
+        conclusion holds by assumption.
+      Case <code>m_step</code>: Now let's rename the <code>t'</code> from the lemma
+        statement to <code>u0</code> (as Coq likely will) and observe that
+        there must be some <code>t'</code> (from above the line of the
+        <code>m_step</code> rule) such that <code>eval t t'</code> and
+        <code>eval_many t' u0</code>.  Our conclusion follows from from
+        an application of <code>m_step</code> with our new <code>t'</code> and our
+        induction hypothesis, which allows us to piece together
+        <code>eval_many t' u0</code> and <code>eval_many u0 u</code> to get
+        <code>eval_many t' u</code>. 
+</div>
+<code>
+
+<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab107"></a><h3 class="section">Exercise</h3>
+
+    It is possible to use <code>destruct</code> not just on hypotheses but
+    on any lemma we have proved.  If we have a lemma
+<pre>
+      lemma1 : P /\ Q
+</pre>
+
+<br/><br/>
+    then we can use the tactic
+<pre>
+      destruct lemma1 as [ H1 H2 ].
+</pre>
+
+<br/><br/>
+    to continue our proof with <code>H1 : P</code> and <code>H2 : Q</code> in our
+    context.  This works even if the lemma has antecedents (they
+    become new subgoals); however it fail if the lemma has a
+    universal quantifier, such as this:
+<pre>
+      lemma2 : forall x, P(x) /\ Q(x)
+</pre>
+
+<br/><br/>
+    However, remember that we can build a proof of
+    <code>P(e) /\ Q(e)</code> (which can be destructed) using the Coq
+    expression <code>lemma2 e</code>.  So we need to phrase our tactic as
+<pre>
+      destruct (lemma2 e) as [ H1 H2 ].
+</pre>
+
+<br/><br/>
+    An example of this technique is below.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_iszero_nvalue"></a>m_iszero_nvalue : forall t v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t) <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> \/<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t) <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t v Hnv Hm.<br/>
+&nbsp;&nbsp;&nbsp;destruct (<a class="idref" href="CoqIntro.html#e_iszero_nvalue">e_iszero_nvalue</a> v) <span class="keyword">as</span> [ H1 | H2 ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply Hnv.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;left. apply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a> <span class="keyword">with</span> (t' := <a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> v).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply Hm.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right. apply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a> <span class="keyword">with</span> (t' := <a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> v).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply Hm.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply H2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab108"></a><h3 class="section">Exercise</h3>
+
+    Prove the following lemma.
+
+<br/><br/>
+    Hint: You may be interested in some previously proved
+    lemmas, such as <code>m_one</code> and <code>m_trans</code>.
+
+<br/><br/>
+    Note: Even though this lemma is in a comment, its solution
+    is also at the bottom.  (Coq will give an error if we leave
+    it uncommented since it mentions the <code>eval_rtc</code> relation,
+    which was the solution to another exercise.)
+<pre>
+Lemma eval_rtc_many : forall t u,
+  eval_rtc t u -&gt;
+  eval_many t u.
+</pre>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab109"></a><h3 class="section">Exercise</h3>
+
+    Prove the following lemma.
+<pre>
+Lemma eval_many_rtc : forall t u,
+  eval_many t u -&gt;
+  eval_rtc t u.
+</pre>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab110"></a><h3 class="section">Exercise</h3>
+
+    Prove the following lemma.
+<pre>
+Lemma full_eval_to_value : forall t v,
+  full_eval t v -&gt;
+  value v.
+</pre>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab111"></a><h2 class="section">Working with Existential Quantification</h2>
+
+
+<ul>
+<li> <code>exists</code>
+
+</li>
+<li> <code>destruct</code> (for existential propositions)
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab112"></a><h3 class="section">Example</h3>
+
+    Use <code>exists</code> to give the witness for an existential
+    quantifier in your goal. 
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="if_bvalue"></a>if_bvalue : forall t1 t2 t3,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bvalue">bvalue</a> t1 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> u, <a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3) u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t1 t2 t3 Hb. destruct Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists t2. apply <a class="idref" href="CoqIntro.html#e_iftrue">e_iftrue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists t3. apply <a class="idref" href="CoqIntro.html#e_iffalse">e_iffalse</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab113"></a><h3 class="section">Example</h3>
+
+    You may use <code>destruct</code> to break open an existential
+    hypothesis.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_two_exists"></a>m_two_exists : forall t u,<br/>
+&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> w, <a class="idref" href="CoqIntro.html#eval">eval</a> t w /\ <a class="idref" href="CoqIntro.html#eval">eval</a> w u) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u H.<br/>
+&nbsp;&nbsp;&nbsp;destruct H <span class="keyword">as</span> [ w He ].<br/>
+&nbsp;&nbsp;&nbsp;destruct He <span class="keyword">as</span> [ He1 He2 ].<br/>
+&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_two">m_two</a> <span class="keyword">with</span> (t2 := w).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab114"></a><h3 class="section">Example</h3>
+
+    Tip: We can combine patterns that destruct existentials with
+    patterns that destruct other logical connectives.
+
+<br/><br/>
+    Here is the same proof with just one use of <code>destruct</code>.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_two_exists'"></a>m_two_exists' : forall t u,<br/>
+&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> w, <a class="idref" href="CoqIntro.html#eval">eval</a> t w /\ <a class="idref" href="CoqIntro.html#eval">eval</a> w u) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u H. destruct H <span class="keyword">as</span> [ w [ He1 He2 ] ].<br/>
+&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_two">m_two</a> <span class="keyword">with</span> (t2 := w).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab115"></a><h3 class="section">Example</h3>
+
+    Tip: We give patterns to the <code>intros</code> tactic to destruct
+    hypotheses as we introduce them.
+
+<br/><br/>
+    Here is the same proof again without any uses of <code>destruct</code>.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_two_exists''"></a>m_two_exists'' : forall t u,<br/>
+&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> w, <a class="idref" href="CoqIntro.html#eval">eval</a> t w /\ <a class="idref" href="CoqIntro.html#eval">eval</a> w u) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u [ w [ He1 He2 ] ].<br/>
+&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_two">m_two</a> <span class="keyword">with</span> (t2 := w).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab116"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="value_can_expand"></a>value_can_expand : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> u, <a class="idref" href="CoqIntro.html#eval">eval</a> u v.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab117"></a><h3 class="section">Exercise</h3>
+
+    Tip: You should find the lemma <code>m_iszero</code> useful.  Use
+    <code>Check m_iszero.</code> if you've forgotten its statement.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="exists_iszero_nvalue"></a>exists_iszero_nvalue : forall t,<br/>
+&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> nv, <a class="idref" href="CoqIntro.html#nvalue">nvalue</a> nv /\ <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t nv) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> bv, <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t) bv.<br/>
+<span class="keyword">Proof</span>.<br/>
+</code>
+
+<div class="doc">
+There exists some <code>nv</code> such that <code>nvalue nv</code>.  Consider
+      the case where <code>nv</code> is <code>tm_zero</code>.  Then choose <code>bv</code> to
+      be <code>tm_true</code>.  By <code>m_trans</code>, we can show that
+      <code>eval_many (tm_iszero t) tm_true</code> by showing
+      <code>eval_many (tm_iszero t) (tm_iszero tm_zero)</code> and
+      <code>eval_many (tm_iszero tm_zero) tm_true</code>.  The former
+      follows from <code>m_iszero</code> and our assumption.  The latter
+      follows from <code>m_one</code> and the rule <code>e_iszerozero</code>.  On the
+      other hand, in the case where <code>nv</code> is built from
+      <code>tm_succ</code>, we choose <code>bv</code> to be <code>tm_false</code> and the proof
+      follows similarly. 
+</div>
+<code>
+
+<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab118"></a><h2 class="section">Working with Negation</h2>
+
+
+<ul>
+<li> <code>unfold not</code>
+
+</li>
+<li> <code>destruct</code> (for negation)
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab119"></a><h3 class="section">Example</h3>
+
+    The standard library defines an uninhabited type <code>False</code> and
+    defines <code>not P</code> to stand for <code>P -&gt; False</code>.  Furthermore, Coq
+    defines the notation <code>~ P</code> to stand for <code>not P</code>.  (Such
+    notations only affect parsing and printing -- Coq views <code>not
+    P</code> and <code>~ P</code> as being syntactically equal.)
+
+<br/><br/>
+    The most basic way to work with negated statements is to
+    unfold <code>not</code> and treat <code>False</code> just as any other
+    proposition.
+
+<br/><br/>
+    (Note how multiple definitions can be unfolded with one use
+    of <code>unfold</code>.  Also, as noted earlier, many uses of <code>unfold</code>
+    are not strictly necessary.  You can try deleting the uses
+    from the proof below to check that the proof script still
+    works.)
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="normal_form_succ"></a>normal_form_succ : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t Hnf.<br/>
+&nbsp;&nbsp;&nbsp;unfold normal_form. unfold not.<br/>
+&nbsp;&nbsp;&nbsp;unfold normal_form, not <span class="keyword">in</span> Hnf.<br/>
+&nbsp;&nbsp;&nbsp;intros [ t' H' ]. apply Hnf.<br/>
+&nbsp;&nbsp;&nbsp;exists (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t'). apply <a class="idref" href="CoqIntro.html#e_succ">e_succ</a>. apply H'.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab120"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="normal_form_to_forall"></a>normal_form_to_forall : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t -&gt;<br/>
+&nbsp;&nbsp;forall u, ~ <a class="idref" href="CoqIntro.html#eval">eval</a> t u.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab121"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="normal_form_from_forall"></a>normal_form_from_forall : forall t,<br/>
+&nbsp;&nbsp;(forall u, ~ <a class="idref" href="CoqIntro.html#eval">eval</a> t u) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab122"></a><h3 class="section">Example</h3>
+
+    If you happen to have <code>False</code> as a hypothesis, you may use
+    <code>destruct</code> on that hypothesis to solve your goal.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="False_hypothesis"></a>False_hypothesis : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a> -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v H. destruct H.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab123"></a><h3 class="section">Example</h3>
+
+    Recalling that <code>destruct</code> can be used on propositions with
+    antecedents and that negation is simply an abbreviation for
+    an implication, using <code>destruct</code> on a negated hypothesis has
+    the derived behavior of replacing our goal with the
+    proposition that was negated in our context.
+
+<br/><br/>
+    Tip: We actually don't even need to do the unfolding below
+    because <code>destruct</code> would have done it for us.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="destruct_negation_example"></a>destruct_negation_example : forall t v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> -&gt;<br/>
+&nbsp;&nbsp;(<a class="idref" href="CoqIntro.html#value">value</a> v -&gt; <a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t v Hnv He Hnf.<br/>
+&nbsp;&nbsp;&nbsp;unfold normal_form, not <span class="keyword">in</span> Hnf.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;destruct Hnf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply Hnv.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a>. apply He.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab124"></a><h3 class="section">Exercise</h3>
+
+    This one may be a bit tricky.  Start by using <code>destruct</code> on
+    one of your hypotheses.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="negation_exercise"></a>negation_exercise : forall v1 v2,<br/>
+&nbsp;&nbsp;~ (<a class="idref" href="CoqIntro.html#value">value</a> v1 \/ <a class="idref" href="CoqIntro.html#value">value</a> v2) -&gt;<br/>
+&nbsp;&nbsp;~ (~ <a class="idref" href="CoqIntro.html#bvalue">bvalue</a> v1 /\ ~ <a class="idref" href="CoqIntro.html#bvalue">bvalue</a> v2) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab125"></a><h2 class="section">Working with Equality</h2>
+
+
+<ul>
+<li> <code>reflexivity</code>
+
+</li>
+<li> <code>subst</code>
+
+</li>
+<li> <code>rewrite</code>
+
+</li>
+<li> <code>inversion</code> (on equalities)
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab126"></a><h3 class="section">Example</h3>
+
+    If you have an equality in your context, there are several
+    ways to substitute one side of the equality for the other in
+    your goal or in other hypotheses.
+
+<br/><br/>
+    If one side of the equality is a variable <code>x</code>, then the
+    tactic <code>subst x</code> will replace all occurrences of <code>x</code> in the
+    context and goal with the other side of the quality and will
+    remove <code>x</code> from your context.
+
+<br/><br/>
+    Use <code>reflexivity</code> to solve a goal of the form <code>e = e</code>.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="equality_example_1"></a>equality_example_1 : forall t1 t2 t3 u1 u2,<br/>
+&nbsp;&nbsp;t1 = <a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> u1 -&gt;<br/>
+&nbsp;&nbsp;t2 = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u2 -&gt;<br/>
+&nbsp;&nbsp;t3 = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3 =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> u1) (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u2) (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u2)).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t1 t2 t3 u1 u2 Heq1 Heq2 Heq3.<br/>
+&nbsp;&nbsp;&nbsp;subst t1. subst t2. subst t3. reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab127"></a><h3 class="section">Example</h3>
+
+    If neither side of the equality in your context is a
+    variable (or if you don't want to discard the hypothesis),
+    you can use the <code>rewrite</code> tactic to perform a substitution.
+    The arrow after <code>rewrite</code> indicates the direction of the
+    substitution.  As demonstrated, you may perform rewriting in
+    the goal or in a hypothesis.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="equality_example_2a"></a>equality_example_2a : forall t u v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u) v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t) v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u v Heq He. rewrite -&gt; Heq. apply He.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="equality_example_2b"></a>equality_example_2b : forall t u v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u) v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t) v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u v Heq He. rewrite &lt;- Heq <span class="keyword">in</span> He. apply He.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab128"></a><h3 class="section">Example</h3>
+
+    We also note that, analogously with <code>destruct</code>, we may use
+    <code>rewrite</code> even with a hypothesis (or lemma) that has
+    antecedents.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="equality_example_2c"></a>equality_example_2c : forall t u v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt;<br/>
+&nbsp;&nbsp;(<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt; <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u) v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t) v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u v Hnv Heq He. rewrite &lt;- Heq <span class="keyword">in</span> He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply Hnv.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab129"></a><h3 class="section">Example</h3>
+
+    If you need to derive additional equalities implied by an
+    equality in your context (e.g., by the principle of
+    constructor injectivity), you may use <code>inversion</code>.
+    <code>inversion</code> is a powerful tactic that uses unification to
+    introduce more equalities into your context.  (You will
+    observe that it also performs some substitutions in your
+    goal.)
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="equality_example_3"></a>equality_example_3 : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u -&gt;<br/>
+&nbsp;&nbsp;t = u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u Heq. inversion Heq. reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab130"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="equality_exercise"></a>equality_exercise : forall t1 t2 t3 u1 u2 u3 u4,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3 = <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> u1 u2 u2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3 = <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> u3 u3 u4 -&gt;<br/>
+&nbsp;&nbsp;t1 = u4.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab131"></a><h3 class="section">Example</h3>
+
+    <code>inversion</code> will also solve a goal when unification fails on
+    a hypothesis.  (Internally, Coq can construct a proof of
+    <code>False</code> from contradictory equalities.)
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="equality_example_4"></a>equality_example_4 :<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> = <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab132"></a><h3 class="section">Exercise</h3>
+
+    Note: <code>e1 &lt;&gt; e2</code> is a notation for <code>~ e1 = e2</code>, i.e., the
+    two are treated as syntactically equal.
+
+<br/><br/>
+    Note: This is fairly trivial to prove if we have a size
+    function on terms and some automation.  With just the tools
+    we have described so far, it requires just a little bit of
+    work.
+
+<br/><br/>
+    Hint: The proof requires induction on <code>t</code>.  (This is the
+    first example of induction on datatypes, but it is even more
+    straightforward than induction on propositions.)  In each
+    case, unfold the negation, pull the equality into the
+    context, and use <code>inversion</code> to eliminate contradictory
+    equalities.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="succ_not_circular"></a>succ_not_circular : forall t,<br/>
+&nbsp;&nbsp;t &lt;&gt; <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab133"></a><h2 class="section">Reasoning by Inversion</h2>
+
+
+<ul>
+<li> <code>inversion</code> (on propositions)
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab134"></a><h3 class="section">Example</h3>
+
+    The <code>inversion</code> tactic also allows you to reason by
+    inversion on an inductively defined proposition as in paper
+    proofs: we try to match some proposition with the conclusion
+    of each inference rule and only consider the cases (possibly
+    none) where there is a successful unification.  In those
+    cases, we may use the premises of the inference rule in our
+    reasoning.
+
+<br/><br/>
+    Since <code>inversion</code> may generate many equalities between
+    variables, it is useful to know that using <code>subst</code> without
+    an argument will perform all possible substitutions for
+    variables.  It is a little difficult to predict which
+    variables will be eliminated and which will be kept by this
+    tactic, but this is a typical sort of trade-off when using
+    powerful tactics.
+
+<br/><br/>
+    (The use of <code>subst</code> in this proof is superfluous, but you
+    can observe that it simplifies the context.)
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="value_succ_nvalue"></a>value_succ_nvalue : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t H. unfold value <span class="keyword">in</span> H. destruct H <span class="keyword">as</span> [ H1 | H2 ].<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H1.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H2. subst. apply H0.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab135"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="inversion_exercise"></a>inversion_exercise : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t) <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+</code>
+
+<div class="doc">
+By inversion on the <code>eval_many</code> relation, then conclusion
+      <code>eval_many (tm_pred t) tm_zero</code> must have been derived by
+      the rule <code>m_step</code>, which means there is some <code>t'</code> for
+      which <code>eval (tm_pred t) t'</code> and <code>eval_many t' tm_zero</code>.
+      Now, by inversion on the <code>eval</code> relation, there are only
+      three ways that <code>eval (tm_pred t) t'</code> could have been
+      derived:
+<a name="lab136"></a><h1 class="section">By <code>e_predzero</code>, with <code>t</code> and <code>t'</code> both being equal to</h1>
+
+        <code>tm_zero</code>.  Our conclusion follows from <code>n_zero</code>.
+<a name="lab137"></a><h1 class="section">By <code>e_predsucc</code>, with <code>t</code> being <code>tm_succ t0</code> where we</h1>
+
+        have <code>nvalue t0</code>.  In this case, our conclusion is
+        provable with <code>n_succ</code>.
+<a name="lab138"></a><h1 class="section">By <code>e_pred</code>, with <code>t</code> taking an evaluation step.  This</h1>
+
+        contradicts our assumption that <code>t</code> is a normal form
+        (which can be shown by using <code>destruct</code> on that
+        assumption). 
+</div>
+<code>
+
+<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab139"></a><h3 class="section">Exercise</h3>
+
+    Tip: Nested patterns will be useful here.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="contradictory_equalities_exercise"></a>contradictory_equalities_exercise :<br/>
+&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> t, <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> u, <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> v,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> t /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;t = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;u = <a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> v) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab140"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="eval_fact_exercise"></a>eval_fact_exercise : forall t1 t2,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t1)) t2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t2 <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> u, t1 = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab141"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="normal_form_if"></a>normal_form_if : forall t1 t2 t3,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3) -&gt;<br/>
+&nbsp;&nbsp;t1 &lt;&gt; <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> /\ t1 &lt;&gt; <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> /\ <a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t1.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab142"></a><h2 class="section">Additional Important Tactics</h2>
+
+
+<ul>
+<li> <code>generalize dependent</code>
+
+</li>
+<li> <code>assert</code>
+
+</li>
+<li> <code>;</code>
+
+</li>
+<li> <code>clear</code>
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab143"></a><h3 class="section">Example</h3>
+
+    Sometimes we need to have a tactic that moves hypotheses
+    from our context back into our goal.  Often this is
+    because we want to perform induction in the middle of a
+    proof and will not get a sufficiently general induction
+    hypothesis without a goal of the correct form.  (To be
+    specific, if we need to have an induction hypothesis with a
+    <code>forall</code> quantifier in front, then we must make sure our
+    goal has a <code>forall</code> quantifier in front at the time we
+    invoke the <code>induction</code> tactic.) Observe how <code>generalize
+    dependent</code> achieves this in the proof below, moving the
+    variable <code>t</code> and all dependent hypotheses back into the
+    goal.  You may want to remove the use of <code>generalize
+    dependent</code> to convince yourself that it is performing an
+    essential role here.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="value_is_normal_form"></a>value_is_normal_form : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v [ Hb | Hn ] [ t He ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;generalize dependent t. induction Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros t He. inversion He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros u He. inversion He. subst. destruct (IHHn t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab144"></a><h3 class="section">Exercise</h3>
+
+    Coq has many operations (called "tacticals") to combine
+    smaller tactics into larger ones.
+
+<br/><br/>
+    If <code>t1</code> and <code>t2</code> are tactics, then <code>t1; t2</code> is a tactic that
+    executes <code>t1</code>, and then executes <code>t2</code> on subgoals left by or
+    newly generated by <code>t1</code>.  This can help to eliminate
+    repetitious use of tactics.  Two idiomatic uses are
+    performing <code>subst</code> after <code>inversion</code> and performing <code>intros</code>
+    after <code>induction</code>.  More opportunities to use this tactical
+    can usually be discovered after writing a proof.  (It is
+    worth noting that some uses of this tactical can make proofs
+    less readable or more difficult to maintain.  Alternatively,
+    some uses can make proofs more readable or easier to
+    maintain.  It is always good to think about your priorities
+    when writing a proof script.)
+
+<br/><br/>
+    Revise the proof for <code>value_is_normal_form</code> to include uses
+    of the <code>;</code> tactical.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab145"></a><h3 class="section">Example</h3>
+
+    Sometimes it is helpful to be able to use forward reasoning
+    in a proof.  One form of forward reasoning can be done with
+    the tactic <code>assert</code>.  <code>assert</code> adds a new hypothesis to the
+    context but asks us to first justify it.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="nvalue_is_normal_form"></a>nvalue_is_normal_form : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v Hnv.<br/>
+&nbsp;&nbsp;&nbsp;assert (<a class="idref" href="CoqIntro.html#value">value</a> v) <span class="keyword">as</span> Hv. right. apply Hnv.<br/>
+&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#value_is_normal_form">value_is_normal_form</a>. apply Hv.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab146"></a><h3 class="section">Example</h3>
+
+    <code>assert</code> can also be supplied with a tactic that proves the
+    assertion.  We rewrite the above proof using this form.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="nvalue_is_normal_form'"></a>nvalue_is_normal_form' : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v Hnv.<br/>
+&nbsp;&nbsp;&nbsp;assert (<a class="idref" href="CoqIntro.html#value">value</a> v) <span class="keyword">as</span> Hv by (right; apply Hnv).<br/>
+&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#value_is_normal_form">value_is_normal_form</a>. apply Hv.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab147"></a><h3 class="section">Example</h3>
+
+    The proof below introduces two new, simple tactics.  First,
+    the tactic <code>replace e1 <span class="keyword">with</span> e2</code> performs a substitution in
+    the goal and then requires that you prove <code>e2 = e1</code> as a new
+    subgoal.  This often allows us to avoid more cumbersome
+    forms of forward reasoning.  Second, the <code>clear</code> tactic
+    discards a hypothesis from the context.  Of course, this
+    tactic is never needed, but it can be nice to use when there
+    are complicated, irrelevant hypotheses in the context.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="single_step_to_multi_step_determinacy"></a>single_step_to_multi_step_determinacy :<br/>
+&nbsp;&nbsp;(forall t u1 u2, <a class="idref" href="CoqIntro.html#eval">eval</a> t u1 -&gt; <a class="idref" href="CoqIntro.html#eval">eval</a> t u2 -&gt; u1 = u2) -&gt;<br/>
+&nbsp;&nbsp;forall t v1 v2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t v1 -&gt; <a class="idref" href="CoqIntro.html#normal_form">normal_form</a> v1 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t v2 -&gt; <a class="idref" href="CoqIntro.html#normal_form">normal_form</a> v2 -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;v1 = v2.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros H t v1 v2 Hm1 Hnf1 Hm2 Hnf2. induction Hm1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;clear H. destruct Hm2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct Hnf1. exists t'. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hm2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct Hnf2. exists t'. apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHm1; clear IHHm1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Hnf1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace t' <span class="keyword">with</span> t'0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Hm2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H <span class="keyword">with</span> (t := t).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab148"></a><h3 class="section">Exercise</h3>
+
+    This proof is lengthy and thus somewhat challenging.  All of
+    the techniques from this section will be useful; some will
+    be essential.  In particular, you will need to use
+    <code>generalize dependent</code> at the beginning of the proof.  You
+    will find <code>assert</code> helpful in the cases where your
+    assumptions are contradictory but none of them are in a
+    negative form.  In that situation, you can assert a negative
+    statement that follows from your hypotheses (recall that
+    <code>normal_form</code> is a negative statement).  Finally, you will
+    want to use the above lemma <code>nvalue_is_normal_form</code>.  Good
+    luck!
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Theorem</span> <a name="eval_deterministic"></a>eval_deterministic : forall t t' t'',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t'' -&gt;<br/>
+&nbsp;&nbsp;t' = t''.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab149"></a><h3 class="section">Exercise</h3>
+
+    Prove the following lemmas.  The last is quite long, and you
+    may wish to wait until you know more about automation.
+<pre>
+Lemma full_eval_from_value : forall v w,
+  value v -&gt;
+  full_eval v w -&gt;
+  v = w.
+
+Lemma eval_full_eval : forall t t' v,
+  eval t t' -&gt;
+  full_eval t' v -&gt;
+  full_eval t v.
+
+Lemma full_eval_complete : forall t v,
+  value v -&gt;
+  eval_many t v -&gt;
+  full_eval t v.
+</pre>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab150"></a><h2 class="section">Basic Automation</h2>
+
+
+<ul>
+<li> <code>eapply</code>, <code>esplit</code>
+
+</li>
+<li> <code>auto</code>, <code>eauto</code>
+
+</li>
+</ul>
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab151"></a><h3 class="section">Example</h3>
+
+    You can use <code>eapply e</code> instead of <code>apply e <span class="keyword">with</span> (x := e1)</code>.
+    This will generate subgoals containing unification variables
+    that will get unified during subsequent uses of <code>apply</code>.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="m_if"></a>m_if : forall t1 u1 t2 t3,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t1 u1 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3) (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> u1 t2 t3).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t1 u1 t2 t3 Hm. induction Hm.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_step">m_step</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHm.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab152"></a><h3 class="section">Example</h3>
+
+    You can use <code>esplit</code> to turn an existentially quantified
+    variable in your goal into a unification variable.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="exists_pred_zero"></a>exists_pred_zero :<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> u, <a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a>) u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;esplit. apply <a class="idref" href="CoqIntro.html#e_predzero">e_predzero</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab153"></a><h3 class="section">Example</h3>
+
+    The <code>auto</code> tactic solves goals that are solvable by any
+    combination of
+
+<ul>
+<li> <code>intros</code>
+
+</li>
+<li> <code>apply</code> (used on some local hypothesis)
+
+</li>
+<li> <code>split</code>, <code>left</code>, <code>right</code>
+
+</li>
+<li> <code>reflexivity</code>
+
+</li>
+</ul>
+
+<br/><br/>
+    If <code>auto</code> cannot solve the goal, it will leave the proof
+    state completely unchanged (without generating any errors).
+
+<br/><br/>
+    The lemma below is a proposition that has been contrived for
+    the sake of demonstrating the scope of the <code>auto</code> tactic and
+    does not say anything of practical interest.  So instead of
+    thinking about what it means, you should think about the
+    operations that <code>auto</code> had to perform to solve the goal.
+
+<br/><br/>
+    Note: It is important to remember that <code>auto</code> does not
+    destruct hypotheses!  There are more advanced forms of
+    automation available that do destruct hypotheses in some
+    specific ways.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="auto_example"></a>auto_example : forall t t' t'',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t' t'' -&gt;<br/>
+&nbsp;&nbsp;(forall u, <a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt; <a class="idref" href="CoqIntro.html#eval">eval</a> t' u -&gt; <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t' t \/ t = t /\ <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t''.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab154"></a><h3 class="section">Example</h3>
+
+    The <code>eauto</code> tactic solves goals that are solvable by some
+    combination of
+
+<ul>
+<li> <code>intros</code>
+
+</li>
+<li> <code>eapply</code> (used on some local hypothesis)
+
+</li>
+<li> <code>split</code>, <code>left</code>, <code>right</code>
+
+</li>
+<li> <code>esplit</code>
+
+</li>
+<li> <code>reflexivity</code>
+
+</li>
+</ul>
+
+<br/><br/>
+    This lemma has two significantly differences from the
+    previous one, both of which render <code>auto</code> useless.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="eauto_example"></a>eauto_example : forall t t' t'',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t' t'' -&gt;<br/>
+&nbsp;&nbsp;(forall u, <a class="idref" href="CoqIntro.html#eval">eval</a> t u -&gt; <a class="idref" href="CoqIntro.html#eval">eval</a> u t'' -&gt; <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t'') -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t' t \/ (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> u, t = u) /\ <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t''.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab155"></a><h3 class="section">Example</h3>
+
+    You can enhance <code>auto</code> (or <code>eauto</code>) by appending <code><span class="keyword">using</span> x_1,
+    ..., x_n</code>, where each <code>x_i</code> is the name of some constructor
+    or lemma.  Then <code>auto</code> will attempt to apply those
+    constructors or lemmas in addition to the assumptions in
+    the local context.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="eauto_using_example"></a>eauto_using_example : forall t t' t'',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t' t'' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t' t \/ t = t /\ <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t''.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;eauto <span class="keyword">using</span> <a class="idref" href="CoqIntro.html#m_step">m_step</a>, <a class="idref" href="CoqIntro.html#m_one">m_one</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab156"></a><h3 class="section">Exercise</h3>
+
+    Go back and rewrite your proofs for <code>m_one</code>, <code>m_two</code>, and
+    <code>m_iftrue_step</code>.  You should be able to make them very
+    succinct given what you know now.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab157"></a><h3 class="section">Exercise</h3>
+
+    See how short you can make these proofs.
+
+<br/><br/>
+    Note: This is an exercise.  We are not making the claim that
+    shorter proofs are necessarily better!
+
+<br/><br/>
+    Hint: Remember that we can connect tactics in sequence with
+    <code>;</code>.  However, as you can imagine, figuring out the best
+    thing to write after a <code>;</code> usually involves some trial and
+    error.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="pred_not_circular"></a>pred_not_circular : forall t,<br/>
+&nbsp;&nbsp;t &lt;&gt; <a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_succ"></a>m_succ : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t) (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u).<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_pred"></a>m_pred : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t) (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> u).<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab158"></a><h3 class="section">Exercise</h3>
+
+    Go back and rewrite your proofs for <code>m_trans</code> and
+    <code>two_values</code>.  Pulling together several tricks you've
+    learned, you should be able to prove <code>two_values</code> in one
+    (short) line.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab159"></a><h3 class="section">Note</h3>
+
+    Sometimes there are lemmas or constructors that are so
+    frequently needed by <code>auto</code> that we don't want to have to
+    add them to our <code><span class="keyword">using</span></code> clause each time.  Coq allows us to
+    request that certain propositions that always be
+    considered by <code>auto</code> and <code>eauto</code>.
+
+<br/><br/>
+    The following command adds four lemmas to the default search
+    procedure of <code>auto</code>.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Resolve <a class="idref" href="CoqIntro.html#m_if">m_if</a> <a class="idref" href="CoqIntro.html#m_succ">m_succ</a> <a class="idref" href="CoqIntro.html#m_pred">m_pred</a> <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+Constructors of inductively defined propositions are some of
+    the most frequently needed by <code>auto</code>.  Instead of writing
+<pre>
+    Hint Resolve b_true b_false.
+</pre>
+
+<br/><br/>
+    we may simply write
+<pre>
+    Hint Constructors bvalue.
+</pre>
+
+<br/><br/>
+    Let's add all our constructors to <code>auto</code>.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Constructors bvalue nvalue eval eval_many.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+By default <code>auto</code> will never try to unfold definitions to
+    see if a lemma or constructor can be applied.  With the
+    <code><span class="keyword">Hint</span> Unfold</code> command, we can instruct <code>auto</code> to try unfold
+    definitions in the goal as it is working.
+
+</div>
+<code>
+
+<br/>
+<span class="keyword">Hint</span> Unfold value normal_form.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+There are a few more variants on the <code><span class="keyword">Hint</span></code> command that can
+    be used to further customize <code>auto</code>.  You can learn about
+    them in the Coq reference manual.
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab160"></a><h2 class="section">Functions and Conversion</h2>
+
+
+<ul>
+<li> <code><span class="keyword">Fixpoint</span>/struct</code>
+
+</li>
+<li> <code><span class="keyword">match</span> ... <span class="keyword">end</span></code>
+
+</li>
+<li> <code><span class="keyword">if</span> ... <span class="keyword">then</span> ... <span class="keyword">else</span> ...</code>
+
+</li>
+<li> <code>simpl</code>
+
+</li>
+<li> <code>remember</code>
+
+</li>
+</ul>
+
+<br/><br/>
+    In this section we start to use Coq as a programming
+    language and learn how to reason about programs defined
+    within Coq.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab161"></a><h3 class="section">Example</h3>
+
+    Coq defines many datatypes in its standard libraries.  Have
+    a quick look now through the library <code>Datatypes</code> to see some
+    of the basic ones, in particular <code>bool</code> and <code>nat</code>.  (Note
+    that constructors of the datatype <code>nat</code> are the letter <code>O</code>
+    and the letter <code>S</code>.  However, Coq will parse and print
+    <code>nat</code>s using a standard decimal representation.)
+
+<br/><br/>
+    We define two more datatypes here that will be useful later.
+
+</div>
+<code>
+<span class="keyword">Inductive</span> <a name="bool_option"></a>bool_option : <span class="keyword">Set</span> :=<br/>
+| <a name="some_bool"></a>some_bool : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#bool">bool</a> -&gt; bool_option<br/>
+| <a name="no_bool"></a>no_bool : bool_option.<br/>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="nat_option"></a>nat_option : <span class="keyword">Set</span> :=<br/>
+| <a name="some_nat"></a>some_nat : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a> -&gt; nat_option<br/>
+| <a name="no_nat"></a>no_nat : nat_option.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab162"></a><h3 class="section">Example</h3>
+
+    We can define simple (non-recursive) functions from one
+    datatype to another using the <code><span class="keyword">Definition</span></code> keyword.  The
+    <code><span class="keyword">match</span></code> construct allows us to do case analysis on a
+    datatype.  The <code><span class="keyword">match</span></code> expression has a first-match
+    semantics and allows nested patterns; however, Coq's type
+    checker demands that pattern-matching be exhaustive.
+
+<br/><br/>
+    We define functions below for converting between Coq <code>bool</code>s
+    and boolean values in our object language.
+
+</div>
+<code>
+<span class="keyword">Definition</span> <a name="tm_to_bool"></a>tm_to_bool (t : <a class="idref" href="CoqIntro.html#tm">tm</a>) : <a class="idref" href="CoqIntro.html#bool_option">bool_option</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> t <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> =&gt; <a class="idref" href="CoqIntro.html#some_bool">some_bool</a> <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> =&gt; <a class="idref" href="CoqIntro.html#some_bool">some_bool</a> <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a><br/>
+&nbsp;&nbsp;| _ =&gt; <a class="idref" href="CoqIntro.html#no_bool">no_bool</a><br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Definition</span> <a name="bool_to_tm"></a>bool_to_tm (b : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#bool">bool</a>) : <a class="idref" href="CoqIntro.html#tm">tm</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> b <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a> =&gt; <a class="idref" href="CoqIntro.html#tm_true">tm_true</a><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a> =&gt; <a class="idref" href="CoqIntro.html#tm_false">tm_false</a><br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab163"></a><h3 class="section">Example</h3>
+
+    Coq also has an <code><span class="keyword">if</span>/<span class="keyword">then</span>/<span class="keyword">else</span></code> expression.  It can be used,
+    not just with the type <code>bool</code> but, in fact, with any
+    datatype having exactly two constructors (the first
+    constructor corresponding to the <code><span class="keyword">then</span></code> branch and the
+    second to the <code><span class="keyword">else</span></code> branch).  Thus, we can define a
+    function <code>is_bool</code> as below.
+
+</div>
+<code>
+<span class="keyword">Definition</span> <a name="is_bool"></a>is_bool (t : <a class="idref" href="CoqIntro.html#tm">tm</a>) : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#bool">bool</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">if</span> <a class="idref" href="CoqIntro.html#tm_to_bool">tm_to_bool</a> t <span class="keyword">then</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a> <span class="keyword">else</span> <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab164"></a><h3 class="section">Example</h3>
+
+    To define a recursive function, use <code><span class="keyword">Fixpoint</span></code> instead of
+    <code><span class="keyword">Definition</span></code>.
+
+<br/><br/>
+    The type system will only allow us to write functions that
+    terminate.  The annotation <code>{struct t}</code> here informs the
+    type-checker that termination is guaranteed because the
+    function is being defined by structural recursion on <code>t</code>.
+
+</div>
+<code>
+<span class="keyword">Fixpoint</span> <a name="tm_to_nat"></a>tm_to_nat (t : <a class="idref" href="CoqIntro.html#tm">tm</a>) {struct t} : <a class="idref" href="CoqIntro.html#nat_option">nat_option</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> t <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> =&gt; <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#O">O</a><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t1 =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> tm_to_nat t1 <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> n =&gt; <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> n)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#no_nat">no_nat</a> =&gt; <a class="idref" href="CoqIntro.html#no_nat">no_nat</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;| _ =&gt; <a class="idref" href="CoqIntro.html#no_nat">no_nat</a><br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="nat_to_tm"></a>nat_to_tm (n : <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a>) {struct n} : <a class="idref" href="CoqIntro.html#tm">tm</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> n <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#O">O</a> =&gt; <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> m =&gt; <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> (nat_to_tm m)<br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab165"></a><h3 class="section">Exercise</h3>
+
+    Write a function <code>interp : tm -&gt; tm</code> that returns the
+    normal form of its argument according to the small-step
+    semantics given by <code>eval</code>.
+
+<br/><br/>
+    Hint: You will want to use <code>tm_to_nat</code> (or another auxiliary
+    function) to prevent stuck terms from stepping in the cases
+    <code>e_predsucc</code> and <code>e_iszerosucc</code>.
+
+</div>
+<code>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab166"></a><h3 class="section">Example</h3>
+
+    The tactic <code>simpl</code> (recursively) reduces the application of
+    a function defined by pattern-matching to an argument with a
+    constructor at its head.  You can supply <code>simpl</code> with a
+    particular expression if you want to prevent it from
+    simplifying elsewhere.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="bool_tm_bool"></a>bool_tm_bool : forall b,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_to_bool">tm_to_bool</a> (<a class="idref" href="CoqIntro.html#bool_to_tm">bool_to_tm</a> b) = <a class="idref" href="CoqIntro.html#some_bool">some_bool</a> b.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros b. destruct b.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl (<a class="idref" href="CoqIntro.html#bool_to_tm">bool_to_tm</a> <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a>). simpl. reflexivity.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab167"></a><h3 class="section">Example</h3>
+
+    We can also apply the tactic <code>simpl</code> in our hypotheses.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="tm_bool_tm"></a>tm_bool_tm :forall t b,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_to_bool">tm_to_bool</a> t = <a class="idref" href="CoqIntro.html#some_bool">some_bool</a> b -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bool_to_tm">bool_to_tm</a> b = t.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t b Heq. destruct t.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl <span class="keyword">in</span> Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl. reflexivity.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl <span class="keyword">in</span> Heq. inversion Heq.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab168"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="tm_to_bool_dom_includes_bvalue"></a>tm_to_bool_dom_includes_bvalue : forall bv,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bvalue">bvalue</a> bv -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> b, <a class="idref" href="CoqIntro.html#tm_to_bool">tm_to_bool</a> bv = <a class="idref" href="CoqIntro.html#some_bool">some_bool</a> b.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab169"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="tm_to_bool_dom_only_bvalue"></a>tm_to_bool_dom_only_bvalue : forall bv b,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_to_bool">tm_to_bool</a> bv = <a class="idref" href="CoqIntro.html#some_bool">some_bool</a> b -&gt; <a class="idref" href="CoqIntro.html#bvalue">bvalue</a> bv.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab170"></a><h3 class="section">Example</h3>
+
+    Not all uses of <code>simpl</code> are optional.  Sometimes they are
+    necessary so that we can use the <code>rewrite</code> tactic.  Observe,
+    also, how using <code>rewrite</code> can automatically trigger a
+    reduction if it creates a redex.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="nat_tm_nat"></a>nat_tm_nat : forall n,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> (<a class="idref" href="CoqIntro.html#nat_to_tm">nat_to_tm</a> n) = <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> n.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros n. induction n.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl. rewrite -&gt; IHn. reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab171"></a><h3 class="section">Example</h3>
+
+    Here's an example where it is necessary to use <code>simpl</code> on a
+    hypothesis.  To trigger a reduction of a <code><span class="keyword">match</span></code> expression
+    in a hypothesis, we use the <code>destruct</code> tactic on the
+    expression being matched.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="tm_nat_tm"></a>tm_nat_tm : forall t n,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> t = <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> n -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nat_to_tm">nat_to_tm</a> n = t.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t. induction t; intros n Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl <span class="keyword">in</span> Heq. destruct (<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> t).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq. simpl. rewrite -&gt; IHt.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab172"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="tm_to_nat_dom_includes_nvalue"></a>tm_to_nat_dom_includes_nvalue : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> n, <a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> v = <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> n.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab173"></a><h3 class="section">Exercise</h3>
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="tm_to_nat_dom_only_nvalue"></a>tm_to_nat_dom_only_nvalue : forall v n,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> v = <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> n -&gt; <a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v.<br/>
+<span class="keyword">Proof</span>.<br/>
+<br/>
+Admitted.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab174"></a><h3 class="section">Example</h3>
+
+    Using the tactic <code>destruct</code> (or <code>induction</code>) on a complex
+    expression (i.e., one that is not simply a variable) may not
+    leave you with enough information for you to finish the
+    proof.  The tactic <code>remember</code> can help in these cases.  Its
+    usage is demonstrated below.  If you are curious, try to
+    finish the proof without <code>remember</code> to see what goes wrong.
+
+</div>
+<code>
+<span class="keyword">Lemma</span> <a name="remember_example"></a>remember_example : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> v))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">match</span> <a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> v <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> _ =&gt; v<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#no_nat">no_nat</a> =&gt; <a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> v)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v. remember (<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> v) <span class="keyword">as</span> x. destruct x.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply <a class="idref" href="CoqIntro.html#e_predsucc">e_predsucc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#tm_to_nat_dom_only_nvalue">tm_to_nat_dom_only_nvalue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- Heqx. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab175"></a><h3 class="section">Exercise</h3>
+
+    Prove the following lemmas involving the function <code>interp</code>
+    from a previous exercise:
+<pre>
+Lemma interp_reduces : forall t,
+  eval_many t (interp t).
+
+Lemma interp_fully_reduces : forall t,
+  normal_form (interp t).
+</pre>
+
+<br/><br/>
+
+</div>
+<code>
+
+<br/>
+<br/>
+</code>
+
+<div class="doc">
+<a name="lab176"></a><h1 class="section">Solutions to Exercises</h1>
+
+</div>
+<code>
+<br/>
+<span class="keyword">Inductive</span> <a name="eval_rtc"></a>eval_rtc : <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+| <a name="r_eval"></a>r_eval : forall t t',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval_rtc t t'<br/>
+| <a name="r_refl"></a>r_refl : forall t,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval_rtc t t<br/>
+| <a name="r_trans"></a>r_trans : forall t u v,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval_rtc t u -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval_rtc u v -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;eval_rtc t v.<br/>
+
+<br/>
+<span class="keyword">Inductive</span> <a name="full_eval"></a>full_eval : <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <a class="idref" href="CoqIntro.html#tm">tm</a> -&gt; <span class="keyword">Prop</span> :=<br/>
+| <a name="f_value"></a>f_value : forall v,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval v v<br/>
+| <a name="f_iftrue"></a>f_iftrue : forall t1 t2 t3 v,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval t1 <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval t2 v -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3) v<br/>
+| <a name="f_iffalse"></a>f_iffalse : forall t1 t2 t3 v,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval t1 <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval t3 v -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3) v<br/>
+| <a name="f_succ"></a>f_succ : forall t v,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval t v -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t) (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> v)<br/>
+| <a name="f_predzero"></a>f_predzero : forall t,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval t <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t) <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a><br/>
+| <a name="f_predsucc"></a>f_predsucc : forall t v,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval t (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> v) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t) v<br/>
+| <a name="f_iszerozero"></a>f_iszerozero : forall t,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval t <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t) <a class="idref" href="CoqIntro.html#tm_true">tm_true</a><br/>
+| <a name="f_iszerosucc"></a>f_iszerosucc : forall t v,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval t (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> v) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;full_eval (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t) <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_one_sol"></a>m_one_sol : forall t t',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t'.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t t' He. apply <a class="idref" href="CoqIntro.html#m_step">m_step</a> <span class="keyword">with</span> (t' := t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_two_sol"></a>m_two_sol : forall t t' t'',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t' t'' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t t''.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t t' t'' He1 He2. apply <a class="idref" href="CoqIntro.html#m_step">m_step</a> <span class="keyword">with</span> (t' := t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply He2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_iftrue_step_sol"></a>m_iftrue_step_sol : forall t t1 t2 u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t1 u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t t1 t2) u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t t1 t2 u He Hm.<br/>
+&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_step">m_step</a> <span class="keyword">with</span> (t' := <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> t1 t2).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_step">m_step</a> <span class="keyword">with</span> (t' := t1).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_iftrue">e_iftrue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Hm.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_if_iszero_conj_sol"></a>m_if_iszero_conj_sol : forall v t2 t2' t3 t3',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v /\ <a class="idref" href="CoqIntro.html#eval">eval</a> t2 t2' /\ <a class="idref" href="CoqIntro.html#eval">eval</a> t3 t3' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a>) t2 t3) t2' /\<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> v)) t2 t3) t3'.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v t2 t2' t3 t3' H.<br/>
+&nbsp;&nbsp;&nbsp;destruct H <span class="keyword">as</span> [ Hn [ He1 He2 ] ]. split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_three">m_three</a> <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(t' := <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> t2 t3) (t'' := t2).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply <a class="idref" href="CoqIntro.html#e_iszerozero">e_iszerozero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_iftrue">e_iftrue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_three">m_three</a> <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(t' := <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> t2 t3) (t'' := t3).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply <a class="idref" href="CoqIntro.html#e_iszerosucc">e_iszerosucc</a>. apply Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_iffalse">e_iffalse</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply He2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="two_values_sol"></a>two_values_sol : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> t /\ <a class="idref" href="CoqIntro.html#value">value</a> u -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bvalue">bvalue</a> t \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bvalue">bvalue</a> u \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t /\ <a class="idref" href="CoqIntro.html#nvalue">nvalue</a> u).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold value. intros t u H.<br/>
+&nbsp;&nbsp;&nbsp;destruct H <span class="keyword">as</span> [ [ Hb1 | Hn1 ] H2 ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;left. apply Hb1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct H2 <span class="keyword">as</span> [ Hb2 | Hn2 ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;right. left. apply Hb2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;right. right. split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Hn1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Hn2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_trans_sol"></a>m_trans_sol : forall t u v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> u v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u v Hm1 Hm2. induction Hm1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply Hm2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_step">m_step</a> <span class="keyword">with</span> (t' := t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHm1. apply Hm2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="eval_rtc_many_sol"></a>eval_rtc_many_sol : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_rtc">eval_rtc</a> t u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u Hr. induction Hr.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a> <span class="keyword">with</span> (t' := u).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHr1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHr2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="eval_many_rtc_sol"></a>eval_many_rtc_sol : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_rtc">eval_rtc</a> t u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u Hm. induction Hm.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#r_refl">r_refl</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#r_trans">r_trans</a> <span class="keyword">with</span> (u := t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#r_eval">r_eval</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHm.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="full_eval_to_value_sol"></a>full_eval_to_value_sol : forall t v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#full_eval">full_eval</a> t v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t v Hf. induction Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply IHHf2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply IHHf2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right. apply <a class="idref" href="CoqIntro.html#n_succ">n_succ</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right. apply <a class="idref" href="CoqIntro.html#n_zero">n_zero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;right. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;left. apply <a class="idref" href="CoqIntro.html#b_true">b_true</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;left. apply <a class="idref" href="CoqIntro.html#b_false">b_false</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="value_can_expand_sol"></a>value_can_expand_sol : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> u, <a class="idref" href="CoqIntro.html#eval">eval</a> u v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v Hv. exists (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> v v). apply <a class="idref" href="CoqIntro.html#e_iftrue">e_iftrue</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="exists_iszero_nvalue_sol"></a>exists_iszero_nvalue_sol : forall t,<br/>
+&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> nv, <a class="idref" href="CoqIntro.html#nvalue">nvalue</a> nv /\ <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t nv) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> bv, <a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t) bv.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t [ nv [ Hnv Hm ]]. destruct Hnv.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists <a class="idref" href="CoqIntro.html#tm_true">tm_true</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a> <span class="keyword">with</span> (t' := <a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply Hm.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply <a class="idref" href="CoqIntro.html#e_iszerozero">e_iszerozero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a> <span class="keyword">with</span> (t' := <a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t0)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply Hm.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply <a class="idref" href="CoqIntro.html#e_iszerosucc">e_iszerosucc</a>. apply Hnv.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="normal_form_to_forall_sol"></a>normal_form_to_forall_sol : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t -&gt;<br/>
+&nbsp;&nbsp;forall u, ~ <a class="idref" href="CoqIntro.html#eval">eval</a> t u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold normal_form, not. intros t H u He.<br/>
+&nbsp;&nbsp;&nbsp;apply H. exists u. apply He.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="normal_form_from_forall_sol"></a>normal_form_from_forall_sol : forall t,<br/>
+&nbsp;&nbsp;(forall u, ~ <a class="idref" href="CoqIntro.html#eval">eval</a> t u) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;unfold normal_form, not. intros t H [ t' Het' ].<br/>
+&nbsp;&nbsp;&nbsp;apply H <span class="keyword">with</span> (u := t'). apply Het'.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="negation_exercise_sol"></a>negation_exercise_sol : forall v1 v2,<br/>
+&nbsp;&nbsp;~ (<a class="idref" href="CoqIntro.html#value">value</a> v1 \/ <a class="idref" href="CoqIntro.html#value">value</a> v2) -&gt;<br/>
+&nbsp;&nbsp;~ (~ <a class="idref" href="CoqIntro.html#bvalue">bvalue</a> v1 /\ ~ <a class="idref" href="CoqIntro.html#bvalue">bvalue</a> v2) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v1 v2 H1 H2. destruct H2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Hb. destruct H1. left. left. apply Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Hb. destruct H1. right. left. apply Hb.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="equality_exercise_sol"></a>equality_exercise_sol : forall t1 t2 t3 u1 u2 u3 u4,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3 = <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> u1 u2 u2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3 = <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> u3 u3 u4 -&gt;<br/>
+&nbsp;&nbsp;t1 = u4.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t1 t2 t3 u1 u2 u3 u4 Heq1 Heq2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq1. subst t1. subst t2. subst t3.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq2. reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="succ_not_circular_sol"></a>succ_not_circular_sol : forall t,<br/>
+&nbsp;&nbsp;t &lt;&gt; <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t. induction t.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq. destruct IHt. apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="inversion_exercise_sol"></a>inversion_exercise_sol : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t) <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t Hnf Hm. inversion Hm. subst. inversion H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#n_zero">n_zero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#n_succ">n_succ</a>. apply H2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hnf. exists t'0. apply H2.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="contradictory_equalities_exercise_sol"></a>contradictory_equalities_exercise_sol :<br/>
+&nbsp;&nbsp;(<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> t, <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> u, <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> v,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> t /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;t = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;u = <a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> v) -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> <a class="idref" href="CoqIntro.html#tm_false">tm_false</a>.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros [ t [ u [ v [ [ Hb | Hn ] [ eq1 eq2 ] ] ] ] ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion eq1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion eq1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion eq1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion eq1. subst t. subst u. inversion Hn.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="eval_fact_exercise_sol"></a>eval_fact_exercise_sol : forall t1 t2,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> (<a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t1)) t2 -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t2 <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> u, t1 = <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t1 t2 He1 He2. inversion He1. subst t2.<br/>
+&nbsp;&nbsp;&nbsp;inversion He2. subst t'.<br/>
+&nbsp;&nbsp;&nbsp;inversion H0. exists (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t0). reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="normal_form_if_sol"></a>normal_form_if_sol : forall t1 t2 t3,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3) -&gt;<br/>
+&nbsp;&nbsp;t1 &lt;&gt; <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> /\ t1 &lt;&gt; <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> /\ <a class="idref" href="CoqIntro.html#normal_form">normal_form</a> t1.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t1 t2 t3 Hnf. destruct t1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hnf. exists t2. apply <a class="idref" href="CoqIntro.html#e_iftrue">e_iftrue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hnf. exists t3. apply <a class="idref" href="CoqIntro.html#e_iffalse">e_iffalse</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros [t' He]. destruct Hnf. exists (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t' t2 t3).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros [t' He]. inversion He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros [t' He]. destruct Hnf. exists (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t' t2 t3).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros [t' He]. destruct Hnf. exists (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t' t2 t3).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;split.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros [t' He]. destruct Hnf. exists (<a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t' t2 t3).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_if">e_if</a>. apply He.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="full_eval_from_value_sol"></a>full_eval_from_value_sol : forall v w,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#full_eval">full_eval</a> v w -&gt;<br/>
+&nbsp;&nbsp;v = w.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v w Hv Hf. induction Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hv <span class="keyword">as</span> [ Hb | Hn ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hv <span class="keyword">as</span> [ Hb | Hn ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; IHHf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;right. apply <a class="idref" href="CoqIntro.html#value_succ_nvalue">value_succ_nvalue</a>. apply Hv.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hv <span class="keyword">as</span> [ Hb | Hn ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hv <span class="keyword">as</span> [ Hb | Hn ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hv <span class="keyword">as</span> [ Hb | Hn ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hv <span class="keyword">as</span> [ Hb | Hn ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hn.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="value_is_normal_form_sol"></a>value_is_normal_form_sol : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v [ Hb | Hn ] [ t He ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct Hb; inversion He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;generalize dependent t.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;induction Hn; intros u He; inversion He; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (IHHn t'). apply H0.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Theorem</span> <a name="eval_deterministic_sol"></a>eval_deterministic_sol : forall t t' t'',<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t'' -&gt;<br/>
+&nbsp;&nbsp;t' = t''.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t t' t'' He1. generalize dependent t''.<br/>
+&nbsp;&nbsp;&nbsp;induction He1; intros t'' He2; inversion He2; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H3.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H3.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (IHHe1 t1'0).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H3.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (IHHe1 t'0).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t)) <span class="keyword">as</span> Hnf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#nvalue_is_normal_form">nvalue_is_normal_form</a>. apply <a class="idref" href="CoqIntro.html#n_succ">n_succ</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct Hnf. exists t'. apply H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t'')) <span class="keyword">as</span> Hnf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#nvalue_is_normal_form">nvalue_is_normal_form</a>. apply <a class="idref" href="CoqIntro.html#n_succ">n_succ</a>. apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct Hnf. exists t'. apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (IHHe1 t'0).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t)) <span class="keyword">as</span> Hnf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#nvalue_is_normal_form">nvalue_is_normal_form</a>. apply <a class="idref" href="CoqIntro.html#n_succ">n_succ</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct Hnf. exists t'. apply H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;assert (<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t0)) <span class="keyword">as</span> Hnf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#nvalue_is_normal_form">nvalue_is_normal_form</a>. apply <a class="idref" href="CoqIntro.html#n_succ">n_succ</a>. apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct Hnf. exists t'. apply He1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite -&gt; (IHHe1 t'0).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="eval_full_eval_sol"></a>eval_full_eval_sol : forall t t' v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval">eval</a> t t' -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#full_eval">full_eval</a> t' v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#full_eval">full_eval</a> t v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t t' v He. generalize dependent v. induction He.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. apply <a class="idref" href="CoqIntro.html#f_iftrue">f_iftrue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#f_value">f_value</a>. left. apply <a class="idref" href="CoqIntro.html#b_true">b_true</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. apply <a class="idref" href="CoqIntro.html#f_iffalse">f_iffalse</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#f_value">f_value</a>. left. apply <a class="idref" href="CoqIntro.html#b_false">b_false</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. inversion Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. inversion H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. apply <a class="idref" href="CoqIntro.html#f_iftrue">f_iftrue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHe. apply H3.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H4.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. apply <a class="idref" href="CoqIntro.html#f_iffalse">f_iffalse</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHe. apply H3.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H4.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. inversion Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. apply <a class="idref" href="CoqIntro.html#f_succ">f_succ</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#value_succ_nvalue">value_succ_nvalue</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHe. apply <a class="idref" href="CoqIntro.html#f_value">f_value</a>. right.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#value_succ_nvalue">value_succ_nvalue</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. apply <a class="idref" href="CoqIntro.html#f_succ">f_succ</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHe. apply H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. inversion Hf. apply <a class="idref" href="CoqIntro.html#f_predzero">f_predzero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#f_value">f_value</a>. right. apply <a class="idref" href="CoqIntro.html#n_zero">n_zero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. assert (t = v).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#full_eval_from_value_sol">full_eval_from_value_sol</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;right. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst v. apply <a class="idref" href="CoqIntro.html#f_predsucc">f_predsucc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#f_succ">f_succ</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. inversion Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. destruct H <span class="keyword">as</span> [ Hb | Hn ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. apply <a class="idref" href="CoqIntro.html#f_predzero">f_predzero</a>. apply IHHe. apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. apply <a class="idref" href="CoqIntro.html#f_predsucc">f_predsucc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHe. apply H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. inversion Hf. apply <a class="idref" href="CoqIntro.html#f_iszerozero">f_iszerozero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#f_value">f_value</a>. right. apply <a class="idref" href="CoqIntro.html#n_zero">n_zero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. inversion Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#f_iszerosucc">f_iszerosucc</a> <span class="keyword">with</span> (v := t).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#f_value">f_value</a>. right. apply <a class="idref" href="CoqIntro.html#n_succ">n_succ</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros v Hf. inversion Hf.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. destruct H <span class="keyword">as</span> [ Hb | Hn ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hb.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Hn.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. apply <a class="idref" href="CoqIntro.html#f_iszerozero">f_iszerozero</a>. apply IHHe. apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst. apply <a class="idref" href="CoqIntro.html#f_iszerosucc">f_iszerosucc</a> <span class="keyword">with</span> (v := v0).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHe. apply H1.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="full_eval_complete_sol"></a>full_eval_complete_sol : forall t v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#value">value</a> v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t v -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#full_eval">full_eval</a> t v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t v Hv Hm. induction Hm.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#f_value">f_value</a>. apply Hv.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#eval_full_eval_sol">eval_full_eval_sol</a> <span class="keyword">with</span> (t' := t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHHm. apply Hv.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="pred_not_circular_sol"></a>pred_not_circular_sol : forall t,<br/>
+&nbsp;&nbsp;t &lt;&gt; <a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t H. induction t; inversion H; auto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_succ_sol"></a>m_succ_sol : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t) (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> u).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u Hm.<br/>
+&nbsp;&nbsp;&nbsp;induction Hm; eauto <span class="keyword">using</span> <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>, <a class="idref" href="CoqIntro.html#m_step">m_step</a>, <a class="idref" href="CoqIntro.html#e_succ">e_succ</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="m_pred_sol"></a>m_pred_sol : forall t u,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t u -&gt;<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t) (<a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> u).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t u Hm.<br/>
+&nbsp;&nbsp;&nbsp;induction Hm; eauto <span class="keyword">using</span> <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>, <a class="idref" href="CoqIntro.html#m_step">m_step</a>, <a class="idref" href="CoqIntro.html#e_pred">e_pred</a>.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Fixpoint</span> <a name="interp"></a>interp (t : <a class="idref" href="CoqIntro.html#tm">tm</a>) {struct t} : <a class="idref" href="CoqIntro.html#tm">tm</a> :=<br/>
+&nbsp;&nbsp;<span class="keyword">match</span> t <span class="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> =&gt; <a class="idref" href="CoqIntro.html#tm_true">tm_true</a><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> =&gt; <a class="idref" href="CoqIntro.html#tm_false">tm_false</a><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t1 t2 t3 =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> interp t1 <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_true">tm_true</a> =&gt; interp t2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_false">tm_false</a> =&gt; interp t3<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| t4 =&gt; <a class="idref" href="CoqIntro.html#tm_if">tm_if</a> t4 t2 t3<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> =&gt; <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t1 =&gt; <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> (interp t1)<br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t1 =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> interp t1 <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> =&gt; <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t2 =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> <a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> t2 <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> _ =&gt; t2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#no_nat">no_nat</a> =&gt; <a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t2)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| t2 =&gt; <a class="idref" href="CoqIntro.html#tm_pred">tm_pred</a> t2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t1 =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> interp t1 <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_zero">tm_zero</a> =&gt; <a class="idref" href="CoqIntro.html#tm_true">tm_true</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t2 =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span> <a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> t2 <span class="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> _ =&gt; <a class="idref" href="CoqIntro.html#tm_false">tm_false</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoqIntro.html#no_nat">no_nat</a> =&gt; <a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t2)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| t2 =&gt; <a class="idref" href="CoqIntro.html#tm_iszero">tm_iszero</a> t2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="keyword">end</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="tm_to_bool_dom_includes_bvalue_sol"></a>tm_to_bool_dom_includes_bvalue_sol : forall bv,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#bvalue">bvalue</a> bv -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> b, <a class="idref" href="CoqIntro.html#tm_to_bool">tm_to_bool</a> bv = <a class="idref" href="CoqIntro.html#some_bool">some_bool</a> b.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros bv H. destruct H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a>. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a>. reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="tm_to_bool_dom_only_bvalue_sol"></a>tm_to_bool_dom_only_bvalue_sol : forall bv b,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_to_bool">tm_to_bool</a> bv = <a class="idref" href="CoqIntro.html#some_bool">some_bool</a> b -&gt; <a class="idref" href="CoqIntro.html#bvalue">bvalue</a> bv.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros bv b Heq. destruct bv.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#b_true">b_true</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#b_false">b_false</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="tm_to_nat_dom_includes_nvalue_sol"></a>tm_to_nat_dom_includes_nvalue_sol : forall v,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v -&gt; <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Logic.html#"'exists' x , p" type_scope">exists</a> n, <a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> v = <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> n.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v Hnv. induction Hnv.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;exists <a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#O">O</a>. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct IHHnv <span class="keyword">as</span> [ n Heq ]. exists (<a class="idref" href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a> n).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl. rewrite -&gt; Heq. reflexivity.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="tm_to_nat_dom_only_nvalue_sol"></a>tm_to_nat_dom_only_nvalue_sol : forall v n,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> v = <a class="idref" href="CoqIntro.html#some_nat">some_nat</a> n -&gt; <a class="idref" href="CoqIntro.html#nvalue">nvalue</a> v.<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros v. induction v; intros n Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#n_zero">n_zero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#n_succ">n_succ</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl <span class="keyword">in</span> Heq. destruct (<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> v).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq. eapply IHv. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion Heq.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="interp_reduces_sol"></a>interp_reduces_sol : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#eval_many">eval_many</a> t (<a class="idref" href="CoqIntro.html#interp">interp</a> t).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;intros t. induction t.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl. destruct (<a class="idref" href="CoqIntro.html#interp">interp</a> t1).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_if">m_if</a>. apply IHt1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply <a class="idref" href="CoqIntro.html#e_iftrue">e_iftrue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHt2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_if">m_if</a>. apply IHt1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply <a class="idref" href="CoqIntro.html#e_iffalse">e_iffalse</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply IHt3.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_if">m_if</a>. apply IHt1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_if">m_if</a>. apply IHt1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_if">m_if</a>. apply IHt1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_if">m_if</a>. apply IHt1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_if">m_if</a>. apply IHt1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_refl">m_refl</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl. apply <a class="idref" href="CoqIntro.html#m_succ">m_succ</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl. destruct (<a class="idref" href="CoqIntro.html#interp">interp</a> t).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_pred">m_pred</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_pred">m_pred</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_pred">m_pred</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_pred">m_pred</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply <a class="idref" href="CoqIntro.html#e_predzero">e_predzero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remember (<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> t0) <span class="keyword">as</span> x. destruct x.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_pred">m_pred</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply <a class="idref" href="CoqIntro.html#e_predsucc">e_predsucc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#tm_to_nat_dom_only_nvalue">tm_to_nat_dom_only_nvalue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- Heqx. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_pred">m_pred</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_pred">m_pred</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_pred">m_pred</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl. destruct (<a class="idref" href="CoqIntro.html#interp">interp</a> t).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply <a class="idref" href="CoqIntro.html#e_iszerozero">e_iszerozero</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remember (<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> t0) <span class="keyword">as</span> x. destruct x.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#m_trans">m_trans</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_one">m_one</a>. apply <a class="idref" href="CoqIntro.html#e_iszerosucc">e_iszerosucc</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply <a class="idref" href="CoqIntro.html#tm_to_nat_dom_only_nvalue">tm_to_nat_dom_only_nvalue</a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- Heqx. reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply IHt.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#m_iszero">m_iszero</a>. apply IHt.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="keyword">Lemma</span> <a name="interp_fully_reduces_sol"></a>interp_fully_reduces_sol : forall t,<br/>
+&nbsp;&nbsp;<a class="idref" href="CoqIntro.html#normal_form">normal_form</a> (<a class="idref" href="CoqIntro.html#interp">interp</a> t).<br/>
+<span class="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;induction t; intros [t' H].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl <span class="keyword">in</span> H. destruct (<a class="idref" href="CoqIntro.html#interp">interp</a> t1).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt2. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt3. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt1. inversion H. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt1. inversion H. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt1. inversion H. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt1. inversion H. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt1. inversion H. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;inversion H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt. inversion H. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl <span class="keyword">in</span> H. destruct (<a class="idref" href="CoqIntro.html#interp">interp</a> t).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. inversion H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. inversion H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. destruct IHt. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remember (<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> t0) <span class="keyword">as</span> x. destruct x.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt. exists (<a class="idref" href="CoqIntro.html#tm_succ">tm_succ</a> t').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply <a class="idref" href="CoqIntro.html#e_succ">e_succ</a>. apply H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (<a class="idref" href="CoqIntro.html#tm_to_nat_dom_includes_nvalue">tm_to_nat_dom_includes_nvalue</a> t')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">as</span> [n Heq].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- Heqx <span class="keyword">in</span> Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct IHt. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. destruct IHt. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. destruct IHt. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;simpl <span class="keyword">in</span> H. destruct (<a class="idref" href="CoqIntro.html#interp">interp</a> t).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. inversion H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. inversion H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. destruct IHt. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remember (<a class="idref" href="CoqIntro.html#tm_to_nat">tm_to_nat</a> t0) <span class="keyword">as</span> x. destruct x.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H; subst.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct (<a class="idref" href="CoqIntro.html#tm_to_nat_dom_includes_nvalue">tm_to_nat_dom_includes_nvalue</a> t0)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">as</span> [n Heq].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply H1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite &lt;- Heqx <span class="keyword">in</span> Heq. inversion Heq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. destruct IHt. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. destruct IHt. eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion H. destruct IHt. eauto.<br/>
+<span class="keyword">Qed</span>.<br/>
+
+<br/>
+<br/>
+</code>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
