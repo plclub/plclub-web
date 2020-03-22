@@ -16,22 +16,18 @@ import       Control.Monad (liftM)
 import       Data.Ord (comparing)
 import       Data.List (sortBy)
 
---- Suppose
--- C is a compiler that returns a LIST (x) of LISTS (y)
--- I want a context D that will execute against the first list (x)
--- It will a take a key ("group") and a context E to run on an inner lists y.
--- Then it is a totally different Context b. When executed in runs C to get [[a]].
--- Against each list [a] it runs E.
--- Meanwhile E is running against a "Compiler [a]". E should be use a listFieldWith
--- because it is executing NOT against a STORED set (the 3rd argument to listField).
--- No, it must generated the set.
--- And it will run C to get [[a]]. For each
-
+-- | Create a `listField` whose inner `Context` is another
+-- `listField.`
+-- The result `nestedListField ko ki ctx items` is a list
+-- with key `ko`.  The values of that list are the outer elements of
+-- type `[Item a]`.  Those elements are seen in a context in which
+-- there is a single inner context with key `ki` and whose values are
+-- the individual `Item a` values rendered in the original context.
 nestedListField :: String -- outer key
-      -> String -- inner key
-      -> Context a
-      -> Compiler [[Item a]]
-      -> Context b
+                -> String -- inner key
+                -> Context a
+                -> Compiler [[Item a]]
+                -> Context b
 nestedListField ko ki ctx items =
     listField ko innerctx ((Item "" <$>) <$> items)
   where

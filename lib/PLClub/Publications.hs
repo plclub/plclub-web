@@ -40,7 +40,7 @@ makePapersHtml = withSystemTempDirectory "plclub_bib" $ \f -> do
     callProcess "make" ["-C", f]
     readFile (f </> "plclub.html")
 
--- Assemble "plclub.html" as a String
+-- Assemble "plclub_bib.html" as a String
 -- This part purely runs the Makefile and returns "plclub.html"
 -- No Hakyll stuff happening yet
 makeBibHtml :: IO String
@@ -62,12 +62,12 @@ makeMergedBib = withSystemTempDirectory "plclub_bib" $ \f -> do
 parsePapers :: String -> [String]
 parsePapers src = 
     case runPure $ readHtml defaultHakyllReaderOptions (pack src) of
-        Left err -> error "Shit"
+        Left err -> error "Error parsing papers HTML"
         Right pan -> do
             let pans = justRows pan
             flip map pans $ \p -> do
                 case runPure $ (writeHtml5String defaultHakyllWriterOptions) p of
-                    Left err -> error "Writing shit"
+                    Left err -> error "Error writing papers HTML"
                     Right txt -> unpack txt
 
 
