@@ -12,7 +12,11 @@ This iteration began in November 2019. The previous site had been maintained for
 
 Because the site is deployed as static files, building is a 2-step process. First we build the executable (simply called `site`) and then we run `site` to build the website from the source files.
 
-The compiler _should_ be able to build with just
+First set up a `stack.yaml` file for `stack`. We have one that you can copy:
+
+	cp stack-default.yaml stack.yaml
+
+The compiler _should_ then be able to build with just
 
 	stack build
 

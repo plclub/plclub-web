@@ -13,6 +13,7 @@ import       Hakyll
 import       System.FilePath.Posix
 import       Data.List (reverse)
 import       Control.Monad (liftM)
+import       Control.Monad.Fail (MonadFail)
 import       Data.Ord (comparing)
 import       Data.List (sortBy)
 
@@ -104,7 +105,7 @@ siteContext =
 -- Look up the "year" field of an identifier's metadata
 -- Will throw a runtime error if the field does not exist
 -- or cannot be coerced to an integer
-getYear :: (MonadMetadata m)
+getYear :: (MonadMetadata m, MonadFail m)
         => Item a
         -> m Int
 getYear item =

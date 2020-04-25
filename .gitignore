@@ -18,6 +18,7 @@ tests/Main
 _cache
 _store
 
+stack.yaml
 stack*.yaml.lock
 
 .stack-work/

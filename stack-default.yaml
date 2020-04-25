@@ -1,0 +1,5 @@
+resolver: lts-14.27   # GHC 8.6.5
+packages:
+- .
+extra-deps:
+- hakyll-4.13.3.0
