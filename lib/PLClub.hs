@@ -15,6 +15,7 @@ import           PLClub.HakyllExtra
 
 -- | Compose routes, renamed to emphasize
 -- that LHS is applied before RHS
+(<!>), thenRoute :: Routes -> Routes -> Routes
 (<!>) = composeRoutes
 thenRoute = composeRoutes
 
