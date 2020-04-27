@@ -1,0 +1,18 @@
+<h3 id="meetings" class="mt-5">PLClub Blog</h3>
+<hr>
+
+<h4 class="mt-4">Posts</h4>
+
+<div class="mt-3 row">
+  <div class="col-lg-1"></div>
+  <div class="col-lg-10">
+    <table>
+      $for(blog)$
+      <tr>
+        <td>$date$</td>
+        <td><a href="$url$"><b>$title$</b></td>
+      </tr>
+      $endfor$
+    </table>
+  </div>
+</div>
