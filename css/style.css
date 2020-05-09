@@ -97,3 +97,29 @@ h5 {
     column-count: 2;
     column-gap: 20px;
 }
+
+pre {
+    margin-left: 1.5em;
+}
+
+/* Syntax highlighting for code blocks */
+
+code, .sourceCode .fu, .sourceCode .ot, .sourceCode .op {
+  color: #9C27B0;
+}
+
+.sourceCode .kw {
+  color: #4CAF50;
+}
+
+.sourceCode .st {
+  color: #AA0000;
+}
+
+.sourceCode .co {
+  color: #616161;
+}
+
+.sourceCode .dt {
+  color: #311B92;
+}

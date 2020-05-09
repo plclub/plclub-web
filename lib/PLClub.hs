@@ -15,6 +15,7 @@ import           PLClub.HakyllExtra
 
 -- | Compose routes, renamed to emphasize
 -- that LHS is applied before RHS
+(<!>), thenRoute :: Routes -> Routes -> Routes
 (<!>) = composeRoutes
 thenRoute = composeRoutes
 
@@ -51,6 +52,27 @@ application = hakyllWith config $ do
                 >>= loadAndApplyTemplate "templates/default.html"  siteContext
                 >>= relativizeUrls
 
+    match "blog/*" $ do
+        route   $ idRoute <!> setExtension "html" <!> canonizeRoute
+        compile $ do
+          pandocCompiler
+            >>= loadAndApplyTemplate "templates/blog.html" siteContext
+            >>= loadAndApplyTemplate "templates/default.html" siteContext
+            >>= relativizeUrls
+
+    match "blog.html" $ do
+        route   $ idRoute <!> canonizeRoute
+        compile $ do
+            blog <- recentFirst =<< loadAll "blog/*"
+            let blogCtx =
+                    listField "blog" siteContext (return blog) `mappend`
+                    constField "title" "PLClub Blog" `mappend`
+                    siteContext
+            getResourceBody
+                >>= applyAsTemplate blogCtx
+                >>= loadAndApplyTemplate "templates/default.html" blogCtx
+                >>= relativizeUrls
+
     --people tags
     ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
 
@@ -58,8 +80,9 @@ application = hakyllWith config $ do
         route   $ idRoute <!> canonizeRoute
         compile $ do
             let ctx =
-                    papersContext
-                    `mappend` siteContext
+                    papersContext `mappend`
+                    constField "title" "PLClub Publications" `mappend`
+                    siteContext
             getResourceBody
                 >>= applyAsTemplate ctx 
                 >>= loadAndApplyTemplate "templates/default.html" siteContext 
@@ -76,7 +99,7 @@ application = hakyllWith config $ do
             meetings <- recentFirst =<< loadAll "meetings/*"
             let meetingsCtx =
                     listField "meetings" siteContext (return meetings) `mappend`
-                    constField "title" "Penn PL Club" `mappend`
+                    constField "title" "PLClub Discussion Group" `mappend`
                     siteContext
             getResourceBody
                 >>= applyAsTemplate meetingsCtx
@@ -97,8 +120,8 @@ application = hakyllWith config $ do
                 let indexCtx =
                         peopleContext ptags `mappend`
                         listField "meetings" siteContext (return meetings) `mappend`
+                        constField "title" "Programming Languages @ Penn" `mappend`
                         recentPapersContext `mappend`
-                        constField "title" "Home"                `mappend`
                         siteContext
                 getResourceBody
                     >>= applyAsTemplate indexCtx
