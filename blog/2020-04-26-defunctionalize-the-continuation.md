@@ -1,6 +1,7 @@
 ---
 title: Defunctionalize the continuation
 author: Li-yao Xia
+withtoc: true
 ---
 
 This post presents a little example of defunctionalization.
