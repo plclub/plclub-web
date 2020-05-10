@@ -13,6 +13,7 @@ import       Hakyll
 import       System.FilePath.Posix
 import       Data.List (reverse)
 import       Control.Monad (liftM)
+import       Control.Monad.Fail (MonadFail)
 import       Data.Ord (comparing)
 import       Data.List (sortBy)
 
