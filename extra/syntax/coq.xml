@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<language name="coq" version ="1"
+	  section="Sources" extensions="*.v"
+	  author="Lawrence Dunn (dunnl@seas.upenn.edu)"
+	  license="MIT">
+
+  <highlighting>
+    <list name="keywords-gallina">
+      <item>forall</item>
+      <item>exists</item>
+      <item>exists2</item>
+      <item>match</item>
+      <item>at</item>
+      <item>by</item>
+      <item>as</item>
+      <item>in</item>
+      <item>return</item>
+      <item>fun</item>
+      <item>for</item>
+      <item>fix</item>
+      <item>cofix</item>
+      <item>of</item>
+      <item>struct</item>
+      <item>let</item>
+      <item>in</item>
+      <item>if</item>
+      <item>then</item>
+      <item>else</item>
+      <item>with</item>
+      <item>end</item>
+      <item>where</item>
+    </list>
+    <list name="keywords-sorts">
+      <item>Prop</item>
+      <item>SProp</item>
+      <item>Set</item>
+      <item>Type</item>
+    </list>
+    <!--
+	<list name="other-keywords">
+	<item>Program</item>
+	<item>Instance</item>
+	<item>Section</item>
+	</list>
+	<list name="Vernacular">
+	<item>Program</item>
+	<item>Instance</item>
+	</list>
+	<list name="Vernacular-Whole">
+	<item>Set</item>
+	<item>Unset</item>
+	<item>
+	</list>
+    -->
+    <list name="module-keywords">
+      <item>Require</item>
+      <item>Import</item>
+      <item>Export</item>
+      <item>Module</item>
+      <item>Type</item>
+    </list>
+    <list name="keywords-axioms">
+      <item>Axiom</item>
+      <item>Axioms</item>
+      <item>Conjecture</item>
+      <item>Conjectures</item>
+      <item>Parameter</item>
+      <item>Parameters</item>
+      <item>Hypothesis</item>
+      <item>Hypotheses</item>
+    </list>
+    <list name="keywords-proofmode">
+      <item>Lemma</item>
+      <item>Theorem</item>
+      <item>Definition</item>
+      <item>Qed</item>
+      <item>Defined</item>
+      <item>Admitted</item>
+      <item>Corollary</item>
+      <item>Abort</item>
+      <item>Goal</item>
+      <item>Proof</item>
+      <item>Instance</item>
+      <item>Fixpoint</item>
+    </list>
+    
+    <context attribute="Normal" name="code" lineEndContext="#stay">
+      <!-- Recognize an regular keyword -->
+      <keyword String="keywords-gallina" attribute="Normal"/>
+      <!-- Recognize a proof mode keyword -->
+      <keyword String="keywords-proofmode" attribute="Keyword"/>
+      <!-- Recognize a comment -->
+      <Detect2Chars char="(" char1="*" context="comment" />
+      <!-- Recognize an module command -->
+      <!-- <keyword String="module-keywords" attribute="Module" context="Module" lineEndContext="code"/> -->
+      <!-- Recognize an module command -->
+
+      <RegExpr String=".*cat" attribute="MyKw" />
+      <RegExpr String="^\s*(Require|Import|Export|Module)|Import" attribute="Module" context="Module" lineEndContext="code"/>
+    </context>
+    <context attribute="String">
+    </context>
+    <!-- Handle a module command -->
+    <context attribute="Normal" name="Module" lineEndContext="code"> 
+      <keyword String="module-keywords" attribute="Module" context="#stay"/>
+    </context>
+    <!-- Handle a comment -->
+    <context attribute="Comment" name="comment" lineEndContext="#stay"> 
+      <Detect2Chars char="*" char1=")" context="#pop" />
+    </context>
+    <itemDatas>
+      <itemData name="Normal" defStyleNum="dsVariable" />
+      <itemData name="Variable" defStyleNum="dsVariable" />
+      <itemData name="Keyword" defStyleNum="dsKeyword" />
+      <itemData name="Control" defStyleNum="dsControlFlow" />
+      <itemData name="Comment" defStyleNum="dsComment" />
+      <itemData name="Module" defStyleNum="dsImport" />
+    </itemDatas>
+    <general>
+      <comments>
+	<comment name="multiLine" start="(*" end="*)"/>
+      </comments>
+    </general>      
+  </highlighting>
+</language>
