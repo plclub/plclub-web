@@ -4,10 +4,13 @@
     <h1 class="mt-5">$title$</h1>
     <hr>
     $date$<br>By <strong>$author$</strong><br>
-    $if(withtoc)$
-    <div class="toc">$toc$</div>
+    $if(withtoc)$    
+    <div class="toc">
+      <h2 class="mt-5">Table of Contents</h2>
+      $toc$
+    </div>
     $endif$
-    <p class="lead">$body$</p>
+    <p class="lead mt-2">$body$</p>
     <div align="right">
         <a href="/blog">Back ></a>
     </div>
