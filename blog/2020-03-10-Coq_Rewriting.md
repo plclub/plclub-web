@@ -26,7 +26,7 @@ Luckily, the Coq's `rewrite` tactic can make providing this justification easier
 So let us go through some concrete examples showing the strength of rewriting. Consider the following proposition and proof script
 
 
-```
+```coq
 Goal forall (a b c d : Z), a = b -> b = c -> c = d -> a = d.
 Proof.
   intros a b c d Hab Hbc Hcd. rewrite Hab. rewrite Hbc. auto.
