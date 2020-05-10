@@ -86,5 +86,19 @@ tocTemplate =
     Right tem -> tem
         
 
+-- | Return an representation of the TOC of the current item
+-- __Caution__: This used to use the item returned by
+-- 'getResourceString' but this caused Hakyll's caching mechanism to
+-- overwrite the blogpost with the TOC because the resulting item had
+-- the same identifier as the blog post item.
 makeTOC :: Compiler (Item String)
-makeTOC =  pandocCompilerWith defaultHakyllReaderOptions tocWriterOptions
+makeTOC =  do
+    itemtoc <- getItemToc
+    renderPandocWith defaultHakyllReaderOptions tocWriterOptions itemtoc
+  where
+    getItemToc = do
+      item <- getResourceString
+      let origid = itemIdentifier item
+          newid =  setVersion (Just "toc") origid
+          body = itemBody item
+      return (Item newid body)
