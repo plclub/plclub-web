@@ -18,6 +18,10 @@ tests/Main
 _cache
 _store
 
+# Ignore temporary files
+\#*
+.\#*
+
 stack*.yaml.lock
 
 .stack-work/
