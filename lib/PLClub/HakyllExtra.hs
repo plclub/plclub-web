@@ -16,6 +16,7 @@ import       Control.Monad (liftM)
 import       Control.Monad.Fail (MonadFail)
 import       Data.Ord (comparing)
 import       Data.List (sortBy)
+import       PLClub.PandocExtra (makeTOC)
 
 -- | Create a `listField` whose inner `Context` is another
 -- `listField.`
@@ -89,6 +90,13 @@ canonicalUrlField key = field key $ \i -> do
         empty' = fail $ "No route url found for item " ++ show id
     fmap (maybe empty' toUrl) $ getCanonicalRoute id
 
+tocField :: String -> Context String
+tocField key = field key $ \_ -> do
+  itemtoc <- makeTOC
+  let toc = itemBody itemtoc
+  return toc
+  
+  
 -- | Global context
 -- Note that an item's title will either be set explicitly in its metadata
 -- or based on its filename (dropping up to the first '-')
@@ -99,6 +107,7 @@ siteContext =
     bodyField  "body"  `mappend`
     titleField "title" `mappend`
     canonicalUrlField   "url" `mappend`
+    tocField "toc" `mappend`
     missingField
     
 -- | Get graduation year field
