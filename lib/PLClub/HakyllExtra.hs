@@ -104,7 +104,7 @@ siteContext =
 -- Look up the "year" field of an identifier's metadata
 -- Will throw a runtime error if the field does not exist
 -- or cannot be coerced to an integer
-getYear :: (MonadMetadata m)
+getYear :: (MonadMetadata m, MonadFail m)
         => Item a
         -> m Int
 getYear item =
@@ -118,6 +118,12 @@ sortByM f xs = liftM (map fst . sortBy (comparing snd)) $
 routeTail :: Routes
 routeTail = customRoute $
   joinPath. tail. splitPath. toFilePath
+
+  -- | Move /foo/bar/bang.ext to /folder/bang.ext"
+  -- The output folder is completely flattened
+inFolderFlatly :: String -> Routes
+inFolderFlatly folder = customRoute $ \item ->
+  folder </> takeFileName (toFilePath item)
 
 htaccessHackRoute :: Routes
 htaccessHackRoute = customRoute $

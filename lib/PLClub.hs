@@ -10,8 +10,9 @@ module PLClub where
 --------------------------------------------------------------------------------
 import           Data.Monoid (mappend)
 import           Hakyll
-import           PLClub.Publications 
+import           PLClub.Publications
 import           PLClub.HakyllExtra
+import           PLClub.PandocExtra
 
 -- | Compose routes, renamed to emphasize
 -- that LHS is applied before RHS
@@ -25,7 +26,7 @@ config = defaultConfiguration
       "ssh plclub@eniac \"tar -zc -f html-$(date '+%F').tar.gz html\";\
       \ rsync -vr _site/ plclub@eniac:html"
   }
-  
+
 --------------------------------------------------------------------------------
 application :: IO ()
 application = hakyllWith config $ do
@@ -48,17 +49,21 @@ application = hakyllWith config $ do
         route   $ idRoute <!> setExtension "html" <!> canonizeRoute
         compile $ do
             pandocCompiler
-                >>= loadAndApplyTemplate "templates/meeting.html" siteContext 
+                >>= loadAndApplyTemplate "templates/meeting.html" siteContext
                 >>= loadAndApplyTemplate "templates/default.html"  siteContext
                 >>= relativizeUrls
 
     match "blog/*" $ do
         route   $ idRoute <!> setExtension "html" <!> canonizeRoute
         compile $ do
-          pandocCompiler
+          pandocCompilerWith customReaderOptions customWriterOptions
             >>= loadAndApplyTemplate "templates/blog.html" siteContext
             >>= loadAndApplyTemplate "templates/default.html" siteContext
             >>= relativizeUrls
+
+    match "extra/syntax/*.theme" $ do
+      route   $ inFolderFlatly "css" <!> setExtension "css"
+      compile $ kateThemeToCSSCompiler
 
     match "blog.html" $ do
         route   $ idRoute <!> canonizeRoute
@@ -84,8 +89,8 @@ application = hakyllWith config $ do
                     constField "title" "PLClub Publications" `mappend`
                     siteContext
             getResourceBody
-                >>= applyAsTemplate ctx 
-                >>= loadAndApplyTemplate "templates/default.html" siteContext 
+                >>= applyAsTemplate ctx
+                >>= loadAndApplyTemplate "templates/default.html" siteContext
                 >>= relativizeUrls
 
     create ["papers/plclub_bib.html"] $ do
@@ -109,8 +114,8 @@ application = hakyllWith config $ do
     match "old_site/**" $ do
       route   $ routeTail <!> htaccessHackRoute
       compile $ copyFileCompiler
-        
-        
+
+
 
     match "index.html" $ do
         rulesExtraDependencies [tagsDependency ptags] $ do
@@ -138,7 +143,7 @@ unbindList n as =
     (take n as):(unbindList n $ drop n as)
 
 peopleContext :: Tags -> Context String
-peopleContext ptags = 
+peopleContext ptags =
   let faculty  = (unbindList 3) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
       students = (unbindList 3) <$> loadTag ptags "student" :: Compiler [[Item String]]
       postdocs = (unbindList 3) <$> loadTag ptags "postdoc" :: Compiler [[Item String]]
