@@ -2,6 +2,7 @@
 title: Defunctionalize the continuation
 author: Li-yao Xia
 withtoc: true
+tags: haskell
 ---
 
 This post presents a little example of defunctionalization.

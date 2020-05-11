@@ -1,6 +1,7 @@
 ---
 title: "R E S P E C T : Find Out What It Means To The Coq Standard Library"
 author: Lucas Silver
+tags: coq, tutorials
 ---
 
 This blog post is a companion to the following [code](https://github.com/lag47/Rewrite-Tutorial). Please follow along with that file.

@@ -53,18 +53,25 @@ application = hakyllWith config $ do
                 >>= loadAndApplyTemplate "templates/default.html"  siteContext
                 >>= relativizeUrls
 
-    match "blog/*" $ do
-        route   $ idRoute <!> setExtension "html" <!> canonizeRoute
-        compile $ do
-          pandocCompilerWith customReaderOptions customWriterOptions
-            >>= loadAndApplyTemplate "templates/blog.html" siteContext
-            >>= loadAndApplyTemplate "templates/default.html" siteContext
-            >>= relativizeUrls
-
     match "extra/syntax/*.theme" $ do
       route   $ inFolderFlatly "css" <!> setExtension "css"
       compile $ kateThemeToCSSCompiler
+      
+    --blog post tags
+    btags <- let mktagid = fromCapture "blog/tags/*.html"
+             in  buildTags "blog/*" mktagid
 
+    match "blog/*" $
+      rulesExtraDependencies [tagsDependency btags] $ do
+        route   $ idRoute <!> setExtension "html" <!> canonizeRoute
+        compile $ do
+          let blogContext =
+                tagsField "tags" btags `mappend` siteContext
+          pandocCompilerWith customReaderOptions customWriterOptions
+            >>= loadAndApplyTemplate "templates/blog.html" blogContext
+            >>= loadAndApplyTemplate "templates/default.html" blogContext
+            >>= relativizeUrls
+            
     match "blog.html" $ do
         route   $ idRoute <!> canonizeRoute
         compile $ do
@@ -77,7 +84,21 @@ application = hakyllWith config $ do
                 >>= applyAsTemplate blogCtx
                 >>= loadAndApplyTemplate "templates/default.html" blogCtx
                 >>= relativizeUrls
-
+                
+    -- Tag pages for blog tags
+    tagsRules btags $ \tag pattern -> do
+        let title = "All posts tagged \"" ++ tag ++ "\""
+        route idRoute
+        compile $ do
+            posts <- recentFirst =<< loadAll pattern
+            let ctx = constField "title" title
+                      `mappend` listField "posts" siteContext (return posts)
+                      `mappend` defaultContext
+            makeItem ""
+                >>= loadAndApplyTemplate "templates/tag.html" ctx
+                >>= loadAndApplyTemplate "templates/default.html" ctx
+                >>= relativizeUrls
+                
     --people tags
     ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
 
@@ -114,8 +135,6 @@ application = hakyllWith config $ do
     match "old_site/**" $ do
       route   $ routeTail <!> htaccessHackRoute
       compile $ copyFileCompiler
-
-
 
     match "index.html" $ do
         rulesExtraDependencies [tagsDependency ptags] $ do
