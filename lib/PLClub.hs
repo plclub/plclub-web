@@ -20,9 +20,7 @@ thenRoute = composeRoutes
 
 config :: Configuration
 config = defaultConfiguration
-  { deployCommand =
-      "ssh plclub@eniac \"tar -zc -f html-$(date '+%F').tar.gz html\";\
-      \ rsync -vr _site/ plclub@eniac:html"
+  { deployCommand = "./extra/deploy.sh"
   }
   
 --------------------------------------------------------------------------------
