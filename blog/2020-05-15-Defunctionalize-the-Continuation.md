@@ -1,45 +1,43 @@
 ---
-title: Defunctionalize the continuation
+title: Defunctionalize the Continuation
 author: Li-yao Xia
 withtoc: true
 tags: haskell
 ---
 
-This post presents a little example of defunctionalization.
-
-This is taken from a PLClub talk I gave recently.[^dejavu]
-I wanted to unpack this example in more space than a single slide.
-
-[^dejavu]: See also links in references. I probably saw this `sum` example
-  somewhere else originally but I can't remember.
+This post details a little example of refactoring a program using
+*defunctionalization*.
 
 ## Defunctionalization
 
-Defunctionalization is a programming technique to emulate higher-order functions
+Defunctionalization is a programming technique that emulates higher-order functions
 using only first-order language features.
 
-In short:
+A higher-order function (HOF) can be defunctionalized in two steps:
 
-1. replace all lambdas with unique constructors of a dedicated algebraic
-   data type; and
-2. replace all function applications with calls to a dedicated first-order
-   function---often called `apply`, sometimes `eval`.
+1. for every location where the HOF is used and applied to a function, replace
+   that function with a value of a dedicated data type to *represent* that
+   function---we call this a "defunctionalization symbol"; and
+2. in the HOF's definition, wherever a function parameter is applied,
+   replace that application with a call to a dedicated first-order function
+   which will *interpret* the defunctionalization symbol that this parameter
+   now stands for---this function is often called `apply`, sometimes `eval`.
 
 For a more fulfilling introduction, check out [*The best refactoring you've
-never heard of*][tbrynho], by James Koppel.
-The title of this post comes from there;
-we are about to see another example of that refactoring technique.
+never heard of*][tbrynho], by James Koppel;
+the title of this post comes from that talk.
+We are about to see another example of that refactoring technique.
 
-Defunctionalization allows functional programming ideas---from a world where
-higher-order functions are the norm---to be applied even in first-order
+Defunctionalization makes functional programming ideas---from a world where
+higher-order functions are the norm---applicable even in first-order
 languages.
-However, there's also a lot of room for defunctionalization in languages that
+However, defunctionalization also has a lot of value in languages that
 already have higher-order functions, *i.e.*, functional languages.
 This is what we wish to demonstrate.
 
 ## The Problem
 
-Here is the well-known `sum` function, which computes the sum of a list of numbers.
+Here is the well-known `sum` function which computes the sum of a list of numbers.
 The code is in Haskell for concreteness, but this could be written in pretty
 much any programming language.
 
@@ -52,11 +50,11 @@ sum (x : xs) = x + sum xs
 This is a basic example of a recursive function that also illustrates
 one of their common pitfalls.
 
-If we evaluate it, say, on a list `1 : 2 : 3 : []`, we can see the computation
-split in two phases:
-first the recursive calls are unfolded, and only after that phase
+If we evaluate it, say, on a list `1 : 2 : 3 : []`, we can see two distinct
+phases in the computation:
+first, the recursive calls are unfolded, and only after all of that unfolding
 do we start adding the numbers in the list, starting from the end.
-That means that during the first phase, the function `sum` will consume
+Hence, during the first phase, the function `sum` will consume
 additional space that grows linearly with the length of the input list.
 
 ```haskell
@@ -70,29 +68,25 @@ additional space that grows linearly with the length of the input list.
 = 6
 ```
 
-As you might already be aware of, the solution is to rewrite the `sum`
-function to be tail-recursive. (Oops, spoilers. Too late!)
-The goal here is to decompose this simple transformation into two even more
-elementary steps.
-In choosing such a straightforward example, we can focus on this decomposition
-without getting bogged down in domain-specific details. The underlying ideas
-are then more readily applicable to attack bigger problems.[^motivation]
+As you might already be aware, the solution is to rewrite the `sum`
+function to be tail-recursive. This is a common technique to allow functional
+programs to compile down to efficient machine code, as efficient as a
+regular loop in imperative programming.
 
-[^motivation]: This is clearly not because I can't be bothered to come
-  up with a more interesting example.
+In fact, this simple transformation can be decomposed into two even more
+elementary and (at least partially) mechanical steps.
+We will illustrate them using the very small example of `sum`, but the
+underlying ideas are readily applicable to bigger refactoring and
+optimization problems.
 
-To make recursive functions run fast, a common advice is thus:
-
-1. Make the function tail-recursive.
-
-We can reword that advice to be more actionable.
-In fact, if we take it literally, the above can even be achieved in a fully mechanical
-way:
+If we really only cared about making the function tail-recursive,
+we might do so in a fully mechanical manner:
 
 1. Rewrite the function in continuation-passing style (CPS).
 
-But we must still do something more beyond that.
-CPS matters because it is a first step to enable further transformations.
+As we will soon see, tail recursion alone is technically not sufficient to
+make `sum` run more efficiently. Another transformation is necessary.
+What makes CPS valuable is that it enables further code transformations.
 
 The rest of this post is going to illustrate that defunctionalization
 provides a reasonable second step:
@@ -107,8 +101,7 @@ tactics" are domain-specific insights to push a solution to completion.
 
 The two steps presented here thus constitute a "standard strategy" to make
 functions tail-recursive---and efficient. As we will soon see, only the second
-step calls for "creative tactics" (where the specific domain is "adding
-numbers").
+step calls for "creative tactics" (using knowledge specific to "adding numbers").
 
 ---
 
@@ -123,11 +116,9 @@ sum (x : xs) = x + sum xs
 
 ## Continuation-passing style
 
-Those familiar with it are free to skip this section. Therefore, this
-explanation is geared to those who are new to the idea of continuation-passing
-style.
-
-This first step is entirely mechanical.
+This first step is entirely mechanical, and those familiar with it are free to
+skip this section. The following explanation is geared to those who are new to
+the idea of continuation-passing style.
 
 Instead of producing the *result* directly, we construct a *function* whose
 parameter `k` is to be called with the result. `k` is commonly named
@@ -137,7 +128,9 @@ do with the result of our function.[^world]
 [^world]: "The rest of the world" may sound grand and daunting.
   The idea of continuations turns out to be fittingly grand and daunting.
 
-We can already give the type of the transformed function:
+We can already give the type of the transformed function, where
+a continuation has type `Int -> r` for an abstract type parameter `r`.
+The only way for the function to terminate is to call the continuation:
 
 ```haskell
 sum' :: [Int] -> (Int -> r) -> r
@@ -152,11 +145,12 @@ the known result `0`:
 sum' [] k = k 0
 ```
 
-In the inductive step `(x : xs)`, we must compute the sum of the tail `xs`
-recursively, so we write `sum' xs`. Now that we're in CPS, `sum' xs` is not
-literally the sum of `xs`: it is another function expecting a continuation,
-so we write such a continuation. Provided a result `y`, adding `x` to it yields
-the result of `sum' (x : xs)`, which we pass to its own continuation `k`:
+In the inductive step `(x : xs)`, we first compute the sum of the tail `xs`
+recursively, via `sum' xs`. Now that we're in CPS, `sum' xs` is not
+literally the sum of `xs`: it is another function expecting a continuation.
+This continuation is defined here as a lambda: provided a result `y`,
+adding `x` to it yields the result we expect from `sum' (x : xs)`,
+so we pass that to its own continuation `k`:
 
 ```haskell
 sum' (x : xs) k = sum' xs (\y -> k (x + y))
@@ -167,7 +161,7 @@ the expression `k (x + y)` is how we tell the rest of the world that the result
 is `x + y`. Moreover, from the perspective of the recursive call `sum' xs`,
 what the surrounding call `sum' (x : xs)` wants to do (add `x` to the result)
 is also part of "the rest of the world", so it makes sense that this logic goes
-into the continuation.
+into the continuation of `sum' xs`.
 
 Put those three lines together:
 
@@ -177,17 +171,24 @@ sum' []       k = k 0
 sum' (x : xs) k = sum' xs (\y -> k (x + y))
 ```
 
-CPS transformation turns recursive functions into tail-recursive functions:
+In continuation-passing style, all function calls are *tail calls*:
 when the recursive call `sum' xs ...` returns (some value of type `r`),
 it can return directly to the caller of `sum' (x : xs) k`.
+Thanks to that, [tail calls][tc] can be compiled to efficient code,
+which is one of the reasons that make continuation-passing style valuable,
+for both compiling and programming.
+
+[tc]: https://en.wikipedia.org/wiki/Tail_call
 
 ## Defunctionalize the continuation
 
 This second step cannot be fully automated: we will need to think creatively in
 order to simplify the structure of the continuation as much as possible.
 
-Let's look at how `sum'` evaluates on an example.
-At every step, the continuation grows with the next element of the list:
+We've just rewritten the original and naive `sum` function into `sum'` by
+CPS transformation. Let's take a look at how `sum'` evaluates on an example.
+At every step, `sum'` adds the next element of the list (its first argument) to
+the continuation (its second argument):
 
 ```haskell
   sum' (1 : 2 : 3 : []) k0
@@ -198,12 +199,9 @@ At every step, the continuation grows with the next element of the list:
 = k0 6
 ```
 
-Evaluation still blows up by spelling out the whole sum,
-which is how we can tell that we are not done yet:
-
-```haskell
-1 + (2 + (3 + 0))
-```
+Evaluation still blows up by spelling out the whole sum in the continuation.
+That's how we can tell that we are not done yet, and further effort is
+necessary.
 
 But notice also that the continuation always takes the same form at every step:
 
@@ -213,8 +211,7 @@ But notice also that the continuation always takes the same form at every step:
 (\y -> k0 (1 + (2 + (3 + y))))
 ```
 
-Now, using properties of addition (associativity),
-they can be simplified:
+Now, these continuations can be simplified:
 
 ```haskell
 (\y -> k0 (1 + y))
@@ -222,20 +219,21 @@ they can be simplified:
 (\y -> k0 (6 + y))
 ```
 
-In other words, the continuation really consists only of:
+In other words, the continuations actually used by this program really consist
+only of:
 
-1. the initial continuation `k0` which comes from "outside";
+1. an initial continuation `k0`;
 2. an integer `n` to add to the final result `y`.
 
-From now on, we will assume that continuations `k` have the form
-`\y -> k0 (n + y)` for some integer `n`.
+The continuation `k0` is fixed throughout one top-level invocation of `sum'`,
+so we will treat it as a global constant from the point of view of `sum'`.
 
-Defunctionalization then replaces the continuation by that integer.
-We don't need to also keep the initial continuation `k0` around:
-we can ask for it later, in the `apply` function.
-With that change, it turns out we can drop all references to `k0` and the
-continuation type parameter `r`.
-Skipping those details, we are left with the following:
+That leaves the integer `n`, which is really the only data needed to describe
+each continuation that occurs during the evaluation of `sum'`.
+
+*Defunctionalization* replaces continuations by the corresponding integers.
+Skipping some details in the transformation, where we manage to remove any
+reference to `k0`, we are left with the following:
 
 ```haskell
 sum_ :: [Int] -> Int -> Int
@@ -250,6 +248,8 @@ Even though the initial continuation `k0` disappeared, `n` still stands for
 some sort of continuation; in that sense, `sum_` is still in CPS and we didn't
 actually undo the previous step.
 
+### Side-by-side comparison
+
 If we look carefully enough, `sum'` and `sum_` should really appear as
 the same thing "modulo defunctionalization".
 For comparison, here is `sum'` again:
@@ -261,17 +261,17 @@ sum' []       k = k 0
 sum' (x : xs) k = sum' xs (\y -> k (x + y))
 ```
 
-Where we had a continuation `k` in `sum'`, we now have `n` in `sum_`,
-assuming that `k` has the form `\y -> k0 (n + y)`.
+Where we had a continuation `k` in `sum'`, we now have a number `n` to
+represent it in `sum_`, assuming that `k` has the form `\y -> k0 (n + y)`.
 
 Where we had an application `k 0` in `sum'`, we now have `apply n 0` in `sum_`.
 The function `apply` is defined so that `k` is equal to
-`\y -> k0 (apply n y)`, or equivalently, `k0 . apply n`.
+`\y -> k0 (apply n y)`, or equivalently, `k0 . apply n`,
+so `apply = (+)`.
 Technically, if we wanted to replace `k 0` with something literally equal,
 we would write `k0 (apply n 0)`, but we secretly dropped `k0` at some point
 in the (skipped) derivation of `sum_`.
-Thus, `n` is related to the `k` it defunctionalizes by `apply`,
-which is equal to `(+)`.
+Even so, `apply` formally relates `n` to the `k` it defunctionalizes.
 
 Where we had a continuation `\y -> k (x + y)` in the second case of `sum'`,
 we now have `(n + x)` in `sum_`. They are also related by `apply`:
@@ -312,7 +312,7 @@ Nice and tidy.
 
 A fair question to ask is whether all of this is not a bit indirect.
 Indeed, to go from the naive `sum` to the tail-recursive `sum''`,
-CPS is not necessarily the first thing that comes to mind.
+CPS is not necessarily the first solution that comes to mind.
 A more direct way to think about the problem is to look again at how `sum`
 evaluates (instead of `sum'`):
 
@@ -332,15 +332,15 @@ and notice that the *evaluation contexts* around `sum` have a common shape:
 ```
 
 It is hopefully evident here that *evaluation contexts* in `sum` play the same
-role as *continuations* in `sum'`
+role as *continuations* in `sum'`.
 Nevertheless, to go from recognizing the shape of the evaluation context to
 coming up with the optimized `sum''`, there remains a small gap.
-How do we actually finish the story from this point?
+How do we logically finish the story from this point?
 
 1. We must compress such an evaluation context to a plain number.
 
 2. We must carry explicitly the compressed evaluation context to achieve
-   tail-recursion.
+   tail recursion.
 
 These two steps correspond exactly to defunctionalization and CPS
 transformation, just in the reverse order of what we detailed previously.
@@ -358,11 +358,11 @@ doesn't sound nearly as catchy as
 
 ## References
 
-- [Slides from the PLClub talk (Google Slides)][slides], with more references at the end.
-
 - [*The best refactoring you've never heard of*][tbrynho],
   a talk and transcript by James Koppel (2019), where he popularized the phrase
   "defunctionalize the continuation".
+
+- [Slides from a PLClub talk I gave (Google Slides)][slides], with more references at the end.
 
 - [*Defunctionalization at work*](https://www.brics.dk/RS/01/23/),
   by Olivier Danvy and Lasse R. Nielsen (PPDP 2001, extended version),
