@@ -2,6 +2,7 @@
 title: R E S P E C T - Find Out What It Means To The Coq Standard Library
 author: Lucas Silver
 tags: coq
+description: An introduction to rewriting in Coq
 ---
 
 ## An Introduction To Rewriting In Coq

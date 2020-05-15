@@ -54,7 +54,7 @@ application = hakyllWith config $ do
     match "extra/syntax/*.theme" $ do
       route   $ inFolderFlatly "css" <!> setExtension "css"
       compile $ kateThemeToCSSCompiler
-      
+
     --blog post tags
     btags <- let mktagid = fromCapture "blog/tags/*.html"
              in  buildTags "blog/*" mktagid
@@ -69,7 +69,7 @@ application = hakyllWith config $ do
             >>= loadAndApplyTemplate "templates/blog.html" blogContext
             >>= loadAndApplyTemplate "templates/default.html" blogContext
             >>= relativizeUrls
-            
+
     match "blog.html" $ do
         route   $ idRoute <!> canonizeRoute
         compile $ do
@@ -82,7 +82,21 @@ application = hakyllWith config $ do
                 >>= applyAsTemplate blogCtx
                 >>= loadAndApplyTemplate "templates/default.html" blogCtx
                 >>= relativizeUrls
-                
+
+    create ["atom.xml"] $ do
+        route   $ idRoute
+        compile $ do
+            posts <- recentFirst =<< loadAll "blog/*"
+            let feedCtx = siteContext
+            renderAtom blogRssConfiguration feedCtx posts
+
+    create ["rss.xml"] $ do
+        route   $ idRoute
+        compile $ do
+            posts <- recentFirst =<< loadAll "blog/*"
+            let feedCtx = siteContext
+            renderRss blogRssConfiguration feedCtx posts
+
     -- Tag pages for blog tags
     tagsRules btags $ \tag pattern -> do
         let title = "All posts tagged \"" ++ tag ++ "\""
@@ -96,7 +110,7 @@ application = hakyllWith config $ do
                 >>= loadAndApplyTemplate "templates/tag.html" ctx
                 >>= loadAndApplyTemplate "templates/default.html" ctx
                 >>= relativizeUrls
-                
+
     --people tags
     ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
 
@@ -171,3 +185,12 @@ peopleContext ptags =
     nestedListField "studentGroup" "student" siteContext students`mappend`
     nestedListField "postdocGroup" "postdoc" siteContext postdocs`mappend`
     listField "alum" siteContext alum
+
+blogRssConfiguration :: FeedConfiguration
+blogRssConfiguration = FeedConfiguration
+  { feedTitle = "PL Club Blog"
+  , feedDescription = "Posts from the PL Club at the University of Pennsylvania"
+  , feedAuthorName = "UPenn PL Club"
+  , feedAuthorEmail = "no email address"
+  , feedRoot = "https://www.cis.upenn.edu/~plclub/"
+  }
