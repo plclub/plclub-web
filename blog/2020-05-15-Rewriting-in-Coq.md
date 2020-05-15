@@ -4,7 +4,7 @@ author: Lucas Silver
 tags: coq
 ---
 
-### An Introduction To Rewriting In Coq
+## An Introduction To Rewriting In Coq
 
 This blog post is a companion to the following [code](https://github.com/lag47/Rewrite-Tutorial). Please follow along with that file.
 
@@ -14,7 +14,7 @@ Prerequisites:
 
 - Basic Typeclasses Knowledge: background from any language should be fine
 
-### What is Rewriting?
+## What is Rewriting?
 
 In this blog post, I will introduce the technique of term <em>rewriting</em>, implemented by the `rewrite` tactic in Coq. Informally, rewriting is the process of replacing a term in a mathematical proposition in a way that preserves the correctness of that statement. For instance, equal terms can be used interchangeably in any context, and integers equivalent modulo `k` can be used interchangeable if the context cares only about their remainders when divided by `k` and not any of their other features.
 
@@ -22,7 +22,7 @@ In informal mathematics, rewriting is so ubiquitous that it is not really even e
 
 Suppose, we have some relation `R : A -> A -> Prop`, two values `x y : A` such that `R x y`. We have some context `K`. Our goal is `K[x]` and we would prefer our goal to be `K[y]`. To do this we want to rewrite `x` into `y` under `K`. In order for this to be justified, we need to know that as long as we know `R x y`, we also know that `K[y]` implies `K[x]`. To introduce some other vocabularly, to say `R` is proper with respect to `K` is the same as the previous sentence.
 
-### Rewriting With Coq Equality
+## Rewriting With Coq Equality
 
 The `=` relation in Coq is strong enough that it is proper under any relation. This means that, if we know `x = y`, then for any context `K`, we can transform a goal of `K[x]` into one of `K[y]`
 
@@ -53,7 +53,7 @@ Qed.
 
 Unlike the previous example, it is not immediately obvious how we would prove this proposition without rewriting. In this case we are rewriting integers under the context of addition. In fact, we can rewrite using `=` under any context. This is a very useful property of the `=` relation that is, unsurprisingly, not true for arbitrary relations. Now, we will move on to discuss how to generalized rewriting with arbitrary relations.
 
-### Rewriting Under Arbitrary Equivalences
+## Rewriting Under Arbitrary Equivalences
 
 Suppose we have an integer `k` and consider modular arithmetic modulo `k`. So our relation `x ≡ y` means that `x` is equivalent to `y` mod `k`. The definition given in the file uses [Bezout coefficients](https://en.wikipedia.org/wiki/B%C3%A9zout%27s_identity), which is equivalent to a division based definition. However, this is not really important for our purposes. Note that `≡` is the notation we will use for the relation defined by `equiv` in the file.
 
@@ -121,7 +121,7 @@ Proof.
 Qed.
 ```
 
-### Rewriting Under Arbitrary Contexts
+## Rewriting Under Arbitrary Contexts
 
 Now let us proceed to a more complicated example. We can start by observing and proving that `k ≡ 0`.
 
@@ -251,7 +251,7 @@ Now we can stress test our rewriting with the following example.
 
 Note that there is only one `x` on each side of the equivalence, so once we replace all `k`'s with `0`, the proof is vastly simpler.
 
-### Rewriting Equivalent Notions of Computation
+## Rewriting Equivalent Notions of Computation
 
 To wrap up I will introduce another example where rewriting is incredibly useful. Suppose we want to model stateful computations in Coq, where there are no stateful operations. We can do that with the following type (where our type of states is `S`).
 
@@ -334,7 +334,7 @@ Proof.
 Qed.
 ```
 
-### Conclusion
+## Conclusion
 
 In addition to the `rewrite` tactic discussed in this post, Coq has a similar, but more powerful `setoid_rewrite` tactic. This tactic is enabled by the same typeclasses as `rewrite`, but is capable of rewriting underneath contexts like universal or existential quantifiers. As a rule of thumb, if you feel like a rewrite should work, try to use `setoid_rewrite`. To learn more about `setoid_rewrite`, checkout the relevant sections of the Coq documentation [here](https://coq.inria.fr/refman/addendum/generalized-rewriting.html).  
 
