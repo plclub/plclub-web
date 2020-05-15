@@ -23,6 +23,7 @@ to type soundness proofs.
 Homework:
 
 Familiarize yourself with big-step operational semantics and the basics of coinduction.
+
 * Big-step operational semantics: TAPL Chapter 3 Section 5
 * Coinduction: TAPL Chapter 21
 

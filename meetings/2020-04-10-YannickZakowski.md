@@ -12,8 +12,8 @@ Finally, we will take a more technical focus on three semantic peculiarities tha
 
 In lieu of homework, I would suggest the following:
 
-* Take a quick peak at the specification of the language we are formalizing, just to give you a sense of what we are working with: https://llvm.org/docs/LangRef.html
-* Read at least the introduction of the original Vellvm paper (back in 2012): https://www.cis.upenn.edu/~stevez/papers/ZNMZ12.pdf
-* (optional a.) If you are already familiar with itrees, you may refresh your memory of Section 5, and in particular of the denotation of the [asm] language described in this Section: https://www.cis.upenn.edu/~stevez/papers/XZHH+20.pdf
-* (optional b.) If you are not yet familiar with itrees, but willing to, reading as much as you would like of the corresponding paper would help: https://www.cis.upenn.edu/~stevez/papers/XZHH+20.pdf
+* Take a quick peak at the specification of the language we are formalizing, just to give you a sense of what we are working with: [https://llvm.org/docs/LangRef.html](https://llvm.org/docs/LangRef.html)
+* Read at least the introduction of the original Vellvm paper (back in 2012): [https://www.cis.upenn.edu/~stevez/papers/ZNMZ12.pdf](https://www.cis.upenn.edu/~stevez/papers/ZNMZ12.pdf)
+* (optional a.) If you are already familiar with itrees, you may refresh your memory of Section 5, and in particular of the denotation of the [asm] language described in this Section: [https://www.cis.upenn.edu/~stevez/papers/XZHH+20.pdf](https://www.cis.upenn.edu/~stevez/papers/XZHH+20.pdf)
+* (optional b.) If you are not yet familiar with itrees, but willing to, reading as much as you would like of the corresponding paper would help: [https://www.cis.upenn.edu/~stevez/papers/XZHH+20.pdf](https://www.cis.upenn.edu/~stevez/papers/XZHH+20.pdf)
 * (optional?)    If you find a clever, better name than Vellvm 2 for this project, I offer a beer as soon as logistically possible!
