@@ -26,7 +26,7 @@ import qualified Data.Map as Map
 -- Changes to syntax maps do not trigger site recompilation, you must rebuild
 customSyntaxMap :: SyntaxMap
 customSyntaxMap =
-  Map.union defaultSyntaxMap extraMap
+  Map.union extraMap defaultSyntaxMap
   where
     extraMap = unsafePerformIO $ do
       msm <- Sky.loadSyntaxesFromDir "extra/syntax/"
