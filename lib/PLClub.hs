@@ -10,11 +10,13 @@ module PLClub where
 --------------------------------------------------------------------------------
 import           Data.Monoid (mappend)
 import           Hakyll
-import           PLClub.Publications 
+import           PLClub.Publications
 import           PLClub.HakyllExtra
+import           PLClub.PandocExtra
 
 -- | Compose routes, renamed to emphasize
 -- that LHS is applied before RHS
+(<!>), thenRoute :: Routes -> Routes -> Routes
 (<!>) = composeRoutes
 thenRoute = composeRoutes
 
@@ -22,7 +24,7 @@ config :: Configuration
 config = defaultConfiguration
   { deployCommand = "./extra/deploy.sh"
   }
-  
+
 --------------------------------------------------------------------------------
 application :: IO ()
 application = hakyllWith config $ do
@@ -45,10 +47,56 @@ application = hakyllWith config $ do
         route   $ idRoute <!> setExtension "html" <!> canonizeRoute
         compile $ do
             pandocCompiler
-                >>= loadAndApplyTemplate "templates/meeting.html" siteContext 
+                >>= loadAndApplyTemplate "templates/meeting.html" siteContext
                 >>= loadAndApplyTemplate "templates/default.html"  siteContext
                 >>= relativizeUrls
 
+    match "extra/syntax/*.theme" $ do
+      route   $ inFolderFlatly "css" <!> setExtension "css"
+      compile $ kateThemeToCSSCompiler
+      
+    --blog post tags
+    btags <- let mktagid = fromCapture "blog/tags/*.html"
+             in  buildTags "blog/*" mktagid
+
+    match "blog/*" $
+      rulesExtraDependencies [tagsDependency btags] $ do
+        route   $ idRoute <!> setExtension "html" <!> canonizeRoute
+        compile $ do
+          let blogContext =
+                tagsField "tags" btags `mappend` siteContext
+          pandocCompilerWith customReaderOptions customWriterOptions
+            >>= loadAndApplyTemplate "templates/blog.html" blogContext
+            >>= loadAndApplyTemplate "templates/default.html" blogContext
+            >>= relativizeUrls
+            
+    match "blog.html" $ do
+        route   $ idRoute <!> canonizeRoute
+        compile $ do
+            blog <- recentFirst =<< loadAll "blog/*"
+            let blogCtx =
+                    listField "blog" siteContext (return blog) `mappend`
+                    constField "title" "PLClub Blog" `mappend`
+                    siteContext
+            getResourceBody
+                >>= applyAsTemplate blogCtx
+                >>= loadAndApplyTemplate "templates/default.html" blogCtx
+                >>= relativizeUrls
+                
+    -- Tag pages for blog tags
+    tagsRules btags $ \tag pattern -> do
+        let title = "All posts tagged \"" ++ tag ++ "\""
+        route idRoute
+        compile $ do
+            posts <- recentFirst =<< loadAll pattern
+            let ctx = constField "title" title
+                      `mappend` listField "posts" siteContext (return posts)
+                      `mappend` defaultContext
+            makeItem ""
+                >>= loadAndApplyTemplate "templates/tag.html" ctx
+                >>= loadAndApplyTemplate "templates/default.html" ctx
+                >>= relativizeUrls
+                
     --people tags
     ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
 
@@ -56,11 +104,12 @@ application = hakyllWith config $ do
         route   $ idRoute <!> canonizeRoute
         compile $ do
             let ctx =
-                    papersContext
-                    `mappend` siteContext
+                    papersContext `mappend`
+                    constField "title" "PLClub Publications" `mappend`
+                    siteContext
             getResourceBody
-                >>= applyAsTemplate ctx 
-                >>= loadAndApplyTemplate "templates/default.html" siteContext 
+                >>= applyAsTemplate ctx
+                >>= loadAndApplyTemplate "templates/default.html" siteContext
                 >>= relativizeUrls
 
     create ["papers/plclub_bib.html"] $ do
@@ -74,7 +123,7 @@ application = hakyllWith config $ do
             meetings <- recentFirst =<< loadAll "meetings/*"
             let meetingsCtx =
                     listField "meetings" siteContext (return meetings) `mappend`
-                    constField "title" "Penn PL Club" `mappend`
+                    constField "title" "PLClub Discussion Group" `mappend`
                     siteContext
             getResourceBody
                 >>= applyAsTemplate meetingsCtx
@@ -84,8 +133,6 @@ application = hakyllWith config $ do
     match "old_site/**" $ do
       route   $ routeTail <!> htaccessHackRoute
       compile $ copyFileCompiler
-        
-        
 
     match "index.html" $ do
         rulesExtraDependencies [tagsDependency ptags] $ do
@@ -95,8 +142,8 @@ application = hakyllWith config $ do
                 let indexCtx =
                         peopleContext ptags `mappend`
                         listField "meetings" siteContext (return meetings) `mappend`
+                        constField "title" "Programming Languages @ Penn" `mappend`
                         recentPapersContext `mappend`
-                        constField "title" "Home"                `mappend`
                         siteContext
                 getResourceBody
                     >>= applyAsTemplate indexCtx
@@ -113,7 +160,7 @@ unbindList n as =
     (take n as):(unbindList n $ drop n as)
 
 peopleContext :: Tags -> Context String
-peopleContext ptags = 
+peopleContext ptags =
   let faculty  = (unbindList 3) <$> loadTag ptags "faculty" :: Compiler [[Item String]]
       students = (unbindList 3) <$> loadTag ptags "student" :: Compiler [[Item String]]
       postdocs = (unbindList 3) <$> loadTag ptags "postdoc" :: Compiler [[Item String]]

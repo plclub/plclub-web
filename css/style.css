@@ -97,3 +97,10 @@ h5 {
     column-count: 2;
     column-gap: 20px;
 }
+
+pre {
+    margin-left: 1.5em;
+}
+
+/* Syntax highlighting for code blocks */
+

@@ -1,0 +1,22 @@
+
+<article>
+  <section class="">
+    <h1 class="mt-5">$title$</h1>
+    $if(tags)$
+    Tags: $tags$
+    $endif$
+    <hr>
+    $date$<br>By <strong>$author$</strong><br>
+    $if(withtoc)$    
+    <div class="toc">
+      <h2 class="mt-5">Table of Contents</h2>
+      $toc$
+      <hr />
+    </div>
+    $endif$
+    <p class="lead mt-2">$body$</p>
+    <div align="right">
+        <a href="/blog">Back ></a>
+    </div>
+  </section>
+</article>
