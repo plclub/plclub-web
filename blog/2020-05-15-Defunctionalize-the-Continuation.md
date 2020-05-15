@@ -3,6 +3,7 @@ title: Defunctionalize the Continuation
 author: Li-yao Xia
 withtoc: true
 tags: haskell
+description: Using defunctionalization to emulate higher-order functions using first-order language features
 ---
 
 This post details a little example of refactoring a program using
