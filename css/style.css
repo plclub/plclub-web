@@ -62,6 +62,14 @@ h1, h2, h3, h4 {
     color:#023280f0;
 }
 
+h2.toplevel-title {
+    font-size: 1.75rem;
+}
+
+h3.meeting-title {
+    font-size: 1.25rem;
+}
+
 h5 {
     font-weight:300;
 }
