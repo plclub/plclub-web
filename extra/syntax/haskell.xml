@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This syntax description is modified from KDE's syntax-highlighting. -->
+<!DOCTYPE language SYSTEM "language.dtd">
+<language name="Haskell" version="13" kateversion="5.0" section="Sources" extensions="*.hs;*.chs;*.hs-boot" mimetype="text/x-haskell" author="Nicolas Wu (zenzike@gmail.com)" license="LGPL" indenter="haskell" style="haskell">
+  <highlighting>
+  <list name="keywords">
+    <item>case</item>
+    <item>class</item>
+    <item>data</item>
+    <item>deriving</item>
+    <item>via</item>
+    <item>do</item>
+    <item>else</item>
+    <item>family</item>
+    <item>forall</item>
+    <item>if</item>
+    <item>in</item>
+    <item>infixl</item>
+    <item>infixr</item>
+    <item>instance</item>
+    <item>let</item>
+    <item>module</item>
+    <item>newtype</item>
+    <item>of</item>
+    <item>pattern</item>
+    <item>primitive</item>
+    <item>then</item>
+    <item>type</item>
+    <item>where</item>
+  </list>
+  <list name="cpp_keywords">
+    <item>defined</item>
+    <item>if</item>
+    <item>ifdef</item>
+    <item>ifndef</item>
+    <item>include</item>
+    <item>undef</item>
+  </list>
+  <list name="c2hs_keywords">
+    <item>qualified</item>
+    <item>lib</item>
+    <item>prefix</item>
+    <item>as</item>
+    <item>with</item>
+    <item>call</item>
+    <item>pure</item>
+    <item>unsafe</item>
+    <item>get</item>
+    <item>set</item>
+    <item>foreign</item>
+    <item>stable</item>
+    <item>nocode</item>
+  </list>
+  <list name="import_keywords">
+    <item>as</item>
+    <item>qualified</item>
+    <item>hiding</item>
+  </list>
+  <list name="language_pragmas">
+    <item>AllowAmbiguousTypes</item>
+    <item>ApplicativeDo</item>
+    <item>Arrows</item>
+    <item>AutoDeriveTypeable</item>
+    <item>BangPatterns</item>
+    <item>BinaryLiterals</item>
+    <item>CApiFFI</item>
+    <item>CPP</item>
+    <item>ConstrainedClassMethods</item>
+    <item>ConstraintKinds</item>
+    <item>DataKinds</item>
+    <item>DatatypeContexts</item>
+    <item>DefaultSignatures</item>
+    <item>DeriveAnyClass</item>
+    <item>DeriveDataTypeable</item>
+    <item>DeriveFoldable</item>
+    <item>DeriveFunctor</item>
+    <item>DeriveGeneric</item>
+    <item>DeriveLift</item>
+    <item>DeriveTraversable</item>
+    <item>DisambiguateRecordFields</item>
+    <item>DoAndIfThenElse</item>
+    <item>DoRec</item>
+    <item>DuplicateRecordFields</item>
+    <item>EmptyCase</item>
+    <item>EmptyDataDecls</item>
+    <item>ExistentialQuantification</item>
+    <item>ExplicitForAll</item>
+    <item>ExplicitNamespaces</item>
+    <item>ExtendedDefaultRules</item>
+    <item>ExtensibleRecords</item>
+    <item>FlexibleContexts</item>
+    <item>FlexibleInstances</item>
+    <item>ForeignFunctionInterface</item>
+    <item>FunctionalDependencies</item>
+    <item>GADTSyntax</item>
+    <item>GADTs</item>
+    <item>GHCForeignImportPrim</item>
+    <item>GeneralizedNewtypeDeriving</item>
+    <item>Generics</item>
+    <item>HereDocuments</item>
+    <item>ImplicitParams</item>
+    <item>ImplicitPrelude</item>
+    <item>ImpredicativeTypes</item>
+    <item>IncoherentInstances</item>
+    <item>InstanceSigs</item>
+    <item>InterruptibleFFI</item>
+    <item>JavaScriptFFI</item>
+    <item>KindSignatures</item>
+    <item>LambdaCase</item>
+    <item>LiberalTypeSynonyms</item>
+    <item>MagicHash</item>
+    <item>MonadComprehensions</item>
+    <item>MonadFailDesugaring</item>
+    <item>MonoLocalBinds</item>
+    <item>MonoPatBinds</item>
+    <item>MonomorphismRestriction</item>
+    <item>MultiParamTypeClasses</item>
+    <item>MultiWayIf</item>
+    <item>NPlusKPatterns</item>
+    <item>NamedFieldPuns</item>
+    <item>NamedWildCards</item>
+    <item>NegativeLiterals</item>
+    <item>NewQualifiedOperators</item>
+    <item>NondecreasingIndentation</item>
+    <item>NullaryTypeClasses</item>
+    <item>NumDecimals</item>
+    <item>OverlappingInstances</item>
+    <item>OverloadedLabels</item>
+    <item>OverloadedLists</item>
+    <item>OverloadedStrings</item>
+    <item>PackageImports</item>
+    <item>ParallelArrays</item>
+    <item>ParallelListComp</item>
+    <item>PartialTypeSignatures</item>
+    <item>PatternGuards</item>
+    <item>PatternSignatures</item>
+    <item>PatternSynonyms</item>
+    <item>PolyKinds</item>
+    <item>PolymorphicComponents</item>
+    <item>PostfixOperators</item>
+    <item>QuasiQuotes</item>
+    <item>Rank2Types</item>
+    <item>RankNTypes</item>
+    <item>RebindableSyntax</item>
+    <item>RecordPuns</item>
+    <item>RecordWildCards</item>
+    <item>RecursiveDo</item>
+    <item>RegularPatterns</item>
+    <item>RelaxedPolyRec</item>
+    <item>RestrictedTypeSynonyms</item>
+    <item>RoleAnnotations</item>
+    <item>Safe</item>
+    <item>SafeImports</item>
+    <item>ScopedTypeVariables</item>
+    <item>StandaloneDeriving</item>
+    <item>StaticPointers</item>
+    <item>Strict</item>
+    <item>StrictData</item>
+    <item>TemplateHaskell</item>
+    <item>TemplateHaskellQuotes</item>
+    <item>TraditionalRecordSyntax</item>
+    <item>TransformListComp</item>
+    <item>Trustworthy</item>
+    <item>TupleSections</item>
+    <item>TypeApplications</item>
+    <item>TypeFamilies</item>
+    <item>TypeInType</item>
+    <item>TypeOperators</item>
+    <item>TypeSynonymInstances</item>
+    <item>UnboxedTuples</item>
+    <item>UndecidableInstances</item>
+    <item>UndecidableSuperClasses</item>
+    <item>UnicodeSyntax</item>
+    <item>UnliftedFFITypes</item>
+    <item>Unsafe</item>
+    <item>ViewPatterns</item>
+    <item>XmlSyntax</item>
+  </list>
+  <contexts>
+    <context attribute="Normal" lineEndContext="#stay" name="code">
+      <StringDetect attribute="Pragma"  context="pragma" String="{-#"/>
+      <StringDetect attribute="Comment" context="#stay" String="{--}"/>
+      <RegExpr attribute="Comment" context="comments" String="\{-[^#]?" />
+      <RegExpr attribute="Comment" context="comment"  String="--[\-]*([^!#\$%&amp;\*\+\./&lt;=&gt;\?@&#92;\^\|\-~:]|$)" />
+      <WordDetect attribute="Keyword" context="import"   String="import" />
+      <Detect2Chars attribute="C2HS Directive" context="c2hs directive" char="{" char1="#"/>
+      <DetectChar attribute="C Preprocessor" context="C Preprocessor" char="#" column="0"/>
+
+      <keyword attribute="Keyword"          context="#stay" String="keywords" />
+
+      <RegExpr attribute="Special"          context="#stay" String="(::|=&gt;|\-&gt;|&lt;\-|=)(?![\-!#\$%&amp;\*\+/&lt;=&gt;\?&#92;@\^\|~\.:])" />
+      <AnyChar attribute="Special"          context="#stay" String="∷⇒→←∀∃" />
+      <RegExpr attribute="Signature"        context="#stay" String="\s*[a-z_][a-zA-Z0-9_']*\s*(?=::([^\-!#\$%&amp;\*\+/&lt;=&gt;\?&#92;@\^\|~\.:]|$))" />
+      <RegExpr attribute="Signature"        context="#stay" String="\s*(\([\-!#\$%&amp;\*\+/&lt;=&gt;\?&#92;@\^\|~\.:]*\))*\s*(?=::[^\-!#\$%&amp;\*\+/&lt;=&gt;\?&#92;@\^\|~\.:])" />
+      <RegExpr attribute="Function"         context="#stay" String="([A-Z][a-zA-Z0-9_']*\.)*[a-z_][a-zA-Z0-9_']*" />
+      <RegExpr attribute="Operator"         context="#stay" String="([A-Z][a-zA-Z0-0_']*\.)*[\-!#\$%&amp;\*\+/&lt;=&gt;\?&#92;@\^\|~\.:]+" />
+      <RegExpr attribute="Type"             context="#stay" String="([A-Z][a-zA-Z0-9_']*\.)*[A-Z][a-zA-Z0-9_']*" />
+      <RegExpr attribute="Type"             context="#stay" String="'(?![A-Z]')([A-Z][a-zA-Z0-9_']*\.)*[A-Z][a-zA-Z0-9_']*" />
+
+      <RegExpr    attribute="Float"   context="#stay" String ="\d+\.\d+([Ee][+-]?\d+)?|\d+[Ee][+-]?\d+"/>
+      <RegExpr    attribute="Octal"   context="#stay" String="0[Oo][0-7]+"/>
+      <RegExpr    attribute="Hex"     context="#stay" String="0[Xx][0-9A-Fa-f]+"/>
+      <Int        attribute="Decimal" context="#stay" />
+      <DetectChar attribute="Char"    context="char" char="'" />
+      <DetectChar attribute="String"  context="string" char="&quot;" />
+
+      <DetectChar attribute="Function Infix" context="infix" char="`"/>
+      <Detect2Chars attribute="EnumFromTo" context="#stay" char ="." char1="." />
+      <AnyChar      attribute="EnumFromTo" context="#stay" String="‥" />
+
+      <RegExpr attribute="Normal" context="Hamlet" String="\[[wxs]?hamlet\|" />
+      <RegExpr attribute="Normal" context="Julius" String="\[julius\|" />
+      <RegExpr attribute="Normal" context="QuasiQuote" String="\[[a-zA-Z_'](\w|[_'])*\|" />
+    </context>
+    <context attribute="Normal" lineEndContext="#stay" name="QuasiQuote">
+      <Detect2Chars attribute="Normal" context="#pop" char="|" char1="]"/>
+    </context>
+    <context attribute="Normal" lineEndContext="#stay" name="Julius">
+      <IncludeRules context="QuasiQuote"/>
+      <IncludeRules context="Normal##JavaScript" />
+    </context>
+    <context attribute="Normal" lineEndContext="#stay" name="Hamlet">
+      <IncludeRules context="QuasiQuote"/>
+      <IncludeRules context="##Hamlet" />
+    </context>
+    <context attribute="Pragma" lineEndContext="#stay" name="pragma">
+      <keyword attribute="Pragma" context="#stay" String="language_pragmas" />
+      <StringDetect attribute="Pragma"  context="#pop" String="#-}"/>
+    </context>
+    <context attribute="Comment" lineEndContext="#pop" name="comment">
+      <IncludeRules context="Haddock" />
+    </context>
+    <context attribute="Comment" lineEndContext="#stay" name="comments">
+      <Detect2Chars attribute="Comment" context="comment" char="{" char1="-" />
+      <Detect2Chars attribute="Comment" context="#pop" char="-" char1="}" />
+      <IncludeRules context="Haddock" />
+    </context>
+    <context attribute="Char" lineEndContext="#pop" name="char">
+      <RegExpr attribute="Char" context="#stay" String="\\." />
+      <DetectChar attribute="Char" context="#pop" char="'" />
+    </context>
+    <context attribute="String" lineEndContext="#stay" name="string">
+      <RegExpr attribute="String" context="#stay" String="\\." />
+      <DetectChar attribute="String" context="#pop" char="&quot;" />
+    </context>
+    <context attribute="Function Infix" lineEndContext="#stay" name="infix">
+      <DetectChar attribute="Function Infix" context="#pop" char="`"/>
+    </context>
+    <context attribute="Normal" lineEndContext="#pop" name="import">
+      <keyword attribute="Keyword"          context="#stay" String="import_keywords" />
+      <RegExpr attribute="Function"         context="#stay" String="([A-Z][a-zA-Z0-9_']*\.)*[a-z][a-zA-Z0-9_']*" />
+      <RegExpr attribute="Type"             context="#stay" String="([A-Z][a-zA-Z0-9_']*\.)*[A-Z][a-zA-Z0-9_']*" />
+
+      <RegExpr attribute="Pragma"  context="#stay" String="\{-#.*#-\}"/>
+      <RegExpr attribute="Comment" context="comments" String="\{-[^#]?" />
+      <RegExpr attribute="Comment" context="comment"  String="--([^\-!#\$%&amp;\*\+/&lt;=&gt;\?&#92;@\^\|~\.:].*)?$" />
+    </context>
+
+    <!-- Haddock -->
+    <context attribute="Comment" lineEndContext="#stay" name="Haddock">
+      <RegExpr attribute="Haddock Hyperlink" context="#stay" String="'([A-Z][a-zA-Z0-9_']*\.)*[a-z_][a-zA-Z0-9_']*'" />
+      <RegExpr attribute="Haddock Module" context="#stay" String="&quot;([A-Z][a-zA-Z0-9_']*\.)*[A-Z][a-zA-Z0-9_']*&quot;" />
+      <RegExpr attribute="Haddock Emphasis" context="Start Haddock Emphasis" lookAhead="true" String="/.*/" />
+      <RegExpr attribute="Haddock Bold" context="Start Haddock Bold" lookAhead="true" String="__.*__" />
+    </context>
+    <context attribute="Haddock Emphasis" lineEndContext="#pop" name="Start Haddock Emphasis">
+      <DetectChar attribute="Haddock Emphasis" context="Haddock Emphasis" char="/" />
+    </context>
+    <context attribute="Haddock Emphasis" lineEndContext="#pop" name="Haddock Emphasis">
+      <DetectChar attribute="Haddock Emphasis" context="#pop#pop" char="/" />
+      <IncludeRules context="Haddock"/>
+    </context>
+    <context attribute="Haddock Bold" lineEndContext="#pop" name="Start Haddock Bold">
+      <Detect2Chars attribute="Haddock Bold" context="Haddock Bold" char="_" char1="_" />
+    </context>
+    <context attribute="Haddock Bold" lineEndContext="#pop" name="Haddock Bold">
+      <Detect2Chars attribute="Haddock Bold" context="#pop#pop" char="_" char1="_" />
+      <IncludeRules context="Haddock"/>
+    </context>
+
+    <!-- C Preprocessor -->
+    <context attribute="C Preprocessor" lineEndContext="#pop" name="C Preprocessor">
+      <keyword attribute="C Preprocessor Keyword" context="#stay" String="cpp_keywords" />
+      <RegExpr                          context="#stay" String=".*>$" />
+    </context>
+
+    <!-- C2Hs -->
+    <context attribute="C2HS Directive" lineEndContext="#stay" name="c2hs directive">
+      <Detect2Chars attribute="C2HS Directive" context="#pop" char="#" char1="}" />
+      <keyword attribute="Keyword" context="#stay"          String="c2hs_keywords" />
+      <RegExpr attribute="Keyword" context="#stay"          String="context" />
+      <RegExpr attribute="Keyword" context="#stay"          String="call" />
+      <RegExpr attribute="Keyword" context="#stay"          String="sizeof" />
+      <RegExpr attribute="Keyword" context="#stay"          String="alignof" />
+      <RegExpr attribute="Keyword" context="c2hs fun"       String="fun" />
+      <RegExpr attribute="Keyword" context="c2hs pointer"   String="pointer" />
+      <RegExpr attribute="Keyword" context="c2hs enum"      String="enum" />
+      <RegExpr attribute="Keyword" context="c2hs import"    String="import" />
+    </context>
+    <context attribute="C2HS Directive" lineEndContext="#stay" name="c2hs import">
+      <RegExpr attribute="Type"    context="#stay" String="([A-Z][a-zA-Z0-9_']*\.)*[A-Z][a-zA-Z0-9_']*" />
+      <Detect2Chars attribute="C2HS Directive" context="#pop#pop" char="#" char1="}" />
+    </context>
+    <context attribute="C2HS Directive" lineEndContext="#stay" name="c2hs pointer">
+      <keyword attribute="Keyword" context="#stay" String="c2hs_keywords" />
+      <RegExpr attribute="Keyword" context="#stay" String="newtype" />
+      <RegExpr attribute="Type"    context="#stay" String="([A-Z][a-zA-Z0-9_']*\.)*[A-Z][a-zA-Z0-9_']*" />
+      <Detect2Chars attribute="C2HS Directive" context="#pop#pop" char="#" char1="}" />
+    </context>
+    <context attribute="C2HS Directive" lineEndContext="#stay" name="c2hs fun">
+      <keyword attribute="Keyword" context="#stay" String="c2hs_keywords" />
+      <RegExpr attribute="Type" context="#stay" String="`[^']*'" />
+      <Detect2Chars attribute="C2HS Directive" context="#pop#pop" char="#" char1="}" />
+    </context>
+    <context attribute="C2HS Directive" lineEndContext="#stay" name="c2hs enum">
+      <RegExpr attribute="Type"             context="#stay" String="([A-Z][a-zA-Z0-9_']*\.)*[A-Z][a-zA-Z0-9_']*" />
+      <Detect2Chars attribute="C2HS Directive" context="#pop#pop" char="#" char1="}" />
+    </context>
+  </contexts>
+  <itemDatas>
+    <itemData name="Normal"           defStyleNum="dsNormal"   spellChecking="false" />
+    <itemData name="Comment"          defStyleNum="dsComment" />
+    <itemData name="Pragma"           defStyleNum="dsOthers"   spellChecking="false" />
+
+    <itemData name="Keyword"          defStyleNum="dsKeyword"  spellChecking="false" />
+
+    <itemData name="Signature"        defStyleNum="dsOthers"  spellChecking="false" />
+    <itemData name="Function"         defStyleNum="dsNormal"   spellChecking="false" />
+    <itemData name="Operator"         defStyleNum="dsOperator" spellChecking="false" />
+    <itemData name="Type"             defStyleNum="dsDataType" spellChecking="false" />
+    <itemData name="Special"          defStyleNum="dsOthers"  spellChecking="false" />
+
+    <itemData name="Octal"            defStyleNum="dsBaseN"    spellChecking="false" />
+    <itemData name="Hex"              defStyleNum="dsBaseN"    spellChecking="false" />
+    <itemData name="Decimal"          defStyleNum="dsDecVal"   spellChecking="false" />
+    <itemData name="Float"            defStyleNum="dsFloat"    spellChecking="false" />
+    <itemData name="Char"             defStyleNum="dsChar"     spellChecking="false" />
+    <itemData name="String"           defStyleNum="dsString" />
+
+    <itemData name="Function Infix"   defStyleNum="dsOthers"   spellChecking="false" />
+    <itemData name="EnumFromTo"       defStyleNum="dsOthers"   spellChecking="false" />
+
+    <itemData name="C Preprocessor"   defStyleNum="dsPreprocessor"   spellChecking="false" />
+    <itemData name="C Preprocessor Keyword" defStyleNum="dsPreprocessor"   spellChecking="false" />
+
+    <itemData name="Haddock Hyperlink" defStyleNum="dsComment" spellChecking="false" underline="true" />
+    <itemData name="Haddock Module" defStyleNum="dsComment" spellChecking="false" underline="true" />
+    <itemData name="Haddock Emphasis" defStyleNum="dsComment" italic="true"/>
+    <itemData name="Haddock Bold" defStyleNum="dsComment" bold="true"/>
+
+    <itemData name="C2HS Directive"   defStyleNum="dsString"   spellChecking="false" />
+  </itemDatas>
+  </highlighting>
+  <general>
+    <folding indentationsensitive="1"/>
+    <comments>
+      <comment name="singleLine" start="--" />
+      <comment name="multiLine" start="{-" end="-}" />
+    </comments>
+    <keywords casesensitive="1" />
+</general>
+</language>
