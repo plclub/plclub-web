@@ -6,4 +6,3 @@ where : "Tweag I/O"
 website : "https://richarde.dev/"
 tags : ["alum"]
 ---
-Add description here.

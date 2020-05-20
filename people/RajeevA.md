@@ -5,4 +5,3 @@ email : "alur@seas.upenn.edu"
 tags : ["faculty"]
 headshot : "RajeevA.jpg"
 ---
-Add description here.

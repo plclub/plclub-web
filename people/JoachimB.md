@@ -6,4 +6,3 @@ where : "DFINITY"
 website : "https://www.joachim-breitner.de/blog"
 tags : ["alum"]
 ---
-Add description here.

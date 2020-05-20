@@ -6,4 +6,3 @@ where : "IISc Bangalore"
 website : "http://www.iisc-seal.net/kanade"
 tags : ["alum"]
 ---
-Add description here.

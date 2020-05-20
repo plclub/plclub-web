@@ -6,4 +6,3 @@ where : "KAIST"
 website : "https://www.cis.upenn.edu/~kheo/"
 tags : ["alum"]
 ---
-Add description here.

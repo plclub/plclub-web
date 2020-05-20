@@ -6,4 +6,3 @@ where : "Inria Paris"
 website : "https://prosecco.gforge.inria.fr/personal/hritcu/"
 tags : ["alum"]
 ---
-Add description here.

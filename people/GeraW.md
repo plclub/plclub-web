@@ -6,4 +6,3 @@ where : "Ben Guiron Univ."
 website : "https://in.bgu.ac.il/en/natural_science/cs/geraw/Pages/default.aspx"
 tags : ["alum"]
 ---
-Add description here.

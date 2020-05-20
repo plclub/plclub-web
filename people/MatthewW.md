@@ -6,4 +6,3 @@ where : "Princeton"
 website : "https://www.cs.princeton.edu/~mzweaver/"
 tags : ["alum"]
 ---
-Add description here.

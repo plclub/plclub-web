@@ -6,4 +6,3 @@ where : "USC"
 website : "https://viterbi-web.usc.edu/~jdeshmuk/"
 tags : ["alum"]
 ---
-Add description here.

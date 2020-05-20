@@ -6,4 +6,3 @@ where : "CMU"
 website : "http://www.andrew.cmu.edu/user/liminjia/"
 tags : ["alum"]
 ---
-Add description here.

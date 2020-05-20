@@ -6,4 +6,3 @@ where : "Ben Gurion Univ."
 website : "https://www.cs.bgu.ac.il/~dana/"
 tags : ["alum"]
 ---
-Add description here.

@@ -6,4 +6,3 @@ where : "UIC"
 website : "https://www.cs.uic.edu/~mansky/"
 tags : ["alum"]
 ---
-Add description here.

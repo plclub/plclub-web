@@ -6,4 +6,3 @@ where : "CentraleSupélec"
 website : "www.monoidal.net"
 tags : ["alum"]
 ---
-Add description here.

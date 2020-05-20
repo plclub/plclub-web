@@ -5,4 +5,3 @@ email : "omarsa@seas.upenn.edu"
 tags : ["student"]
 headshot : "OmarN.jpg"
 ---
-Add description here.
