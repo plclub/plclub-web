@@ -1,6 +1,5 @@
 ---
 name : "Solomon Maina"
-website : ""
 email : "smaina@seas.upenn.edu"
 tags : ["alum"]
 year: "2020"
