@@ -6,4 +6,3 @@ where : "UIUC"
 website : "http://madhu.cs.illinois.edu/"
 tags : ["alum"]
 ---
-Add description here.

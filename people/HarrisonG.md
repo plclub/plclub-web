@@ -5,4 +5,3 @@ email : "hgo@seas.upenn.edu"
 tags : ["student"]
 headshot : "HarrisonG.jpg"
 ---
-Add description here.

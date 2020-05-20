@@ -6,4 +6,3 @@ where : "MINES ParisTech"
 website : "https://www.cri.ensmp.fr/people/gallego/"
 tags : ["alum"]
 ---
-Add description here.

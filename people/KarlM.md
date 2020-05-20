@@ -5,4 +5,3 @@ year : "2013"
 where : "Google"
 tags : ["alum"]
 ---
-Add description here.

@@ -6,4 +6,3 @@ where : "CNRS"
 website : "http://www-verimag.imag.fr/PEOPLE/Thao.Dang/"
 tags : ["alum"]
 ---
-Add description here.

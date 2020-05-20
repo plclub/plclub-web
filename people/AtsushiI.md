@@ -5,4 +5,3 @@ year : "2000"
 where : "Kyoto Univ."
 tags : ["alum"]
 ---
-Add description here.

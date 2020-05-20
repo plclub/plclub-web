@@ -7,4 +7,3 @@ degree: "Masters"
 where: ""
 headshot : "SolomonM.jpg"
 ---
-Add description here.

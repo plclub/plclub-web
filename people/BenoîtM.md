@@ -6,4 +6,3 @@ where : "Inria"
 website : "http://people.irisa.fr/Benoit.Montagu/"
 tags : ["alum"]
 ---
-Add description here.

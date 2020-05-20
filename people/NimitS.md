@@ -6,4 +6,3 @@ where : "Google"
 website : "https://www.linkedin.com/in/nimit-singhania-a378527"
 tags : ["alum"]
 ---
-Add description here.

@@ -6,4 +6,3 @@ where : "Pomona College"
 website : "https://cs.pomona.edu/~michael/"
 tags : ["alum"]
 ---
-Add description here.

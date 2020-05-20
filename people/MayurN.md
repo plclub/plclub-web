@@ -5,4 +5,3 @@ email : "mhnaik@seas.upenn.edu"
 tags : ["faculty"]
 headshot : "MayurN.jpg"
 ---
-Add description here.

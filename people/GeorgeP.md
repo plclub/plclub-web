@@ -6,4 +6,3 @@ where : "UPenn"
 website : "https://www.georgejpappas.org/"
 tags : ["alum"]
 ---
-Add description here.

@@ -6,4 +6,3 @@ where : "U. Colorado, Boulder"
 website : "https://ashut.bitbucket.io/"
 tags : ["alum"]
 ---
-Add description here.

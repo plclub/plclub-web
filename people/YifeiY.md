@@ -6,4 +6,3 @@ where : "Postdoc, CMU"
 website : "http://www.andrew.cmu.edu/user/yifeiy2/"
 tags : ["alum"]
 ---
-Add description here.

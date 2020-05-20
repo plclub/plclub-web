@@ -6,4 +6,3 @@ where : "Hanyang Univ."
 website : "http://psl.hanyang.ac.kr/"
 tags : ["alum"]
 ---
-Add description here.

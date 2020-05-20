@@ -6,4 +6,3 @@ where : "Rice"
 website : "https://csweb.rice.edu/konstantinos-mamouras"
 tags : ["alum"]
 ---
-Add description here.

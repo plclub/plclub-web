@@ -5,4 +5,3 @@ year : "2017"
 where : "Microsoft"
 tags : ["alum"]
 ---
-Add description here.

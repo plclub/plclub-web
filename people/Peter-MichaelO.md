@@ -6,4 +6,3 @@ where : "Grinnell College"
 website : "https://iampmo.com/"
 tags : ["alum"]
 ---
-Add description here.

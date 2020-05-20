@@ -6,4 +6,3 @@ where : "Galois"
 website : "https://jpaykin.github.io/"
 tags : ["alum"]
 ---
-Add description here.

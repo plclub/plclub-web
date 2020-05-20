@@ -6,4 +6,3 @@ where : "Postdoc, CMU"
 website : "http://arthuraa.net/"
 tags : ["alum"]
 ---
-Add description here.

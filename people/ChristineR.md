@@ -6,4 +6,3 @@ where : "UNSW"
 website : "http://www.cse.unsw.edu.au/~crizkallah/"
 tags : ["alum"]
 ---
-Add description here.

@@ -6,4 +6,3 @@ where : "Postdoc, UMD"
 website : "https://www.cs.umd.edu/~rrand/"
 tags : ["alum"]
 ---
-Add description here.

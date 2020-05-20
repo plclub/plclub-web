@@ -6,4 +6,3 @@ where : "Tokyo Univ."
 website : "https://bicr.atr.jp/~hosoya/"
 tags : ["alum"]
 ---
-Add description here.

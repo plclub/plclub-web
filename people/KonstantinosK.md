@@ -5,4 +5,3 @@ email : "kallas@seas.upenn.edu"
 tags : ["student"]
 headshot : "KonstantinosK.jpg"
 ---
-Add description here.

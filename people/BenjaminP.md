@@ -5,4 +5,3 @@ email : "bcpierce@seas.upenn.edu"
 tags : ["faculty"]
 headshot : "BenjaminP.png"
 ---
-Add description here.

@@ -5,4 +5,3 @@ email : "swericih@seas.upenn.edu"
 tags : ["faculty"]
 headshot : "StephanieW.png"
 ---
-Add description here.

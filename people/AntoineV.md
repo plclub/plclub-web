@@ -5,4 +5,3 @@ email : "voizard@seas.upenn.edu"
 tags : ["student"]
 headshot : "AntoineV.jpg"
 ---
-Add description here.
