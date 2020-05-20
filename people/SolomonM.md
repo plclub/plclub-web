@@ -4,7 +4,7 @@ website : ""
 email : "smaina@seas.upenn.edu"
 tags : ["alum"]
 year: "2020"
-degree: "Ph.D."
+degree: "Masters"
 where: ""
 headshot : "SolomonM.jpg"
 ---
