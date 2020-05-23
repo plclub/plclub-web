@@ -44,7 +44,7 @@ application = hakyllWith config $ do
         compile getResourceBody
 
     match "meetings/*" $ do
-        route   $ idRoute <!> setExtension "html" <!> canonizeRoute
+        route   $ setExtension "html" <!> makeIntoFolder
         compile $ do
             pandocCompiler
                 >>= loadAndApplyTemplate "templates/meeting.html" siteContext
@@ -52,7 +52,7 @@ application = hakyllWith config $ do
                 >>= relativizeUrls
 
     match "extra/syntax/*.theme" $ do
-      route   $ inFolderFlatly "css" <!> setExtension "css"
+      route   $ flattenIntoFolder "css" <!> setExtension "css"
       compile $ kateThemeToCSSCompiler
 
     --blog post tags
@@ -61,7 +61,7 @@ application = hakyllWith config $ do
 
     match "blog/*" $
       rulesExtraDependencies [tagsDependency btags] $ do
-        route   $ idRoute <!> setExtension "html" <!> canonizeRoute
+        route   $ setExtension "html" <!> makeIntoFolder
         compile $ do
           let blogContext =
                 tagsField "tags" btags `mappend` siteContext
@@ -71,7 +71,7 @@ application = hakyllWith config $ do
             >>= relativizeUrls
 
     match "blog.html" $ do
-        route   $ idRoute <!> canonizeRoute
+        route   $ makeIntoFolder
         compile $ do
             blog <- recentFirst =<< loadAll "blog/*"
             let blogCtx =
@@ -115,7 +115,7 @@ application = hakyllWith config $ do
     ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
 
     create ["papers.html"] $ do
-        route   $ idRoute <!> canonizeRoute
+        route   $ makeIntoFolder
         compile $ do
             let ctx =
                     papersContext `mappend`
@@ -132,7 +132,7 @@ application = hakyllWith config $ do
             makeItem =<< unsafeCompiler makeBibHtml
 
     match "club.html" $ do
-        route   $ idRoute <!> canonizeRoute
+        route   $  makeIntoFolder
         compile $ do
             meetings <- recentFirst =<< loadAll "meetings/*"
             let meetingsCtx =
@@ -179,7 +179,7 @@ peopleContext ptags =
       students = (unbindList 3) <$> loadTag ptags "student" :: Compiler [[Item String]]
       postdocs = (unbindList 3) <$> loadTag ptags "postdoc" :: Compiler [[Item String]]
       alum'    = loadTag ptags "alum" :: Compiler [Item String]
-      alum     = reverse <$> (sortByM getYear =<< alum')
+      alum     = reverse <$> (sortOnM getYear =<< alum')
   in
     nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
     nestedListField "studentGroup" "student" siteContext students`mappend`
