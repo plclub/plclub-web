@@ -35,7 +35,7 @@ nestedListField ko ki ctx items =
     listField ko innerctx ((Item "" <$>) <$> items)
   where
     innerctx = listFieldWith ki ctx (\(Item _ as) -> return as)
- 
+
 -- | Load a list of items whose tag field matches some key
 --
 -- Note that `rulesExtraDependencies` is required to register
@@ -63,6 +63,52 @@ makeIntoFolder = customRoute $ \ident ->
        "index" -<.>
        takeExtension fn
 
+-- | Type of a blog post file
+data Blogfile =
+    Blogpost
+  | Blogartifact
+  deriving (Eq)
+
+-- | Determine the type of a blog post file
+getBlogType :: Identifier -> Blogfile
+getBlogType ident =
+  let path = splitDirectories (toFilePath ident)
+  in case path of
+       "blog" : file : [] -> Blogpost
+       "blog" : folder : something : rest ->
+         if takeBaseName something == folder
+         then Blogpost
+         else Blogartifact
+
+-- | A smart function to route blog posts into their own folders, if necessary.
+--
+-- If a blog post is stored in its own folder, the folder name should
+-- be dated. Then the unique file whose name begins with the __same__
+-- date is used as the @index.html@ file. If instead there is a
+-- filename of @index.ext@, that is the index file. Other files and
+-- nested folders are routed with their same names and structure, to be linked to
+-- within the blog post.
+--
+--    * @\/blog\/date-title.ext@ becomes @\/blog\/date-title\/index.ext@
+--    * @\/blog\/date-title\/index.ext@ becomes @\/blog\/date-title\/index.ext@
+--    * @\/blog\/date-title\/date-title2.ext@ becomes @\/blog\/date-title2\/index.ext@
+--    * @\/blog\/date-title\/artifact.ext@ becomes @\/blog\/date-title\/artifact.ext@
+blogPostRoute :: Routes
+blogPostRoute = customRoute $ \ident ->
+  case getBlogType ident of
+    Blogpost -> "blog" </> takeBaseName (toFilePath ident) </> "index.html"
+    Blogartifact -> toFilePath ident
+
+-- | Load only blog posts (no artifacts) from the @blog/@ directory
+loadAllBlogPosts :: Compiler [Item String]
+loadAllBlogPosts = do
+  items <- loadAll "blog/**"
+  return (filter itemIsPost items)
+    where
+      itemIsPost :: Item a -> Bool
+      itemIsPost item =
+        getBlogType (itemIdentifier item) == Blogpost
+
 -- | Drop redundant `/index.html` from a URL 'String', if present
 --
 -- We call the result the _canonical_ url.
@@ -76,7 +122,7 @@ canonizeUrlString url = canon
         if "/index.html" == inreverse (take (len + 1)) url
         then inreverse (drop len) url
         else url
- 
+
 -- | A field to obtain the prettified (canonical) URL for an 'Item'
 --
 -- This field is use, for example, when generating links to blog posts.
@@ -96,7 +142,7 @@ tocField key = field key $ \_ -> do
   itemtoc <- makeTOC
   let toc = itemBody itemtoc
   return toc
-    
+
 -- | Default context for rendering most templates.
 siteContext :: Context String
 siteContext = mconcat $
@@ -108,7 +154,7 @@ siteContext = mconcat $
     , tocField "toc"
     , missingField
     ]
-    
+
 -- | Lookup graduation year field of an 'Item'
 --
 -- Look up the "year" field of an identifier's metadata Will throw a
@@ -135,11 +181,11 @@ sortOnM f xs = liftM (map fst . sortBy (comparing snd)) $
 --     * @\/bang.ext@ generates a runtime error
 routeTail :: Routes
 routeTail = customRoute $ \ident ->
-  let path = splitPath (toFilePath ident)
+  let path = splitDirectories (toFilePath ident)
   in if length path <= 1
      then error "[routeTail] expects a path with a leading folder to drop"
      else joinPath (tail path)
-          
+
 -- | Drop the entire folder structure and dump into a flat folder
 -- named by the argument. For example, @flattenIntoFolder "foo"@:
 --

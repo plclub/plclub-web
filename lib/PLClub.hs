@@ -57,23 +57,27 @@ application = hakyllWith config $ do
 
     --blog post tags
     btags <- let mktagid = fromCapture "blog/tags/*.html"
-             in  buildTags "blog/*" mktagid
+             in  buildTags "blog/**" mktagid
 
-    match "blog/*" $
+    match "blog/**" $
       rulesExtraDependencies [tagsDependency btags] $ do
-        route   $ setExtension "html" <!> makeIntoFolder
+        route   $ blogPostRoute
         compile $ do
-          let blogContext =
-                tagsField "tags" btags `mappend` siteContext
-          pandocCompilerWith customReaderOptions customWriterOptions
-            >>= loadAndApplyTemplate "templates/blog.html" blogContext
-            >>= loadAndApplyTemplate "templates/default.html" blogContext
-            >>= relativizeUrls
+          itemName <- getUnderlying
+          case getBlogType itemName of
+            Blogpost -> do
+              let blogContext =
+                    tagsField "tags" btags `mappend` siteContext
+              pandocCompilerWith customReaderOptions customWriterOptions
+                >>= loadAndApplyTemplate "templates/blog.html" blogContext
+                >>= loadAndApplyTemplate "templates/default.html" blogContext
+                >>= relativizeUrls
+            Blogartifact -> getResourceString
 
     match "blog.html" $ do
         route   $ makeIntoFolder
         compile $ do
-            blog <- recentFirst =<< loadAll "blog/*"
+            blog <- recentFirst =<< loadAllBlogPosts
             let blogCtx =
                     listField "blog" siteContext (return blog) `mappend`
                     constField "title" "PLClub Blog" `mappend`
@@ -86,14 +90,14 @@ application = hakyllWith config $ do
     create ["atom.xml"] $ do
         route   $ idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "blog/*"
+            posts <- recentFirst =<< loadAllBlogPosts
             let feedCtx = siteContext
             renderAtom blogRssConfiguration feedCtx posts
 
     create ["rss.xml"] $ do
         route   $ idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "blog/*"
+            posts <- recentFirst =<< loadAllBlogPosts
             let feedCtx = siteContext
             renderRss blogRssConfiguration feedCtx posts
 
