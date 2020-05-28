@@ -59,7 +59,7 @@ application = hakyllWith config $ do
     btags <- let mktagid = fromCapture "blog/tags/*.html"
              in  buildTags "blog/**" mktagid
 
-    match "blog/**" $
+    match ("blog/*/*" .||. "blog/*") $
       rulesExtraDependencies [tagsDependency btags] $ do
         route   $ blogPostRoute
         compile $ do
@@ -72,7 +72,18 @@ application = hakyllWith config $ do
                 >>= loadAndApplyTemplate "templates/blog.html" blogContext
                 >>= loadAndApplyTemplate "templates/default.html" blogContext
                 >>= relativizeUrls
-            Blogartifact -> getResourceString
+            Blogartifact -> error $ "This looks like an artifact file. \
+                                    \ Artifacts should go into a local assets/ folder"
+
+    match "blog/*/assets/*" $
+      rulesExtraDependencies [tagsDependency btags] $ do
+        route   $ blogPostRoute
+        compile $ do
+          itemName <- getUnderlying
+          case getBlogType itemName of
+            Blogpost -> error $ "This looks like a blog post non-artifact file. \
+                                \ This situation should be impossible."
+            Blogartifact -> copyFileCompiler
 
     match "blog.html" $ do
         route   $ makeIntoFolder

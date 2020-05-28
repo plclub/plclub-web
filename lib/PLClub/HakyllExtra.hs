@@ -79,6 +79,7 @@ getBlogType ident =
          if takeBaseName something == folder
          then Blogpost
          else Blogartifact
+       _ -> error "getBlogType: I don't know what to do with this file"
 
 -- | A smart function to route blog posts into their own folders, if necessary.
 --
@@ -102,7 +103,7 @@ blogPostRoute = customRoute $ \ident ->
 -- | Load only blog posts (no artifacts) from the @blog/@ directory
 loadAllBlogPosts :: Compiler [Item String]
 loadAllBlogPosts = do
-  items <- loadAll "blog/**"
+  items <- loadAll ("blog/*/*" .||. "blog/*")
   return (filter itemIsPost items)
     where
       itemIsPost :: Item a -> Bool
