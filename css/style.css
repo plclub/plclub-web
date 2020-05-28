@@ -106,7 +106,7 @@ h5 {
     column-gap: 20px;
 }
 
-pre {
+pre, div.sourceCode {
     margin-left: 1.5em;
 }
 
