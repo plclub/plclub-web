@@ -44,7 +44,7 @@ application = hakyllWith config $ do
         compile getResourceBody
 
     match "meetings/*" $ do
-        route   $ idRoute <!> setExtension "html" <!> canonizeRoute
+        route   $ setExtension "html" <!> makeIntoFolder
         compile $ do
             pandocCompiler
                 >>= loadAndApplyTemplate "templates/meeting.html" siteContext
@@ -52,28 +52,43 @@ application = hakyllWith config $ do
                 >>= relativizeUrls
 
     match "extra/syntax/*.theme" $ do
-      route   $ inFolderFlatly "css" <!> setExtension "css"
+      route   $ flattenIntoFolder "css" <!> setExtension "css"
       compile $ kateThemeToCSSCompiler
 
     --blog post tags
     btags <- let mktagid = fromCapture "blog/tags/*.html"
-             in  buildTags "blog/*" mktagid
+             in  buildTags "blog/**" mktagid
 
-    match "blog/*" $
+    match ("blog/*/*" .||. "blog/*") $
       rulesExtraDependencies [tagsDependency btags] $ do
-        route   $ idRoute <!> setExtension "html" <!> canonizeRoute
+        route   $ blogPostRoute
         compile $ do
-          let blogContext =
-                tagsField "tags" btags `mappend` siteContext
-          pandocCompilerWith customReaderOptions customWriterOptions
-            >>= loadAndApplyTemplate "templates/blog.html" blogContext
-            >>= loadAndApplyTemplate "templates/default.html" blogContext
-            >>= relativizeUrls
+          itemName <- getUnderlying
+          case getBlogType itemName of
+            Blogpost -> do
+              let blogContext =
+                    tagsField "tags" btags `mappend` siteContext
+              pandocCompilerWith customReaderOptions customWriterOptions
+                >>= loadAndApplyTemplate "templates/blog.html" blogContext
+                >>= loadAndApplyTemplate "templates/default.html" blogContext
+                >>= relativizeUrls
+            Blogartifact -> error $ "This looks like an artifact file. \
+                                    \ Artifacts should go into a local assets/ folder"
+
+    match "blog/*/assets/*" $
+      rulesExtraDependencies [tagsDependency btags] $ do
+        route   $ blogPostRoute
+        compile $ do
+          itemName <- getUnderlying
+          case getBlogType itemName of
+            Blogpost -> error $ "This looks like a blog post non-artifact file. \
+                                \ This situation should be impossible."
+            Blogartifact -> copyFileCompiler
 
     match "blog.html" $ do
-        route   $ idRoute <!> canonizeRoute
+        route   $ makeIntoFolder
         compile $ do
-            blog <- recentFirst =<< loadAll "blog/*"
+            blog <- recentFirst =<< loadAllBlogPosts
             let blogCtx =
                     listField "blog" siteContext (return blog) `mappend`
                     constField "title" "PLClub Blog" `mappend`
@@ -86,14 +101,14 @@ application = hakyllWith config $ do
     create ["atom.xml"] $ do
         route   $ idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "blog/*"
+            posts <- recentFirst =<< loadAllBlogPosts
             let feedCtx = siteContext
             renderAtom blogRssConfiguration feedCtx posts
 
     create ["rss.xml"] $ do
         route   $ idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "blog/*"
+            posts <- recentFirst =<< loadAllBlogPosts
             let feedCtx = siteContext
             renderRss blogRssConfiguration feedCtx posts
 
@@ -115,7 +130,7 @@ application = hakyllWith config $ do
     ptags <- buildTags "people/*" (fromCapture "ptags/*.html")
 
     create ["papers.html"] $ do
-        route   $ idRoute <!> canonizeRoute
+        route   $ makeIntoFolder
         compile $ do
             let ctx =
                     papersContext `mappend`
@@ -132,7 +147,7 @@ application = hakyllWith config $ do
             makeItem =<< unsafeCompiler makeBibHtml
 
     match "club.html" $ do
-        route   $ idRoute <!> canonizeRoute
+        route   $  makeIntoFolder
         compile $ do
             meetings <- recentFirst =<< loadAll "meetings/*"
             let meetingsCtx =
@@ -179,7 +194,7 @@ peopleContext ptags =
       students = (unbindList 3) <$> loadTag ptags "student" :: Compiler [[Item String]]
       postdocs = (unbindList 3) <$> loadTag ptags "postdoc" :: Compiler [[Item String]]
       alum'    = loadTag ptags "alum" :: Compiler [Item String]
-      alum     = reverse <$> (sortByM getYear =<< alum')
+      alum     = reverse <$> (sortOnM getYear =<< alum')
   in
     nestedListField "facultyGroup" "faculty" siteContext faculty `mappend`
     nestedListField "studentGroup" "student" siteContext students`mappend`
