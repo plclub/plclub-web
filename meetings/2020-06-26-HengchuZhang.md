@@ -13,6 +13,6 @@ As a concrete example, I will present a toy DSL implemented using this technique
 Finally, we will venture outside the norm a bit, and see how Haskell's laziness allows us to represent recursive programs with infinite syntax trees, and discuss how infinite syntax trees affect the symbolic execution analysis on our toy DSL.
 
 Your homework is to review Haskell GADTs:
-https://downloads.haskell.org/ghc/8.8.3/docs/html/users_guide/glasgow_exts.html#generalised-algebraic-data-types-gadts
+[https://downloads.haskell.org/ghc/8.8.3/docs/html/users_guide/glasgow_exts.html#generalised-algebraic-data-types-gadts](https://downloads.haskell.org/ghc/8.8.3/docs/html/users_guide/glasgow_exts.html#generalised-algebraic-data-types-gadts)
 
 And read the first 2 sections of the linked paper: Introduction, and Shallow and Deep --- Pros and Cons.
