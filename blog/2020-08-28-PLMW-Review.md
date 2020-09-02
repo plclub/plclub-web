@@ -45,7 +45,7 @@ I'm sure you can think of more.
 
 It can be challenging to find answers to these sorts of questions because PL research can be a niche topic most commonly associated with graduate-level studies. Many institutions have few researchers in the field, if any, and they often lack dedicated courses in the subject. Undergraduates have difficulty finding research advisors for senior projects or writing grad school applications, and it does not help matters that PL research often attracts students without computer science backgrounds (particularly math students like me). The field is also rife with impenetrable jargon as embodied by the famous quip, "A monad is just a monoid in the category of endofunctors, what's the problem?"[^2] Jobs in the field are few in number and typically quite competitive. On top of all of this, students from disadvantaged or underrepresented backgrounds face their own set of challenges entirely.
 
-[^2]: See [here on StackOverflow](https://stackoverflow.com/questions/3870088/a-monad-is-just-a-monoid-in-the-category-of-endofunctors-whats-the-problem) for more info.
+[^2]: See [here on StackOverflow](https://stackoverflow.com/questions/3870088/a-monad-is-just-a-monoid-in-the-category-of-endofunctors-whats-the-problem) to read more about this.
 
 These factors can create a gap between the PL research community and potential new practitioners. PLMW exists to help bridge this gap. Each year there are about four opportunities to attend a SIGPLAN conference that hosts the workshop. As I said, students must apply to the program before the conference (so be vigilant about those deadlines). Admitted students can have the cost of conference registration covered, as well as travel fees. Many students attend the program several times. [^3]
 
