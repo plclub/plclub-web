@@ -1,0 +1,3 @@
+#!/bin/sh
+COQOPTS="-Q Src/ Src -Q Proofs/ Proofs"
+coqc $COQOPTS Proofs/GHC/List.v Src/Queue.v

@@ -114,5 +114,20 @@ pre, div.sourceCode {
     margin-left: 1.5em;
 }
 
+.tuto {
+    border: 2px solid black;
+    padding: 0.5em 1em;
+    margin-bottom: 1rem;
+    background-color: #FAFAFA;
+}
+
+.tuto > :first-child {
+    margin-top: 0;
+}
+
+.tuto > :last-child {
+    margin-bottom: 0;
+}
+
 /* Syntax highlighting for code blocks */
 

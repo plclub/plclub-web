@@ -1,0 +1,109 @@
+<div class="highlight"><pre><span></span><span class="c">(* Default settings (from HsToCoq.Coq.Preamble) *)</span>
+
+<span class="n">Generalizable</span> <span class="kn">All</span> <span class="kn">Variables</span><span class="o">.</span>
+
+<span class="kn">Unset</span> <span class="kn">Implicit</span> <span class="kn">Arguments</span><span class="o">.</span>
+<span class="kn">Set</span> <span class="n">Maximal</span> <span class="kn">Implicit</span> <span class="n">Insertion</span><span class="o">.</span>
+<span class="kn">Unset</span> <span class="kn">Strict</span> <span class="kn">Implicit</span><span class="o">.</span>
+<span class="kn">Unset</span> <span class="kn">Printing</span> <span class="kn">Implicit</span> <span class="n">Defensive</span><span class="o">.</span>
+
+<span class="kn">Require</span> <span class="n">Coq</span><span class="o">.</span><span class="n">Program</span><span class="o">.</span><span class="n">Tactics</span><span class="o">.</span>
+<span class="kn">Require</span> <span class="n">Coq</span><span class="o">.</span><span class="n">Program</span><span class="o">.</span><span class="n">Wf</span><span class="o">.</span>
+
+<span class="c">(* Converted imports: *)</span>
+
+<span class="kn">Require</span> <span class="n">Coq</span><span class="o">.</span><span class="n">Lists</span><span class="o">.</span><span class="n">List</span><span class="o">.</span>
+
+<span class="c">(* Converted type declarations: *)</span>
+
+<span class="kn">Inductive</span> <span class="n">Queue</span> <span class="n">a</span> <span class="o">:</span> <span class="kt">Type</span>
+  <span class="o">:=</span> <span class="o">|</span> <span class="n">MkQueue</span> <span class="o">(</span><span class="n">front</span> <span class="o">:</span> <span class="n">list</span> <span class="n">a</span><span class="o">)</span> <span class="o">(</span><span class="n">back</span> <span class="o">:</span> <span class="n">list</span> <span class="n">a</span><span class="o">)</span> <span class="o">:</span> <span class="n">Queue</span> <span class="n">a</span><span class="o">.</span>
+
+<span class="kn">Arguments</span> <span class="n">MkQueue</span> <span class="o">{_}</span> <span class="o">_</span> <span class="o">_.</span>
+
+<span class="kn">Definition</span> <span class="n">back</span> <span class="o">{</span><span class="n">a</span><span class="o">}</span> <span class="o">(</span><span class="n">arg_0__</span> <span class="o">:</span> <span class="n">Queue</span> <span class="n">a</span><span class="o">)</span> <span class="o">:=</span>
+  <span class="k">let</span> <span class="k">&#39;</span><span class="n">MkQueue</span> <span class="o">_</span> <span class="n">back</span> <span class="o">:=</span> <span class="n">arg_0__</span> <span class="k">in</span>
+  <span class="n">back</span><span class="o">.</span>
+
+<span class="kn">Definition</span> <span class="n">front</span> <span class="o">{</span><span class="n">a</span><span class="o">}</span> <span class="o">(</span><span class="n">arg_0__</span> <span class="o">:</span> <span class="n">Queue</span> <span class="n">a</span><span class="o">)</span> <span class="o">:=</span>
+  <span class="k">let</span> <span class="k">&#39;</span><span class="n">MkQueue</span> <span class="n">front</span> <span class="o">_</span> <span class="o">:=</span> <span class="n">arg_0__</span> <span class="k">in</span>
+  <span class="n">front</span><span class="o">.</span>
+
+<span class="c">(* Converted value declarations: *)</span>
+
+<span class="kn">Definition</span> <span class="n">push</span> <span class="o">{</span><span class="n">a</span><span class="o">}</span> <span class="o">:</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">Queue</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">Queue</span> <span class="n">a</span> <span class="o">:=</span>
+  <span class="k">fun</span> <span class="n">arg_0__</span> <span class="n">arg_1__</span> <span class="o">=&gt;</span>
+    <span class="k">match</span> <span class="n">arg_0__</span><span class="o">,</span> <span class="n">arg_1__</span> <span class="k">with</span>
+    <span class="o">|</span> <span class="n">x</span><span class="o">,</span> <span class="n">MkQueue</span> <span class="n">front</span> <span class="n">back</span> <span class="o">=&gt;</span> <span class="n">MkQueue</span> <span class="n">front</span> <span class="o">(</span><span class="n">cons</span> <span class="n">x</span> <span class="n">back</span><span class="o">)</span>
+    <span class="k">end</span><span class="o">.</span>
+
+<span class="kn">Definition</span> <span class="n">pop</span> <span class="o">{</span><span class="n">a</span><span class="o">}</span> <span class="o">:</span> <span class="n">Queue</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">option</span> <span class="o">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">Queue</span> <span class="n">a</span><span class="o">)%</span><span class="n">type</span> <span class="o">:=</span>
+  <span class="k">fun</span> <span class="n">arg_0__</span> <span class="o">=&gt;</span>
+    <span class="k">match</span> <span class="n">arg_0__</span> <span class="k">with</span>
+    <span class="o">|</span> <span class="n">MkQueue</span> <span class="o">(</span><span class="n">cons</span> <span class="n">y</span> <span class="n">front</span><span class="o">)</span> <span class="n">back</span> <span class="o">=&gt;</span> <span class="n">Some</span> <span class="o">(</span><span class="n">pair</span> <span class="n">y</span> <span class="o">(</span><span class="n">MkQueue</span> <span class="n">front</span> <span class="n">back</span><span class="o">))</span>
+    <span class="o">|</span> <span class="n">MkQueue</span> <span class="n">nil</span> <span class="n">back</span> <span class="o">=&gt;</span>
+        <span class="k">match</span> <span class="n">GHC</span><span class="o">.</span><span class="n">List</span><span class="o">.</span><span class="n">reverse</span> <span class="n">back</span> <span class="k">with</span>
+        <span class="o">|</span> <span class="n">nil</span> <span class="o">=&gt;</span> <span class="n">None</span>
+        <span class="o">|</span> <span class="n">cons</span> <span class="n">y</span> <span class="n">front</span> <span class="o">=&gt;</span> <span class="n">Some</span> <span class="o">(</span><span class="n">pair</span> <span class="n">y</span> <span class="o">(</span><span class="n">MkQueue</span> <span class="n">front</span> <span class="n">nil</span><span class="o">))</span>
+        <span class="k">end</span>
+    <span class="k">end</span><span class="o">.</span>
+
+<span class="kn">Definition</span> <span class="n">empty</span> <span class="o">{</span><span class="n">a</span><span class="o">}</span> <span class="o">:</span> <span class="n">Queue</span> <span class="n">a</span> <span class="o">:=</span>
+  <span class="n">MkQueue</span> <span class="n">nil</span> <span class="n">nil</span><span class="o">.</span>
+
+<span class="c">(* External variables:</span>
+<span class="c">     None Some cons list nil op_zt__ option pair Coq.Lists.List.rev</span>
+<span class="c">*)</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="kn">Inductive</span> <span class="n">Queue</span> <span class="n">a</span> <span class="o">:</span> <span class="kt">Type</span>
+  <span class="o">:=</span> <span class="o">|</span> <span class="n">MkQueue</span> <span class="o">(</span><span class="n">front</span> <span class="o">:</span> <span class="n">list</span> <span class="n">a</span><span class="o">)</span> <span class="o">(</span><span class="n">back</span> <span class="o">:</span> <span class="n">list</span> <span class="n">a</span><span class="o">)</span> <span class="o">:</span> <span class="n">Queue</span> <span class="n">a</span><span class="o">.</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="kn">Arguments</span> <span class="n">MkQueue</span> <span class="o">{_}</span> <span class="o">_</span> <span class="o">_.</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="kn">Definition</span> <span class="n">push</span> <span class="o">{</span><span class="n">a</span><span class="o">}</span> <span class="o">:</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">Queue</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="n">Queue</span> <span class="n">a</span> <span class="o">:=</span>
+  <span class="k">fun</span> <span class="n">arg_0__</span> <span class="n">arg_1__</span> <span class="o">=&gt;</span>
+    <span class="k">match</span> <span class="n">arg_0__</span><span class="o">,</span> <span class="n">arg_1__</span> <span class="k">with</span>
+    <span class="o">|</span> <span class="n">x</span><span class="o">,</span> <span class="n">MkQueue</span> <span class="n">xs</span> <span class="n">ys</span> <span class="o">=&gt;</span> <span class="n">MkQueue</span> <span class="o">(</span><span class="n">cons</span> <span class="n">x</span> <span class="n">xs</span><span class="o">)</span> <span class="n">ys</span>
+    <span class="k">end</span><span class="o">.</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="n">front</span> <span class="n">q</span> <span class="o">++</span> <span class="n">rev</span> <span class="o">(</span><span class="n">back</span> <span class="n">q</span><span class="o">)</span>   <span class="o">=</span>   <span class="n">xs</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="c">(* Current goal (below the line) *)</span>
+<span class="n">front</span> <span class="o">(</span><span class="n">push</span> <span class="n">x</span> <span class="n">q</span><span class="o">)</span> <span class="o">++</span> <span class="n">rev</span> <span class="o">(</span><span class="n">back</span> <span class="o">(</span><span class="n">push</span> <span class="n">x</span> <span class="n">q</span><span class="o">))</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">++</span> <span class="o">[</span><span class="n">x</span><span class="o">]</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="c">(* Current goal *)</span>
+<span class="n">front</span> <span class="o">(</span><span class="n">push</span> <span class="n">x</span> <span class="o">(</span><span class="n">MkQueue</span> <span class="n">front_q</span> <span class="n">back_q</span><span class="o">))</span> <span class="o">++</span> <span class="n">rev</span> <span class="o">(</span><span class="n">back</span> <span class="o">(</span><span class="n">push</span> <span class="n">x</span> <span class="o">(</span><span class="n">MkQueue</span> <span class="n">front_q</span> <span class="n">back_q</span><span class="o">)))</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">++</span> <span class="o">[</span><span class="n">x</span><span class="o">]</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="c">(* Current goal *)</span>
+<span class="n">front_q</span> <span class="o">++</span> <span class="o">(</span><span class="n">rev</span> <span class="n">back_q</span> <span class="o">++</span> <span class="o">[</span><span class="n">x</span><span class="o">])</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">++</span> <span class="o">[</span><span class="n">x</span><span class="o">]</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="n">app_assoc</span> <span class="o">:</span> <span class="k">forall</span> <span class="n">xs</span> <span class="n">ys</span> <span class="n">zs</span><span class="o">,</span> <span class="n">xs</span> <span class="o">++</span> <span class="o">(</span><span class="n">ys</span> <span class="o">++</span> <span class="n">zs</span><span class="o">)</span> <span class="o">=</span> <span class="o">(</span><span class="n">xs</span> <span class="o">++</span> <span class="n">ys</span><span class="o">)</span> <span class="o">++</span> <span class="n">zs</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="c">(* Current goal *)</span>
+<span class="o">(</span><span class="n">front_q</span> <span class="o">++</span> <span class="n">rev</span> <span class="n">back_q</span><span class="o">)</span> <span class="o">++</span> <span class="o">[</span><span class="n">x</span><span class="o">]</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">++</span> <span class="o">[</span><span class="n">x</span><span class="o">]</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
+<div class="highlight"><pre><span></span><span class="c">(* Current goal *)</span>
+<span class="n">xs</span> <span class="o">++</span> <span class="o">[</span><span class="n">x</span><span class="o">]</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">++</span> <span class="o">[</span><span class="n">x</span><span class="o">]</span>
+</pre></div>
+
+<!-- pygments-batch-end -->
