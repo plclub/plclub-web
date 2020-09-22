@@ -59,8 +59,7 @@ application = hakyllWith config $ do
     btags <- let mktagid = fromCapture "blog/tags/*.html"
              in  buildTags "blog/**" mktagid
 
-    match ("blog/*/*" .||. "blog/*") $
-      rulesExtraDependencies [tagsDependency btags] $ do
+    match ("blog/*/*" .||. "blog/*") $ do
         route   $ blogPostRoute
         compile $ do
           itemName <- getUnderlying
@@ -75,8 +74,7 @@ application = hakyllWith config $ do
             Blogartifact -> error $ "This looks like an artifact file. \
                                     \ Artifacts should go into a local assets/ folder"
 
-    match "blog/*/assets/*" $
-      rulesExtraDependencies [tagsDependency btags] $ do
+    match "blog/*/assets/*" $ do
         route   $ blogPostRoute
         compile $ do
           itemName <- getUnderlying
