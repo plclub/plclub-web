@@ -11,9 +11,11 @@ This mindset is a stepping stone towards solving the "paradoxes" arising from to
 Don't worry, it's just type theory!
 
 Homework:
-https://github.com/dunnl/dprop/
-https://dunnl.github.io/dprop/DProp.Prop.html
+
+[https://github.com/dunnl/dprop/](https://github.com/dunnl/dprop/)
+
+[https://dunnl.github.io/dprop/DProp.Prop.html](https://dunnl.github.io/dprop/DProp.Prop.html)
 
 Please take a look at the Coq file in this Github repo, which implements propositional logic as a "guest" in Coq. Skim the contents and try some exercises. (You probably won't finish everything in 30 minutes, but take a look.) I'll use this file during the talk.
 
-Furthermore it would be helpful if you gently re-acquaint yourself with the syntax of first-order logic. Van Dalen's "Logic and Structure" is a good reference (see the #logic-reading-group on Slack). How would you extend the semantics to such a logic?
+Furthermore it would be helpful if you gently re-acquaint yourself with the syntax of first-order logic. Van Dalen's "Logic and Structure" is a good reference (see the *#logic-reading-group on Slack*). How would you extend the semantics to such a logic?
