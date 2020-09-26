@@ -24,7 +24,7 @@ Stephanie Weirich,https://www.cis.upenn.edu/~sweirich/,swericih
 Steve Zdancewic,https://www.cis.upenn.edu/~stevez/,stevez
 Rajeev Alur,https://www.cis.upenn.edu/~alur/,alur
 Mayur Naik,https://www.cis.upenn.edu/~mhnaik/,mhnaik
-Osbert Bastani,https://obastani.github.io/,obastani
+# Osbert Bastani,https://obastani.github.io/,obastani
 
 ## Example input (alum.csv):
 

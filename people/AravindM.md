@@ -1,8 +1,6 @@
 ---
 name : "Aravind Machiry"
-degree : "Masters"
-year : "2013"
-where : "Ph.D., UCSB"
+email : "ude.bscu.sc@yrihcam"
 website : "https://machiry.github.io/"
-tags : ["alum"]
+tags : ["postdoc"]
 ---

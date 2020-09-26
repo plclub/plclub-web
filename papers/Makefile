@@ -16,7 +16,7 @@ B2HFLAGS = -dl \
 	   --reverse-sort --sort-by-date
 
 MV=mv
-BIBS=bcp.bib weirich.bib zdancewic.bib obastani.bib
+BIBS=bcp.bib weirich.bib zdancewic.bib
 
 .DELETE_ON_ERROR: $(BIBS)
 
@@ -47,9 +47,9 @@ zdancewic.bib:
 	bib2bib -ob $@-tmp -c 'not($$key = "ABFF+05")' $@
 	$(MV) $@-tmp $@
 
-obastani.bib:
-	-$(RM) $@
-	wget https://obastani.github.io/docs/obastani.bib
+# obastani.bib:
+# 	-$(RM) $@
+# 	wget https://obastani.github.io/docs/obastani.bib
 
 clean:
 	-$(RM) bib2html* plclub.keys plclub.html plclub_bib.html
