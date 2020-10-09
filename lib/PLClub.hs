@@ -10,6 +10,7 @@ module PLClub where
 --------------------------------------------------------------------------------
 import           Data.Monoid (mappend)
 import           Hakyll
+import qualified Hakyll.Alectryon as Alectryon (hakyllWith)
 import           PLClub.Publications
 import           PLClub.HakyllExtra
 import           PLClub.PandocExtra
@@ -27,7 +28,7 @@ config = defaultConfiguration
 
 --------------------------------------------------------------------------------
 application :: IO ()
-application = hakyllWith config $ do
+application = Alectryon.hakyllWith config $ \opts -> do
     match "img/**" $ do
         route   idRoute
         compile copyFileCompiler
@@ -36,7 +37,7 @@ application = hakyllWith config $ do
         route   idRoute
         compile copyFileCompiler
 
-    match "css/*" $ do
+    match "css/**" $ do
         route   idRoute
         compile compressCssCompiler
 
@@ -67,7 +68,7 @@ application = hakyllWith config $ do
             Blogpost -> do
               let blogContext =
                     tagsField "tags" btags `mappend` siteContext
-              pandocCompilerWith customReaderOptions customWriterOptions
+              customPandocCompiler opts
                 >>= loadAndApplyTemplate "templates/blog.html" blogContext
                 >>= loadAndApplyTemplate "templates/default.html" blogContext
                 >>= relativizeUrls

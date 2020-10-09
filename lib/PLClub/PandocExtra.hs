@@ -20,6 +20,8 @@ import Skylighting.Syntax (defaultSyntaxMap)
 import qualified Skylighting as Sky
 import qualified Data.Map as Map
 
+import qualified Hakyll.Alectryon as Alectryon
+
 -- Our map of recognized languages for code highlighting
 -- We dynamically add our own lexers as Kate highlighting files
 -- https://docs.kde.org/stable5/en/applications/katepart/highlight.html
@@ -47,6 +49,12 @@ customWriterOptions =
 -- Our Pandoc reader configuration
 customReaderOptions :: ReaderOptions
 customReaderOptions = defaultHakyllReaderOptions
+
+-- | Process Coq code using Alectryon, for posts with the @alectryon@ field set.
+customPandocCompiler :: Alectryon.Options -> Compiler (Item String)
+customPandocCompiler opt = do
+  doc <- Alectryon.tryTransform opt =<< readPandocWith customReaderOptions =<< getResourceBody
+  return (writePandocWith customWriterOptions doc)
 
 -- Compile a Kate .theme JSON file into a CSS file
 kateThemeToCSSCompiler :: Compiler (Item String)
