@@ -5,7 +5,7 @@ tags: haskell
 description: An exploration of nested types and perfect trees in Haskell.
 ---
 
-The following was generated from a [literate Haskell file](./assets/Nested.lhs).
+The following was generated from a [literate Haskell file](https://github.com/sweirich/dth/blob/master/nested-datatypes/Nested.lhs).
 
 ``` {.haskell .literate}
 {-# LANGUAGE AllowAmbiguousTypes #-}
@@ -740,7 +740,7 @@ alternatives.
   Haskell's implementation of the
   [sequence](https://hackage.haskell.org/package/containers-0.6.4.1/docs/Data-Sequence.html)
   data structure is built on FingerTrees. In the module
-  [DFinger.lhs](./assets/DFinger.lhs) I've sketched out a nat-indexed replacement
+  [DFinger.lhs](https://github.com/sweirich/dth/blob/master/nested-datatypes/DFinger.lhs) I've sketched out a nat-indexed replacement
   to the nested datatype.
 
 [^0]: Many examples of nested datatypes, especially for perfect trees, use the type
