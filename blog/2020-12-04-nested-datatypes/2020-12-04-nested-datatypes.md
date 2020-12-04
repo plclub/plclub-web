@@ -740,7 +740,7 @@ alternatives.
   Haskell's implementation of the
   [sequence](https://hackage.haskell.org/package/containers-0.6.4.1/docs/Data-Sequence.html)
   data structure is built on FingerTrees. In the module
-  [DFinger.lhs](DFinger.lhs) I've sketched out a nat-indexed replacement
+  [DFinger.lhs](./assets/DFinger.lhs) I've sketched out a nat-indexed replacement
   to the nested datatype.
 
 [^0]: Many examples of nested datatypes, especially for perfect trees, use the type
