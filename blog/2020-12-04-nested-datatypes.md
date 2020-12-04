@@ -5,7 +5,7 @@ tags: haskell
 description: An exploration of nested types and perfect trees in Haskell.
 ---
 
-The following was generated from a [literate Haskell file](https://github.com/sweirich/dth/blob/master/nested-datatypes/Nested.lhs).
+This blog post was generated from a [literate Haskell file](https://github.com/sweirich/dth/blob/master/nested-datatypes/Nested.lhs).
 
 ``` {.haskell .literate}
 {-# LANGUAGE AllowAmbiguousTypes #-}
@@ -751,7 +751,7 @@ alternatives.
 [^2]: Fritz Henglein, Type Inference with Polymorphic Recursion. ACM Transactions
   on Programming Languages and Systems. Vol 15, Issue 2. April 1993.
 [^3]: Assaf J Kfoury, Jerzy  Tiuryn, Paweł Urzyczyn. Type reconstruction in the presence of polymorphic recursion. ACM Transactions on Programming Languages and Systems. Vol 15, Issue 2. April 1993.
-[^4]: https://www.haskell.org/onlinereport/decls.html#type-signatures
+[^4]: [https://www.haskell.org/onlinereport/decls.html#type-signatures](https://www.haskell.org/onlinereport/decls.html#type-signatures)
 [^5]: I follow the terminology of Coq and call `n` a type *index* (because it varies in the
   result type) and `a` a type *parameter* (because it does not).
-[^6]: We could use https://hackage.haskell.org/package/singletons for these types but it is simpler to just write them here.
+[^6]: We could use [https://hackage.haskell.org/package/singletons](https://hackage.haskell.org/package/singletons) for these types but it is simpler to just write them here.
