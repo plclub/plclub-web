@@ -1,6 +1,6 @@
 ---
-title: "Petr4: Formal Foundations for P4 Data Planes"
-speaker: "Nate Foster"
+title: "Shared Session Types"
+speaker: "Stephanie Balzer"
 semester: "FA20"
 ---
 
