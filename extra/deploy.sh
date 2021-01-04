@@ -2,7 +2,7 @@
 # Local folder with static site contents
 OUTPUT_DIR=_site/
 # Remote user and host to connect to
-PLCLUB_ACCOUNT=plclub@eniac
+PLCLUB_ACCOUNT=plclub@eniac.seas.upenn.edu
 # Location of folder relative to remote user's home directory
 # This variable may also need to be set in ./deploy_remote.sh
 REMOTE_FOLDER=html/
