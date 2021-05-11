@@ -1,6 +1,6 @@
 ---
 name : "Yannick Zakowski"
-website : "https://www.seas.upenn.edu/~zakowski/"
+website : "https://perso.ens-lyon.fr/yannick.zakowski/"
 email : "zakowski@seas.upenn.edu"
 degree : "Postdoc"
 year : "2020"
