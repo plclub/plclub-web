@@ -72,10 +72,10 @@ application = Alectryon.hakyllWith config $ \opts -> do
                 >>= loadAndApplyTemplate "templates/blog.html" blogContext
                 >>= loadAndApplyTemplate "templates/default.html" blogContext
                 >>= relativizeUrls
-            Blogartifact -> error $ "This looks like an artifact file. \
+            Blogartifact -> error $ "Item " ++ show itemName ++ " looks like an artifact file. \
                                     \ Artifacts should go into a local assets/ folder"
 
-    match "blog/*/assets/*" $ do
+    match ("blog/*/**" .&&. complement "blog/*/*.md") $ do
         route   $ blogPostRoute
         compile $ do
           itemName <- getUnderlying
