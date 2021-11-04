@@ -2,7 +2,7 @@
 name : "Xin Zhang"
 degree : "Ph.D."
 year : "2017"
-where : "Postdoc, MIT"
-website : "http://people.csail.mit.edu/xzhang/"
+where : "Peking U."
+website : "https://xinpl.github.io/"
 tags : ["alum"]
 ---
