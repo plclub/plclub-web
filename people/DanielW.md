@@ -4,6 +4,6 @@ website : "https://www.danwc.com/"
 email : "dwincort@gmail.com"
 degree : "Postdoc"
 year : "2017"
-where : ""
+where : "Luminous Computing"
 tags : ["alum"]
 ---
