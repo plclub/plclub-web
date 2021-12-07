@@ -44,7 +44,7 @@ That is essentially the transitivity property of equality extended to 4 elements
 Now let's look at a slightly more complicated example. The following proposition is trivially simple with rewriting.
 
 ```coq
-Goal forall (a b c x y z : Z), a = x -> b = y -> c = z -> 
+Goal forall (a b c x y z : Z), a = x -> b = y -> c = z ->
                                            a + b + c = x + y + z.
 Proof.
   intros a b c x y z Hax Hby Hcz. rewrite Hax. rewrite Hby. rewrite Hcz.
@@ -79,7 +79,7 @@ Proof.
 Qed.
 ```
 
-This is just a statement of the transitive property for the relation. Run the code for yourself, and note that we can rewrite `a` into `b`, but when we try to rewrite `b` back into `a` it fails. Because we only proved this relation to be `Transitive`, we can only rewrite in the goal by replacing the value on the left of the relation with the value on the right (and vice-versa when rewriting in hypotheses). 
+This is just a statement of the transitive property for the relation. Run the code for yourself, and note that we can rewrite `a` into `b`, but when we try to rewrite `b` back into `a` it fails. Because we only proved this relation to be `Transitive`, we can only rewrite in the goal by replacing the value on the left of the relation with the value on the right (and vice-versa when rewriting in hypotheses).
 
 You can build up more intuition for this by practicing rewriting with relations that are only transitive, and not symmentric, like the `<=` relation.
 
@@ -87,7 +87,7 @@ In order to rewrite in both directions, we will need to show that our relation i
 
 ```coq
 Instance sym_equiv : Symmetric equiv.
-Proof. 
+Proof.
   ...
 Qed.
 ```
@@ -138,17 +138,17 @@ We might want to prove some basic propositions by rewriting `k` into `0`. But fo
 ```coq
 Goal forall x, x + k ≡ x.
 Proof.
-  intros. Fail rewrite k_equiv_0. 
+  intros. Fail rewrite k_equiv_0.
 Abort.
 ```
 
 So it didn't work. The terrifying error message you should have seen is related to typeclass resolution in Coq and is not obviously helpful.
 
-Even without useful error messages to guide us, we can still figure out what went wrong. Recall what I mentioned earlier about rewriting under different contexts. We need to prove that `≡` respects itself under the context of addition. It makes sense that we should need to prove this, because we can easily construct functions that are not proper. For instance, consider 
+Even without useful error messages to guide us, we can still figure out what went wrong. Recall what I mentioned earlier about rewriting under different contexts. We need to prove that `≡` respects itself under the context of addition. It makes sense that we should need to prove this, because we can easily construct functions that are not proper. For instance, consider
 
 ```coq
-Definition f x y := 
-  if x ?= 0 && y ?= 0 
+Definition f x y :=
+  if x ?= 0 && y ?= 0
   then 0
   else 1.
 ```
@@ -157,13 +157,13 @@ which clearly distinguishes between `0` and `k` in general. For example, let `k 
 In the scary error message you may have noticed the term `Proper` and the notation `==>`. So we can start our search there.
 
 ```coq
-Definition Proper {A : Type} (R : A -> A -> Prop) : A -> Prop := 
+Definition Proper {A : Type} (R : A -> A -> Prop) : A -> Prop :=
   fun a => R a a
 ```
 
-`Proper` is the function that takes a relation `R`, a single element `a` and uses `a` for both of `R`'s inputs. We provide some more basic examples in the attached code. We haven't gotten very fair with this definition. So let's try to learn more about the `==>`. Note that `==>` is notation for the function `respectful`. 
+`Proper` is the function that takes a relation `R`, a single element `a` and uses `a` for both of `R`'s inputs. We provide some more basic examples in the attached code. We haven't gotten very far with this definition. So let's try to learn more about the `==>`. Note that `==>` is notation for the function `respectful`.
 
-```coq 
+```coq
 Definition respectful {A B : Type} (R : A -> A -> Prop)
   (R' : B -> B -> Prop) : (A -> B) -> (A -> B) -> Prop :=
     fun f g => forall x y, R x y -> R' (f x) (g y)
@@ -183,7 +183,7 @@ Goal Proper (equiv ==> equiv) (fun x => x + 2).
 Proof.
     intros ? ? ?.
     ...
-Qed. 
+Qed.
 ```
 
 After introducing the first 3 variables, we have, in our context, `x,y : Z` and `H : x ≡ y`, and we have, as our goal, `x + 2 ≡ y + 2`. For a general rule consider the following proposition
@@ -193,8 +193,8 @@ After introducing the first 3 variables, we have, in our context, `x,y : Z` and 
 ```
 
 It means that given two sequences of variables `x1 ... xn` and `y1 .. yn` such that given any `i`, `Ri xi yi`,
-```coq 
- Rm (f x1 .. xn) (f y1 .. yn) 
+```coq
+ Rm (f x1 .. xn) (f y1 .. yn)
 ```
 So all of the relations to the left of a `==>` relate arguments and the rightmost relation relates the outputs.
 
@@ -222,9 +222,9 @@ Note that we still can't rewrite in the left argument.
 ```coq
 Goal forall x, k + x ≡ x.
 Proof.
-  intros. 
-  Fail rewrite k_equiv_0. 
-Abort.  
+  intros.
+  Fail rewrite k_equiv_0.
+Abort.
 ```
 
 In order to rewrite in the left argument, we need to show that addition is proper in all of its arguments. This proof follows from our existing proper instance and the fact that addition is commutative.
@@ -233,7 +233,7 @@ In order to rewrite in the left argument, we need to show that addition is prope
 Instance add_proper : Proper (equiv ==> equiv ==> equiv) Z.add.
 Proof.
   intros x y Hxy z w Hzw.
-  rewrite <- Hzw. Fail rewrite Hxy. 
+  rewrite <- Hzw. Fail rewrite Hxy.
   rewrite Z.add_comm. rewrite Hxy. rewrite Z.add_comm.
   reflexivity.
 Qed.
@@ -241,9 +241,9 @@ Qed.
 
 Now we can stress test our rewriting with the following example.
 ```coq
- Goal forall x : Z, 
-  k + (x + ( k + k ) + k) ≡ 
-  k + k + (k + k) + ( (k + k) + (k + k)  ) + x. 
+ Goal forall x : Z,
+  k + (x + ( k + k ) + k) ≡
+  k + k + (k + k) + ( (k + k) + (k + k)  ) + x.
   Proof.
     intros. rewrite k_equiv_0. simpl. rewrite Z.add_comm. simpl.
     rewrite Z.add_comm. reflexivity.
@@ -295,7 +295,7 @@ Proof.
   ...
 Qed.
 
-Lemma bind_bind : forall (A B C : Type) (m : State A) 
+Lemma bind_bind : forall (A B C : Type) (m : State A)
                           (f : A -> State B) (g : B -> State C),
     (m >>= f) >>= g ≈ (m >>= (fun a => f a >>= g)).
 Proof.
@@ -308,17 +308,17 @@ Now suppose we want to rewrite these equations. We currently can't, because we h
 First, we can lift our equivalence over `State B` to an equivalence over `A -> State B` using the `pointwise_relation` function.
 
 ```coq
-Definition pointwise_relation {A B : Type} (R : B -> B -> Prop) : 
+Definition pointwise_relation {A B : Type} (R : B -> B -> Prop) :
   (A -> B) -> (A -> B) -> Prop :=
   fun f g => forall a, R (f a) (g a)
 ```
 This captures the notion that given equal inputs, `f` and `g` produce related outputs.
 
-Now we want to show that `bind` respects the stateful equivalence relation given arguments that are similarly equivalent. 
+Now we want to show that `bind` respects the stateful equivalence relation given arguments that are similarly equivalent.
 
 ```coq
-Instance proper_monad {A B: Type} : Proper 
-  (@state_eq A ==> pointwise_relation A state_eq ==> @state_eq B) 
+Instance proper_monad {A B: Type} : Proper
+  (@state_eq A ==> pointwise_relation A state_eq ==> @state_eq B)
     (bind).
 Proof.
   ...
@@ -337,6 +337,6 @@ Qed.
 
 ## Conclusion
 
-In addition to the `rewrite` tactic discussed in this post, Coq has a similar, but more powerful `setoid_rewrite` tactic. This tactic is enabled by the same typeclasses as `rewrite`, but is capable of rewriting underneath contexts like universal or existential quantifiers. As a rule of thumb, if you feel like a rewrite should work, try to use `setoid_rewrite`. To learn more about `setoid_rewrite`, checkout the relevant sections of the Coq documentation [here](https://coq.inria.fr/refman/addendum/generalized-rewriting.html).  
+In addition to the `rewrite` tactic discussed in this post, Coq has a similar, but more powerful `setoid_rewrite` tactic. This tactic is enabled by the same typeclasses as `rewrite`, but is capable of rewriting underneath contexts like universal or existential quantifiers. As a rule of thumb, if you feel like a rewrite should work, try to use `setoid_rewrite`. To learn more about `setoid_rewrite`, checkout the relevant sections of the Coq documentation [here](https://coq.inria.fr/refman/addendum/generalized-rewriting.html).
 
 Hopefully, you found this to be a useful introduction to rewriting in Coq. There is much more to learn, but you should have a strong enough foundation to learn it on your own. Good luck proving things!
