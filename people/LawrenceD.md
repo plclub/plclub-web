@@ -1,6 +1,6 @@
 ---
 name : "Lawrence Dunn"
-website : "https://lawrencedunn.io/"
+website : "https://comono.id"
 email : "dunnla@seas.upenn.edu"
 tags : ["student"]
 headshot : "LawrenceD.jpg"
