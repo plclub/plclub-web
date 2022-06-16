@@ -1,6 +1,9 @@
 ---
 name : "Aravind Machiry"
-email : "ude.bscu.sc@yrihcam"
+email : "amachiry@purdue.edu"
 website : "https://machiry.github.io/"
-tags : ["postdoc"]
+degree : "Postdoc"
+year : "2020"
+where : "Purdue University"
+tags : ["alum"]
 ---
