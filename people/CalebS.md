@@ -1,7 +1,9 @@
 ---
 name : "Caleb Stanford"
-website : "https://www.cis.upenn.edu/~castan/"
+where : "UC Davis"
+degree : "Ph.D."
 email : "castan@seas.upenn.edu"
-tags : ["student"]
+tags : ["alum"]
+year: "2022"
 headshot : "CalebS.jpg"
 ---

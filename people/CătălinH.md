@@ -2,7 +2,7 @@
 name : "Cătălin Hriţcu"
 degree : "Postdoc"
 year : "2013"
-where : "Inria Paris"
-website : "https://prosecco.gforge.inria.fr/personal/hritcu/"
+where : "MPI-SP"
+website : "https://catalin-hritcu.github.io"
 tags : ["alum"]
 ---
