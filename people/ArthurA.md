@@ -2,7 +2,7 @@
 name : "Arthur Azevedo de Amorim"
 degree : "Ph.D."
 year : "2017"
-where : "Postdoc, CMU"
+where : "Boston University"
 website : "http://arthuraa.net/"
 tags : ["alum"]
 ---
