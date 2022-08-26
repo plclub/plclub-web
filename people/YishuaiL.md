@@ -1,7 +1,10 @@
 ---
 name : "Yishuai Li"
-website : "https://www.cis.upenn.edu/~yishuai/"
-email : "yishuai@seas.upenn.edu"
-tags : ["student"]
+website : "https://github.com/liyishuai"
+email : "lys@alumni.upenn.edu"
+tags : ["alum"]
+degree : "Ph.D."
+year : 2022
+where: "Alibaba"
 headshot : "YishuaiL.jpg"
 ---
