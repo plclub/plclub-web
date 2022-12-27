@@ -1,6 +1,5 @@
-resolver: lts-15.11
+resolver: lts-19.13
 packages:
 - .
 extra-deps: 
-- hakyll-4.13.3.0@sha256:7d8903f03974691aec049a6188ace8d93457563bad9f078c6faf4c9156e27a33,8867
 - hakyll-alectryon-0.1.1.0
