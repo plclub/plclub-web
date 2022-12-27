@@ -34,10 +34,12 @@ compilePapers = do
 -- This part purely runs the Makefile and returns "plclub.html"
 -- No Hakyll stuff happening yet
 makePapersHtml :: IO String
-makePapersHtml = withSystemTempDirectory "plclub_bib" $ \f -> do
+makePapersHtml = --withSystemTempDirectory "plclub_bib" $ \f -> do
+  do
+    let f = "./"
     copyFile "papers/Makefile" (f </> "Makefile")
     copyFile "papers/bold-title.bst" (f </> "bold-title.bst")
-    callProcess "make" ["-C", f]
+    callProcess "make" ["-C", f, "-v"]
     readFile (f </> "plclub.html")
 
 -- Assemble "plclub_bib.html" as a String
@@ -76,10 +78,17 @@ justRows (Pandoc m blocks) =
     splitTable table
   where
     table = head $ dropWhile (not . isTable) blocks
-    isTable (Table _ _ _ _ _) = True 
+    isTable (Table _ _ _ _ _ _) = True 
     isTable _ = False 
-    splitTable (Table i a d c rows) = 
-        (Pandoc m . secondCell) <$> rows
+    splitTable (Table _attr _cap _colspec _head body foot) = 
+        (Pandoc m . concat . helper1) <$>  body
+    -- Convert a TableBody to a list of [Block]
+    helper1 (TableBody _ _ _ rows) = 
+        (helper2 <$> rows)
+    -- Extract content from the second cell from a row 
+    helper2 (Row attr cells) = helper3 (secondCell cells)
+    -- extract content from a Cell
+    helper3 (Cell attr align rspan cspan blocks) = blocks
     secondCell (_:x:_) = x
 
 compileRecentPapers :: Int -> Compiler [String]
