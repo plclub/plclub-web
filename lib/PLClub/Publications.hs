@@ -19,82 +19,71 @@ import       Text.Pandoc (writeHtml5String, readHtml)
 import       Text.Pandoc.Class (runPure)
 import       Data.Text (unpack, pack)
 
-
-
--- | A compiler action that assembles the webpage in a temporary directory,
--- parses everything, and returns a list of strings
-compilePapers :: Compiler [String]
-compilePapers = do
-    unsafeCompiler $ do
-        html <- makePapersHtml
-        return $ parsePapers html
-
-
--- Assemble "plclub.html" as a String
--- This part purely runs the Makefile and returns "plclub.html"
--- No Hakyll stuff happening yet
-makePapersHtml :: IO String
-makePapersHtml = --withSystemTempDirectory "plclub_bib" $ \f -> do
-  do
-    let f = "./"
-    copyFile "papers/Makefile" (f </> "Makefile")
-    copyFile "papers/bold-title.bst" (f </> "bold-title.bst")
-    callProcess "make" ["-C", f, "-v"]
-    readFile (f </> "plclub.html")
-
--- Assemble "plclub_bib.html" as a String
--- This part purely runs the Makefile and returns "plclub.html"
--- No Hakyll stuff happening yet
-makeBibHtml :: IO String
-makeBibHtml = withSystemTempDirectory "plclub_bib" $ \f -> do
+-- | Run the entire `papers/Makefile` process and read one of the
+-- generated files as a string
+readFileAfterMaking :: String -> IO String
+readFileAfterMaking fn = withSystemTempDirectory "plclub_bib" $ \f -> do
     copyFile "papers/Makefile" (f </> "Makefile")
     copyFile "papers/bold-title.bst" (f </> "bold-title.bst")
     callProcess "make" ["-C", f]
-    readFile (f </> "plclub_bib.html")
+    readFile (f </> fn)
 
--- Assemble "merged.bib" as a String
+-- | Generate "plclub.html" as a String.
+makePapersHtml :: IO String
+makePapersHtml = readFileAfterMaking "plclub.html"
+
+-- | Generate "plclub_bib.html"
+makeBibHtml :: IO String
+makeBibHtml = readFileAfterMaking "plclub_bib.html"
+
+-- | Generate "merged.bib"
 makeMergedBib :: IO String
-makeMergedBib = withSystemTempDirectory "plclub_bib" $ \f -> do
-    copyFile "papers/Makefile" (f </> "Makefile")
-    copyFile "papers/bold-title.bst" (f </> "bold-title.bst")
-    callProcess "make" ["-C", f, "merged.bib"]
-    readFile (f </> "merged.bib")
+makeMergedBib = readFileAfterMaking "merged.bib"
 
--- This uses pandoc to parse the papers
+-- | Given the HTML of the generated file "plclub.html" as a String,
+-- | compute a list of strings
 parsePapers :: String -> [String]
 parsePapers src = 
     case runPure $ readHtml defaultHakyllReaderOptions (pack src) of
         Left err -> error "Error parsing papers HTML"
-        Right pan -> do
-            let pans = justRows pan
-            flip map pans $ \p -> do
-                case runPure $ (writeHtml5String defaultHakyllWriterOptions) p of
+        Right pandoc -> do
+            let entries = parseMainTable pandoc
+            flip map entries $ \entry -> do
+                case runPure $ writeHtml5String defaultHakyllWriterOptions entry of
                     Left err -> error "Error writing papers HTML"
                     Right txt -> unpack txt
 
-
-justRows :: Pandoc -> [Pandoc] 
-justRows (Pandoc m blocks) =
-    splitTable table
+-- | Filter the document into a set of table bodies. Pandoc's AST
+-- allows for tables to have multiple bodies in the form of a list,
+-- but we hardcode the assumption that this list has length 1.
+parseMainTable :: Pandoc -> [Pandoc]
+parseMainTable (Pandoc m blocks) =
+  (\blocks -> Pandoc m blocks) <$> (getRowsOf $ firstTableBody blocks)
   where
-    table = head $ dropWhile (not . isTable) blocks
-    isTable (Table _ _ _ _ _ _) = True 
-    isTable _ = False 
-    splitTable (Table _attr _cap _colspec _head body foot) = 
-        (Pandoc m . concat . helper1) <$>  body
-    -- Convert a TableBody to a list of [Block]
-    helper1 (TableBody _ _ _ rows) = 
-        (helper2 <$> rows)
-    -- Extract content from the second cell from a row 
-    helper2 (Row attr cells) = helper3 (secondCell cells)
-    -- extract content from a Cell
-    helper3 (Cell attr align rspan cspan blocks) = blocks
-    secondCell (_:x:_) = x
+    firstTableBody blocks =
+      case blocks of
+        Table _attr _cap _colspec _head body foot : rest ->
+          head body
+        x : rest -> firstTableBody rest
+        _ -> error "Did not find a 'Table' block in the provided Pandoc"
 
-compileRecentPapers :: Int -> Compiler [String]
-compileRecentPapers n = do
-    take n <$> compilePapers
+-- | Convert a 'TableBody' to a list of 'Pandoc' values. This function
+-- assumes the table is in the format of "plclub.html," i.e. a table
+-- whose rows' *second entries* contain HTML corresponding intuitively
+-- corresponding to one "entry" in the list of papers.
+getRowsOf :: TableBody -> [[Block]]
+getRowsOf (TableBody _att _rhc _head rows) =
+  secondCellOf <$> rows
 
+-- | Given a table body 'Row', return the contents (a list of 'Block'
+-- values) of the row's second cell
+secondCellOf :: Row -> [Block]
+secondCellOf (Row _attr cells) =
+  case snd cells of
+    Cell _attr _align _rsp _csp blocks -> blocks
+  where
+    snd (_:x: _) = x
+    
 papersContext :: Context a
 papersContext = listField "papers" defaultContext ps
   where
@@ -106,3 +95,15 @@ recentPapersContext = listField "recentpapers" defaultContext ps
   where
     ps :: Compiler [Item String]
     ps = (Item "" <$>) <$> compileRecentPapers 5
+
+-- | A compiler action that assembles the webpage in a temporary directory,
+-- parses everything, and returns a list of strings
+compilePapers :: Compiler [String]
+compilePapers = do
+    unsafeCompiler $ do
+        html <- makePapersHtml
+        return $ parsePapers html
+
+compileRecentPapers :: Int -> Compiler [String]
+compileRecentPapers n = do
+    take n <$> compilePapers
