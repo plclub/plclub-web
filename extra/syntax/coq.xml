@@ -84,31 +84,33 @@
       <item>Instance</item>
       <item>Fixpoint</item>
     </list>
-    
-    <context attribute="Normal" name="code" lineEndContext="#stay">
-      <!-- Recognize an regular keyword -->
-      <keyword String="keywords-gallina" attribute="Normal"/>
-      <!-- Recognize a proof mode keyword -->
-      <keyword String="keywords-proofmode" attribute="Keyword"/>
-      <!-- Recognize a comment -->
-      <Detect2Chars char="(" char1="*" context="comment" />
-      <!-- Recognize an module command -->
-      <!-- <keyword String="module-keywords" attribute="Module" context="Module" lineEndContext="code"/> -->
-      <!-- Recognize an module command -->
 
-      <RegExpr String=".*cat" attribute="MyKw" />
-      <RegExpr String="^\s*(Require|Import|Export|Module)|Import" attribute="Module" context="Module" lineEndContext="code"/>
-    </context>
-    <context attribute="String">
-    </context>
-    <!-- Handle a module command -->
-    <context attribute="Normal" name="Module" lineEndContext="code"> 
-      <keyword String="module-keywords" attribute="Module" context="#stay"/>
-    </context>
-    <!-- Handle a comment -->
-    <context attribute="Comment" name="comment" lineEndContext="#stay"> 
-      <Detect2Chars char="*" char1=")" context="#pop" />
-    </context>
+    <contexts>
+      <context attribute="Normal" name="code" lineEndContext="#stay">
+	<!-- Recognize an regular keyword -->
+	<keyword String="keywords-gallina" attribute="Normal"/>
+	<!-- Recognize a proof mode keyword -->
+	<keyword String="keywords-proofmode" attribute="Keyword"/>
+	<!-- Recognize a comment -->
+	<Detect2Chars char="(" char1="*" context="comment" />
+	<!-- Recognize an module command -->
+	<!-- <keyword String="module-keywords" attribute="Module" context="Module" lineEndContext="code"/> -->
+	<!-- Recognize an module command -->
+
+	<RegExpr String=".*cat" attribute="MyKw" />
+	<RegExpr String="^\s*(Require|Import|Export|Module)|Import" attribute="Module" context="Module" lineEndContext="code"/>
+      </context>
+      <context attribute="String">
+      </context>
+      <!-- Handle a module command -->
+      <context attribute="Normal" name="Module" lineEndContext="code"> 
+	<keyword String="module-keywords" attribute="Module" context="#stay"/>
+      </context>
+      <!-- Handle a comment -->
+      <context attribute="Comment" name="comment" lineEndContext="#stay"> 
+	<Detect2Chars char="*" char1=")" context="#pop" />
+      </context>
+    </contexts>
     <itemDatas>
       <itemData name="Normal" defStyleNum="dsVariable" />
       <itemData name="Variable" defStyleNum="dsVariable" />
