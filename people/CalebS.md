@@ -1,6 +1,6 @@
 ---
 name : "Caleb Stanford"
-website : web.cs.ucdavis.edu/~cdstanford
+website : https://web.cs.ucdavis.edu/~cdstanford
 where : "UC Davis"
 degree : "Ph.D."
 email : "cdstanford@ucdavis.edu"
