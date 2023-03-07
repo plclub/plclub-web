@@ -1,5 +1,6 @@
 # Hakyll
 # Ignore swap files and stack/cabal output.
+dist-newstyle/
 *.hi
 *.o
 *.swo
