@@ -16,18 +16,12 @@ B2HFLAGS = -dl \
 	   --reverse-sort --sort-by-date
 
 MV=mv
-BIBS=bcp.bib weirich.bib zdancewic.bib
-#obastani.bib
+BIBS=bcp.bib weirich.bib zdancewic.bib alur.bib obastani.bib
 
 .DELETE_ON_ERROR: $(BIBS)
 
 plclub.html: merged.bib Makefile
-	#TMPDIR=. here is a workaround for a bug in bibtex2html versions prior to 1.98
-	#TMPDIR=. bibtex2html -o plclub $(B2HFLAGS) -citefile plclub.keys ./merged.bib
 	bibtex2html -o plclub $(B2HFLAGS) -citefile plclub.keys ./merged.bib
-	-$(RM) bib2html*
-	-$(RM) ./merged.bib $(BIBS)
-	#cat plclub.html
 
 merged.bib: $(BIBS)
 	bib2bib -s -r -oc plclub.keys -ob merged.bib -c 'bcp:"yes"|plclub:"yes"' $(BIBS)
@@ -48,9 +42,13 @@ zdancewic.bib:
 	bib2bib -ob $@-tmp -c 'not($$key = "ABFF+05")' $@
 	$(MV) $@-tmp $@
 
+alur.bib:
+	-$(RM) $@
+	wget https://dblp.uni-trier.de/pid/a/RAlur.bib?param=1 -O alur.bib
+
 obastani.bib:
 	-$(RM) $@
-	wget https://trustml.github.io/docs/obastani.bib
+	wget https://dblp.org/pid/21/11275.bib?param=1 -O obastani.bib
 
 clean:
-	-$(RM) bib2html* plclub.keys plclub.html plclub_bib.html
+	-$(RM) bib2html* plclub.keys plclub.html plclub_bib.html $(BIBS) merged.bib
