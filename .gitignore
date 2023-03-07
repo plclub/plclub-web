@@ -26,7 +26,6 @@ _store
 stack*.yaml.lock
 
 .stack-work/
-*.lock
 _cache/
 papers/*.html
 papers/*.bib
