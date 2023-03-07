@@ -74,3 +74,13 @@ machine](https://web.archive.org/web/20191217223927/https://www.cis.upenn.edu/~p
 had been in service for about 15 years and used OMake and Java. A tar
 archive of the old website can be found in the home directory of the
 `plclub` user on ENIAC.
+
+### Where do I find the PL Club logo?
+
+The nicely formatted SVG logo was created by [Daniel
+Wagner](http://dmwit.com/plclub-logo/) to replace an earlier PNG
+version of unknown provenance. The SVG logo, as well as large and
+small PNG files rendered from it, are found under `img/`.
+
+The original PL Club logo is at least as old as the website itself, so
+around since at least 2005.
