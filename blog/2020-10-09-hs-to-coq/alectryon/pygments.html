@@ -7,12 +7,12 @@
 <span class="kn">Unset</span> <span class="kn">Strict</span> <span class="kn">Implicit</span><span class="o">.</span>
 <span class="kn">Unset</span> <span class="kn">Printing</span> <span class="kn">Implicit</span> <span class="n">Defensive</span><span class="o">.</span>
 
-<span class="kn">Require</span> <span class="n">Coq</span><span class="o">.</span><span class="n">Program</span><span class="o">.</span><span class="n">Tactics</span><span class="o">.</span>
-<span class="kn">Require</span> <span class="n">Coq</span><span class="o">.</span><span class="n">Program</span><span class="o">.</span><span class="n">Wf</span><span class="o">.</span>
+<span class="kn">Require</span> <span class="n">Coq.Program.Tactics</span><span class="o">.</span>
+<span class="kn">Require</span> <span class="n">Coq.Program.Wf</span><span class="o">.</span>
 
 <span class="c">(* Converted imports: *)</span>
 
-<span class="kn">Require</span> <span class="n">Coq</span><span class="o">.</span><span class="n">Lists</span><span class="o">.</span><span class="n">List</span><span class="o">.</span>
+<span class="kn">Require</span> <span class="n">Coq.Lists.List</span><span class="o">.</span>
 
 <span class="c">(* Converted type declarations: *)</span>
 
@@ -42,7 +42,7 @@
     <span class="k">match</span> <span class="n">arg_0__</span> <span class="k">with</span>
     <span class="o">|</span> <span class="n">MkQueue</span> <span class="o">(</span><span class="n">cons</span> <span class="n">y</span> <span class="n">front</span><span class="o">)</span> <span class="n">back</span> <span class="o">=&gt;</span> <span class="n">Some</span> <span class="o">(</span><span class="n">pair</span> <span class="n">y</span> <span class="o">(</span><span class="n">MkQueue</span> <span class="n">front</span> <span class="n">back</span><span class="o">))</span>
     <span class="o">|</span> <span class="n">MkQueue</span> <span class="n">nil</span> <span class="n">back</span> <span class="o">=&gt;</span>
-        <span class="k">match</span> <span class="n">GHC</span><span class="o">.</span><span class="n">List</span><span class="o">.</span><span class="n">reverse</span> <span class="n">back</span> <span class="k">with</span>
+        <span class="k">match</span> <span class="n">GHC.List.reverse</span> <span class="n">back</span> <span class="k">with</span>
         <span class="o">|</span> <span class="n">nil</span> <span class="o">=&gt;</span> <span class="n">None</span>
         <span class="o">|</span> <span class="n">cons</span> <span class="n">y</span> <span class="n">front</span> <span class="o">=&gt;</span> <span class="n">Some</span> <span class="o">(</span><span class="n">pair</span> <span class="n">y</span> <span class="o">(</span><span class="n">MkQueue</span> <span class="n">front</span> <span class="n">nil</span><span class="o">))</span>
         <span class="k">end</span>

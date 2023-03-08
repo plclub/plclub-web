@@ -32,3 +32,10 @@ papers/*.bib
 papers/*.bak
 papers/*.keys
 _site/
+
+# Coq artifact files
+*.vo
+*.glob
+*.aux
+*.vos
+*.vok
