@@ -31,16 +31,13 @@ customSyntaxMap =
   Map.union extraMap defaultSyntaxMap
   where
     extraMap = unsafePerformIO $ do
-      msm <- Sky.loadSyntaxesFromDir "extra/syntax/"
+      msm <- Sky.loadSyntaxesFromDir "extra/kate/syntax/"
       case msm of
         Left err -> error $ "Encountered error while \
                             \ loading custom syntax files: " ++ err
         Right sm -> return sm
 
 -- Our Pandoc writer configuration
--- We do __not__ use Pandoc for theming because Pandoc is used not used in its
--- standalone mode (i.e., does not produce a valid HTML file) and cannot insert
--- CSS. Instead we use Hakyll to compile Kate theme files into CSS and load that.
 customWriterOptions :: WriterOptions
 customWriterOptions =
   defaultHakyllWriterOptions
@@ -74,7 +71,7 @@ kateThemeToCSSCompiler = do
 tocWriterOptions :: WriterOptions
 tocWriterOptions =
   defaultHakyllWriterOptions
-  { writerTableOfContents = True  
+  { writerTableOfContents = True
   , writerTOCDepth = 2 + 1
   , writerTemplate = Just tocTemplate
   }
@@ -92,7 +89,7 @@ tocTemplate =
     Left err -> error $ "Error when generating TOC template: " ++
                   show err
     Right tem -> tem
-        
+
 
 -- | Return an representation of the TOC of the current item
 -- __Caution__: This used to use the item returned by

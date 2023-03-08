@@ -29,11 +29,7 @@ config = defaultConfiguration
 --------------------------------------------------------------------------------
 application :: IO ()
 application = Alectryon.hakyllWith config $ \opts -> do
-    match "img/**" $ do
-        route   idRoute
-        compile copyFileCompiler
-
-    match "vendor/**" $ do
+    match ("img/**" .||. "vendor/**") $ do
         route   idRoute
         compile copyFileCompiler
 
@@ -52,8 +48,8 @@ application = Alectryon.hakyllWith config $ \opts -> do
                 >>= loadAndApplyTemplate "templates/default.html"  siteContext
                 >>= relativizeUrls
 
-    match "extra/syntax/*.theme" $ do
-      route   $ flattenIntoFolder "css" <!> setExtension "css"
+    match "extra/kate/themes/*.theme" $ do
+      route   $ flattenIntoFolder "css/kate/" <!> setExtension "css"
       compile $ kateThemeToCSSCompiler
 
     --blog post tags
