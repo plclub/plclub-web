@@ -11,7 +11,13 @@
         nativeBuildInputs = [ ghc cabal-install zlib pkgconfig bibtex2html ] ++ alectryon-deps;
         name = "hello";
         src = self;
-        buildPhase = "cabal build";
+      };
+    devShells.x86_64-linux.default =
+      let pkgs = import nixpkgs { system = "x86_64-linux"; };
+      in pkgs.haskellPackages.shellFor {
+        packages = ps: [ ];
+        buildInputs = [ pkgs.zlib pkgs.haskellPackages.cabal2nix
+                        pkgs.haskellPackages.cabal-install ];
       };
   };
 }
