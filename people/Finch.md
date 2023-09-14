@@ -1,8 +1,8 @@
 ---
-name : "Kenny Foner"
+name : "Finch (a.k.a Kenny Foner)"
 degree : "Masters"
 year : "2017"
 where : "Penumbra Labs"
-website : "https://very.science/"
+website : "https://plaidfinch.net/"
 tags : ["alum"]
 ---
