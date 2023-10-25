@@ -14,10 +14,12 @@
       };
     devShells.x86_64-linux.default =
       let pkgs = import nixpkgs { system = "x86_64-linux"; };
+          alectryon-deps = with pkgs; with pkgs.python310Packages; [ coq coqPackages.serapi alectryon myst-parser ];
       in pkgs.haskellPackages.shellFor {
         packages = ps: [ ];
         buildInputs = [ pkgs.zlib pkgs.haskellPackages.cabal2nix
-                        pkgs.haskellPackages.cabal-install ];
+			pkgs.bibtex2html
+                        pkgs.haskellPackages.cabal-install ] ++ alectryon-deps;
       };
   };
 }
