@@ -1,6 +1,6 @@
 ---
 name : "Jessica Shi"
-website : "https://jwshi21.github.io/"
+website : "https://jwshii.github.io/"
 email : "jwshi@seas.upenn.edu"
 tags : ["student"]
 headshot : "JessicaS.jpg"
