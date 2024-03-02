@@ -8,7 +8,7 @@
       with import nixpkgs { system = "x86_64-linux"; };
       let alectryon-deps = with python310Packages; [ coq coqPackages.serapi alectryon myst-parser ];
       in stdenv.mkDerivation {
-        nativeBuildInputs = [ ghc cabal-install zlib pkgconfig bibtex2html ] ++ alectryon-deps;
+        nativeBuildInputs = [ ghc cabal-install zlib pkg-config bibtex2html ] ++ alectryon-deps;
         name = "hello";
         src = self;
       };
@@ -22,7 +22,7 @@
             ];
           other-deps = with pkgs;
             [ zlib
-              pkgconfig
+              pkg-config
               bibtex2html
             ];
           haskell-deps = with pkgs.haskellPackages;
