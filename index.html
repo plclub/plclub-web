@@ -1,163 +1,161 @@
 <div class="row">
-   <div class="mt-5 col-lg-6">
-      <div class="row">
-         <div class="mt-4 col-lg-4">
-            <img width="100px" class="img-fluid" src="/img/plclub-logo.svg">
-         </div>
-         <div class="mt-4 col-lg-8">
-         The programming languages group at the University of Pennsylvania has been a hub for understanding the essence of computation. Research topics include type theory, functional programming, formal verification, and logic.
-         </div>
+  <div class="mt-5 col-lg-6">
+    <div class="row">
+      <div class="mt-4 col-lg-4">
+        <img width="100px" class="img-fluid" src="/img/plclub-logo.svg">
       </div>
-      <h4 class="mt-4">Keep in Touch</h4>
-      <ul>
-         <li><a href="https://lists.seas.upenn.edu/mailman/listinfo/plclub">[plclub] mailing list</a></li>
-         <li><a href="https://lists.seas.upenn.edu/mailman/listinfo/types-list">TYPES forum</a></li>
-         <li><a href="https://lists.seas.upenn.edu/mailman/listinfo/pearl-group">PEARL (Penn Automated Reasoning and Learning)</a></li>
-      </ul>
-      <div align="center">
-         Check out [plclub] resources and tools on
-         <a href="https://github.com/plclub">GitHub <img src="img/github-logo.png" height="30"></a>
+      <div class="mt-4 col-lg-8">
+        The programming languages group at the University of Pennsylvania has been a hub for understanding the essence of computation. Research topics include type theory, functional programming, formal verification, and logic.
       </div>
-   </div>
-   <div class="mt-5 col-lg-6">
-      <h4 class="mt-4">Courses</h4>
-      <ul>
-         <li>CIS 500 : <a href="http://www.seas.upenn.edu/~cis500/">Software Foundations</a></li>
-         <li>CIS 540 : <a href="http://www.seas.upenn.edu/~cis540/">Principles of Embedded Computation</a></li>
-	 <li>CIS 547 : <a href="https://www.youtube.com/playlist?list=PLF3-CvSRq2SYXEiS80KuZQ80q8K2aHLQX">Software Analysis</a></li>
-         <li>CIS 552 : <a href="http://www.seas.upenn.edu/~cis552/">Advanced Programming</a></li>
-         <li>CIS 670 : <a href="https://www.cis.upenn.edu/~stevez/cis670/index.html">Rotating PL Seminar</a></li>
-         <li>CIS 673 : <a href="http://www.cis.upenn.edu/~alur/cis673.html">Computer-Aided Verification</a></li>
-      </ul>
-      <h4 class="mt-4">Related Groups at Penn</h4>
-      <ul>
-         <li><a href="https://precise.seas.upenn.edu/">PRECISE</a></li>
-         <li><a href="https://dsl.cis.upenn.edu/">Distributed Systems Laboratory</a></li>
-         <li><a href="https://dbappserv.cis.upenn.edu/home/">Penn Database Group</a></li>
-         <li><a href="https://www.cis.upenn.edu/~lc/home.html">Logic and Computation</a></li>
-         <li><a href="https://asset.seas.upenn.edu/">ASSET Center</a></li>
-      </ul>
-   </div>
-   </div>
-
-   <hr>
-   <div class="row">
-      <div class="col-lg-6 mt-2">
-         <h3 class="mt-2"> PLClub Discussion Group</h3>
-         We meet on Fridays, 12 - 1:00pm at Levine 307.
-         <h5 class="mt-3">Rules</h5>
-            <ol>
-               <li>Talk about PLClub! Anyone is welcome.</li>
-               <li>If it's your first semester at PLClub, you have to PL.</li>
-               <li>Lunch starts at 11:45pm.</li>
-               <li>Talks start at 12:00pm.</li>
-               <li>Talks go on as long as they have to, or until 1:00pm.</li>
-         </ol>
-         <div><a href="/club">See full schedule here.</a></div>
-      </div>
-      <div class="col-lg-6 mt-2">
-          <div class="row h-100 align-items-center">
-              <div class="col-lg-1"></div>
-              <div class="col-lg-10">
-                  <div class="card">
-                      <div class="card-body text-center">
-                          Research is better in a diverse community. We affirm and embrace our
-                          differences in race and ethnicity, gender expression, sexual orientation,
-                          and other personal characteristics. We expect our members to make PLClub a
-                          safe and welcoming place for all.
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div>
-   </div>
-   <hr>
-
-   <h3>People of PLClub</h3>
-
-   <h4 class="mt-4">Faculty</h4>
-   $for(facultyGroup)$
-   <div class="mt-3 row">
-       $for(faculty)$
-      <div id="info-container" class="col-lg-2 col-md-12">
-            $if(headshot)$
-					<a href= "$website$"><img class="img-fluid rounded mb-4" src="/img/people/$headshot$" alt="$name$" width="200px" height="200px"/></a>
-				$else$
-					<img class="img-fluid rounded mb-4" src="/img/people/missing.jpg" alt="$name$" width="200px" height="200px"/>
-				$endif$
-      </div>
-      <div class="mt-3 col-lg-2 col-md-12">
-         <strong>$name$</strong>
-         <div class="mt-1" id="links">
-            [<a href="mailto:$email$">email</a>]<br>
-            [<a href="$website$">website</a>]
-         </div>
-      </div>
-      $endfor$
-   </div>
-    $endfor$
-
-   <h4 class="mt-4">Postdocs</h4>
-   $for(postdocGroup)$
-   <div id="info-container" class="mt-3 row">
-       $for(postdoc)$
-      <div class="col-lg-2 col-md-12">
-				$if(headshot)$
-					<a href= "$website$"><img class="img-fluid rounded mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/></a>
-				$else$
-					<img class="img-fluid rounded mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
-				$endif$
-      </div>
-      <div class="mt-3 col-lg-2 col-md-12">
-         <strong>$name$</strong>
-         <div class="mt-1" id="links">
-            [<a href="mailto:$email$">email</a>]<br>
-            [<a href="$website$">website</a>]
-         </div>
-      </div>
-      $endfor$
-   </div>
-   $endfor$
-
-   <h4 class="mt-4">Ph.D. Students</h4>
-   $for(studentGroup)$
-   <div id="info-container" class="mt-3 row">
-       $for(student)$
-      <div class="col-lg-2 col-md-12">
-	$if(headshot)$
-	    $if(website)$
-	    <a href= "$website$"><img class="img-fluid rounded mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/></a>
-	    $else$
-	    <img class="img-fluid rounded mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/>
-	    $endif$
-	$else$
-	    <img class="img-fluid rounded mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
-	$endif$
-      </div>
-      <div class="mt-3 col-lg-2 col-md-12">
-         <strong>$name$</strong>
-         <div class="mt-1" id="links">
-            [<a href="mailto:$email$">email</a>]<br>
-            $if(website)$
-            [<a href="$website$">website</a>]<br>
-	    $else$
-	    $endif$
-         </div>
-      </div>
-      $endfor$
-   </div>
-   $endfor$
-
-   <h3 id="alum" class="mt-5">Alumni</h3>
-   <ul id="circle-list">
-     $for(alum)$
-     $if(website)$
-     <li><a href="$website$">$name$</a> - $degree$, $year$. <span class="year" style="color:gray">$where$</span></li>
-     $else$
-     <li>$name$ - $degree$, $year$. <span class="year" style="color:gray">$where$</span></li>
-     $endif$
-     $endfor$
-   </ul>
+    </div>
+    <h4 class="mt-4">Keep in Touch</h4>
+    <ul>
+      <li><a href="https://lists.seas.upenn.edu/mailman/listinfo/plclub">[plclub] mailing list</a></li>
+      <li><a href="https://lists.seas.upenn.edu/mailman/listinfo/types-list">TYPES forum</a></li>
+      <li><a href="https://lists.seas.upenn.edu/mailman/listinfo/pearl-group">PEARL (Penn Automated Reasoning and Learning)</a></li>
+    </ul>
+    <div align="center">
+      Check out [plclub] resources and tools on
+      <a href="https://github.com/plclub">GitHub <img src="img/github-logo.png" height="30"></a>
+    </div>
+  </div>
+  <div class="mt-5 col-lg-6">
+    <h4 class="mt-4">Courses</h4>
+    <ul>
+      <li>CIS 500 : <a href="http://www.seas.upenn.edu/~cis500/">Software Foundations</a></li>
+      <li>CIS 540 : <a href="http://www.seas.upenn.edu/~cis540/">Principles of Embedded Computation</a></li>
+      <li>CIS 547 : <a href="https://www.youtube.com/playlist?list=PLF3-CvSRq2SYXEiS80KuZQ80q8K2aHLQX">Software Analysis</a></li>
+      <li>CIS 552 : <a href="http://www.seas.upenn.edu/~cis552/">Advanced Programming</a></li>
+      <li>CIS 670 : <a href="https://www.cis.upenn.edu/~stevez/cis670/index.html">Rotating PL Seminar</a></li>
+      <li>CIS 673 : <a href="http://www.cis.upenn.edu/~alur/cis673.html">Computer-Aided Verification</a></li>
+    </ul>
+    <h4 class="mt-4">Related Groups at Penn</h4>
+    <ul>
+      <li><a href="https://precise.seas.upenn.edu/">PRECISE</a></li>
+      <li><a href="https://dsl.cis.upenn.edu/">Distributed Systems Laboratory</a></li>
+      <li><a href="https://dbappserv.cis.upenn.edu/home/">Penn Database Group</a></li>
+      <li><a href="https://www.cis.upenn.edu/~lc/home.html">Logic and Computation</a></li>
+      <li><a href="https://asset.seas.upenn.edu/">ASSET Center</a></li>
+    </ul>
+  </div>
 </div>
 
+<hr>
+<div class="row">
+  <div class="col-lg-6 mt-2">
+    <h3 class="mt-2"> PLClub Discussion Group</h3>
+    We meet on Fridays, 12 - 1:00pm at Levine 307.
+    <h5 class="mt-3">Rules</h5>
+    <ol>
+      <li>Talk about PLClub! Anyone is welcome.</li>
+      <li>If it's your first semester at PLClub, you have to PL.</li>
+      <li>Lunch starts at 11:45pm.</li>
+      <li>Talks start at 12:00pm.</li>
+      <li>Talks go on as long as they have to, or until 1:00pm.</li>
+    </ol>
+    <div><a href="/club">See full schedule here.</a></div>
+  </div>
+  <div class="col-lg-6 mt-2">
+    <div class="row h-100 align-items-center">
+      <div class="col-lg-1"></div>
+      <div class="col-lg-10">
+        <div class="card">
+          <div class="card-body text-center">
+            Research is better in a diverse community. We affirm and embrace our
+            differences in race and ethnicity, gender expression, sexual orientation,
+            and other personal characteristics. We expect our members to make PLClub a
+            safe and welcoming place for all.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<hr>
 
+<h3>People of PLClub</h3>
+
+<h4 class="mt-4">Faculty</h4>
+$for(facultyGroup)$
+<div class="mt-3 row">
+  $for(faculty)$
+  <div id="info-container" class="col-lg-2 col-md-12">
+    $if(headshot)$
+    <a href= "$website$"><img class="img-fluid rounded mb-4" src="/img/people/$headshot$" alt="$name$" width="200px" height="200px"/></a>
+    $else$
+    <img class="img-fluid rounded mb-4" src="/img/people/missing.jpg" alt="$name$" width="200px" height="200px"/>
+    $endif$
+  </div>
+  <div class="mt-3 col-lg-2 col-md-12">
+    <strong>$name$</strong>
+    <div class="mt-1" id="links">
+      [<a href="mailto:$email$">email</a>]<br>
+      [<a href="$website$">website</a>]
+    </div>
+  </div>
+  $endfor$
+</div>
+$endfor$
+
+<h4 class="mt-4">Postdocs</h4>
+$for(postdocGroup)$
+<div id="info-container" class="mt-3 row">
+  $for(postdoc)$
+  <div class="col-lg-2 col-md-12">
+    $if(headshot)$
+    <a href= "$website$"><img class="img-fluid rounded mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/></a>
+    $else$
+    <img class="img-fluid rounded mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
+    $endif$
+  </div>
+  <div class="mt-3 col-lg-2 col-md-12">
+    <strong>$name$</strong>
+    <div class="mt-1" id="links">
+      [<a href="mailto:$email$">email</a>]<br>
+      [<a href="$website$">website</a>]
+    </div>
+  </div>
+  $endfor$
+</div>
+$endfor$
+
+<h4 class="mt-4">Ph.D. Students</h4>
+$for(studentGroup)$
+<div id="info-container" class="mt-3 row">
+  $for(student)$
+  <div class="col-lg-2 col-md-12">
+    $if(headshot)$
+    $if(website)$
+    <a href= "$website$"><img class="img-fluid rounded mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/></a>
+    $else$
+    <img class="img-fluid rounded mb-4" src="/img/people/$headshot$" alt="$name$" width="150px" height="150px"/>
+    $endif$
+    $else$
+    <img class="img-fluid rounded mb-4" src="/img/people/missing.jpg" alt="$name$" width="150px" height="150px"/>
+    $endif$
+  </div>
+  <div class="mt-3 col-lg-2 col-md-12">
+    <strong>$name$</strong>
+    <div class="mt-1" id="links">
+      [<a href="mailto:$email$">email</a>]<br>
+      $if(website)$
+      [<a href="$website$">website</a>]<br>
+      $else$
+      $endif$
+    </div>
+  </div>
+  $endfor$
+</div>
+$endfor$
+
+<h3 id="alum" class="mt-5">Alumni</h3>
+<ul id="circle-list">
+  $for(alum)$
+  $if(website)$
+  <li><a href="$website$">$name$</a> - $degree$, $year$. <span class="year" style="color:gray">$where$</span></li>
+  $else$
+  <li>$name$ - $degree$, $year$. <span class="year" style="color:gray">$where$</span></li>
+  $endif$
+  $endfor$
+</ul>
+</div>
