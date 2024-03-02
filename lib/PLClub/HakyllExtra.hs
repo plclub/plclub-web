@@ -10,7 +10,7 @@ module PLClub.HakyllExtra where
 --------------------------------------------------------------------------------
 
 import       Hakyll
-import       System.FilePath.Posix
+import       System.FilePath
 import       Data.List (reverse)
 import       Control.Monad (liftM)
 import       Control.Monad.Fail (MonadFail)
