@@ -43,7 +43,7 @@ makeMergedBib = readFileAfterMaking "merged.bib"
 -- | Given the HTML of the generated file "plclub.html" as a String,
 -- | compute a list of strings
 parsePapers :: String -> [String]
-parsePapers src = 
+parsePapers src =
     case runPure $ readHtml defaultHakyllReaderOptions (pack src) of
         Left err -> error "Error parsing papers HTML"
         Right pandoc -> do
@@ -83,13 +83,13 @@ secondCellOf (Row _attr cells) =
     Cell _attr _align _rsp _csp blocks -> blocks
   where
     snd (_:x: _) = x
-    
+
 papersContext :: Context a
 papersContext = listField "papers" defaultContext ps
   where
     ps :: Compiler [Item String]
     ps = (Item "" <$>) <$> compilePapers
-    
+
 recentPapersContext :: Context a
 recentPapersContext = listField "recentpapers" defaultContext ps
   where
