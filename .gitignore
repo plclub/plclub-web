@@ -39,3 +39,6 @@ _site/
 *.aux
 *.vos
 *.vok
+
+.envrc
+.direnv/
