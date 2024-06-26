@@ -1,6 +1,7 @@
 ---
 name : "Pritam Choudhury"
 website : "https://pritamchoudhury.github.io/"
+where: ""
 email : "pritam@seas.upenn.edu"
 tags : ["alum"]
 degree : "Ph.D."
