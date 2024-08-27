@@ -1,7 +1,7 @@
 ---
 name : "Cassia Torczon"
 website : "https://cassiatorczon.github.io/"
-email : "ctorczon@seas.upenn.edu"
 tags : ["student"]
+email : "ctorczon@seas.upenn.edu"
 headshot : "CassiaT.jpg"
 ---

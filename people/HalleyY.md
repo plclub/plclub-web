@@ -1,7 +1,8 @@
 ---
 name : "Halley Young"
+degree : "Ph.D"
+year : "2024"
+where : "Postdoc, MSR"
 website : "https://www.cis.upenn.edu/~halleyy/"
-email : "halleyy@seas.upenn.edu"
 tags : ["student"]
-headshot : "HalleyY.jpg"
 ---

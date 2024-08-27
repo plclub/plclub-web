@@ -1,7 +1,7 @@
 ---
 name : "Rajeev Alur"
 website : "https://www.cis.upenn.edu/~alur/"
-email : "alur@seas.upenn.edu"
 tags : ["faculty"]
+email : "alur@seas.upenn.edu"
 headshot : "RajeevA.jpg"
 ---

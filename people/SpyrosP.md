@@ -1,7 +1,7 @@
 ---
 name : "Spyros Pavlatos"
-email : "pavlatos@seas.upenn.edu"
 website : "https://spyrospav.github.io"
 tags : ["student"]
+email : "pavlatos@seas.upenn.edu"
 headshot : "SpyrosP.jpg"
 ---

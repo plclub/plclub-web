@@ -1,7 +1,7 @@
 ---
 name : "Joseph Cutler"
 website : "https://www.cis.upenn.edu/~jwc/"
-email : "jwc@seas.upenn.edu"
 tags : ["student"]
+email : "jwc@seas.upenn.edu"
 headshot : "JosephC.jpeg"
 ---

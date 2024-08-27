@@ -1,7 +1,7 @@
 ---
 name : "Antoine Voizard"
 degree : "Masters"
-where : ""
 year : "2021"
+where : ""
 tags : ["alum"]
 ---

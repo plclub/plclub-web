@@ -1,6 +1,6 @@
 ---
 name : "Stephen Mell"
-email : "sm1@seas.upenn.edu"
 tags : ["student"]
+email : "sm1@seas.upenn.edu"
 headshot : "StephenM.jpg"
 ---

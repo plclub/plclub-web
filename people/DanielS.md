@@ -1,6 +1,6 @@
 ---
 name : "Daniel Sainati"
-email : "sainati@seas.upenn.edu"
 tags : ["student"]
+email : "sainati@seas.upenn.edu"
 headshot : "DanielS.jpg"
 ---

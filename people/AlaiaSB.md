@@ -1,7 +1,7 @@
 ---
 name : "Alaia Solko-Breslin"
-email : "alaia@seas.upenn.edu"
 website : "https://alaiasolkobreslin.github.io/"
 tags : ["student"]
+email : "alaia@seas.upenn.edu"
 headshot : "AlaiaSB.PNG"
 ---

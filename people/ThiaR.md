@@ -1,7 +1,7 @@
 ---
 name : "Thia Richey"
 website : "https://thia.codes/"
-email : "lapwing@seas.upenn.edu"
 tags : ["student"]
+email : "lapwing@seas.upenn.edu"
 headshot : "ThiaR.jpg"
 ---

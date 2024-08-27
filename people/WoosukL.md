@@ -2,7 +2,7 @@
 name : "Woosuk Lee"
 degree : "Postdoc"
 year : "2018"
-where : "Hanyang Univ."
+where : "Hanyang University"
 website : "http://psl.hanyang.ac.kr/"
 tags : ["alum"]
 ---

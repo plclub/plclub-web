@@ -1,10 +1,8 @@
 ---
 name : "Yannick Zakowski"
-website : "https://perso.ens-lyon.fr/yannick.zakowski/"
-email : "zakowski@seas.upenn.edu"
 degree : "Postdoc"
 year : "2020"
 where : "Inria"
+website : "https://perso.ens-lyon.fr/yannick.zakowski/"
 tags : ["alum"]
-headshot : "YannickZ.jpg"
 ---

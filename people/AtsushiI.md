@@ -2,6 +2,6 @@
 name : "Atsushi Igarashi"
 degree : "Ph.D. @ Tokyo"
 year : "2000"
-where : "Kyoto Univ."
+where : "Kyoto University"
 tags : ["alum"]
 ---

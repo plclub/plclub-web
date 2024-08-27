@@ -1,7 +1,6 @@
 ---
 name : "Alwyn Goodloe"
-email : "agoodloe@gmail.com"
-degree : "PhD"
+degree : "Ph.D."
 year : "2008"
 where : "NASA"
 tags : ["alum"]

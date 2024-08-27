@@ -1,6 +1,6 @@
 ---
 name : "Jiani Huang"
-email : "jianih@seas.upenn.edu"
 tags : ["student"]
+email : "jianih@seas.upenn.edu"
 headshot : "JianiH.jpg"
 ---

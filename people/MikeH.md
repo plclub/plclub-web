@@ -1,10 +1,8 @@
 ---
 name : "Michael Hicks"
-website : "http://www.cs.umd.edu/~mwh/"
-email : ""
-year : "2001"
 degree : "Ph.D."
-tags : ["alum"]
-headshot : ""
+year : "2001"
 where : "Amazon Web Services"
+website : "http://www.cs.umd.edu/~mwh/"
+tags : ["alum"]
 ---

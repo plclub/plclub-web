@@ -1,10 +1,8 @@
 ---
 name : "Filip Niksic"
-website : "https://fniksic.github.io"
-email : "fniksic@seas.upenn.edu"
+degree : "Postdoc"
 year : "2020"
 where : "Google"
-degree : "Postdoc"
+website : "https://fniksic.github.io"
 tags : ["alum"]
-headshot : "FilipN.jpg"
 ---

@@ -1,9 +1,7 @@
 ---
 name : "Solomon Maina"
-email : "smaina@seas.upenn.edu"
-tags : ["alum"]
-year: "2020"
 degree: "Masters"
+year: "2020"
 where: ""
-headshot : "SolomonM.jpg"
+tags : ["alum"]
 ---

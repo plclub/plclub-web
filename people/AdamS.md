@@ -1,6 +1,6 @@
 ---
 name : "Adam Stein"
-email : "steinad@seas.upenn.edu"
 tags : ["student"]
+email : "steinad@seas.upenn.edu"
 headshot : "AdamS.jpg"
 ---

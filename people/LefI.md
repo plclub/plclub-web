@@ -1,7 +1,7 @@
 ---
 name : "Eleftherios Ioannidis"
 website : "https://elefthei.github.io/"
-email : "elefthei@seas.upenn.edu"
 tags : ["student"]
+email : "elefthei@seas.upenn.edu"
 headshot : "LefI.jpg"
 ---

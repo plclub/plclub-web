@@ -1,7 +1,7 @@
 ---
 name : "Mayur Naik"
 website : "https://www.cis.upenn.edu/~mhnaik/"
-email : "mhnaik@seas.upenn.edu"
 tags : ["faculty"]
+email : "mhnaik@seas.upenn.edu"
 headshot : "MayurN.jpg"
 ---

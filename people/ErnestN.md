@@ -1,8 +1,8 @@
 ---
 name : "Ernest Ng"
-website : "https://ngernest.github.io"
-where : "Cornell"
 degree : "Masters"
 year : "2023"
+where : "Cornell"
+website : "https://ngernest.github.io"
 tags : ["alum"]
 ---

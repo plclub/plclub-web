@@ -1,7 +1,7 @@
 ---
 name : "Jonathan Chan"
-email : "jcxz@seas.upenn.edu"
 website : "https://ionathan.ch/"
 tags : ["student"]
+email : "jcxz@seas.upenn.edu"
 headshot : "JonathanC.jpg"
 ---
