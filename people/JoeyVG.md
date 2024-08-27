@@ -1,7 +1,7 @@
 ---
 name : "Joey Velez-Ginorio"
 website : "https://www.seas.upenn.edu/~joeyv/"
-email : "joeyv@seas.upenn.edu"
 tags : ["student"]
+email : "joeyv@seas.upenn.edu"
 headshot : "JoeyV.jpg"
 ---
