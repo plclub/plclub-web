@@ -1,7 +1,8 @@
 ---
 name : "Harrison Goldstein"
 website : "https://harrisongoldste.in/"
-email : "hgo@seas.upenn.edu"
-tags : ["student"]
-headshot : "HarrisonG.jpg"
+where : "Postdoc, University of Maryland"
+degree : "Ph.D."
+tags : ["alum"]
+year : "2024"
 ---
