@@ -2,7 +2,7 @@
 name : "Mukund Raghothaman"
 degree : "Ph.D."
 year : "2016"
-where : "USC"
+where : "University of Southern California"
 website : "https://r-mukund.github.io/"
 tags : ["alum"]
 ---
