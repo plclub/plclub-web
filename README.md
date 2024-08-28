@@ -52,7 +52,7 @@ long time during the first site build.
 ## FAQ
 
 ### How do I talk to about...?
-Questions about the blog (e.g. new blog posts) are best directed to
+Questions about the content of the website are best directed to
 Cassia Torczon. Questions about the website itself are best directed to
 Lawrence Dunn. When in doubt, ask in the *#website* channel on the PL
 Club Slack.
