@@ -2,7 +2,7 @@
 name : "Michael Hicks"
 degree : "Ph.D."
 year : "2001"
-where : "Amazon Web Services"
+where : "University of Pennsylvania"
 website : "https://mhicks.me/"
 tags : ["alum"]
 ---

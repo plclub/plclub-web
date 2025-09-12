@@ -2,7 +2,7 @@
 name : "Dimitrios Vytiniotis"
 degree : "Ph.D."
 year : "2008"
-where : "Microsoft Research Cambridge"
+where : "DeepMind"
 website : "https://dimitriv.github.io/"
 tags : ["alum"]
 ---

@@ -2,7 +2,7 @@
 name : "Harrison Goldstein"
 degree : "Ph.D."
 year : "2024"
-where : "Postdoc, University of Maryland"
+where : "University at Buffalo"
 website : "https://harrisongoldste.in/"
 tags : ["alum"]
 ---

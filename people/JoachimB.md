@@ -2,7 +2,7 @@
 name : "Joachim Breitner"
 degree : "Postdoc"
 year : "2019"
-where : "DFINITY"
+where : "Lean FRO"
 website : "https://www.joachim-breitner.de/blog"
 tags : ["alum"]
 ---

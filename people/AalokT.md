@@ -2,7 +2,7 @@
 name : "Aalok Thakkar"
 degree : "Ph.D."
 year : "2023"
-where : "Aptos Labs"
+where : "Ashoka University"
 website : "https://aalok-thakkar.github.io/"
 tags : ["alum"]
 ---
