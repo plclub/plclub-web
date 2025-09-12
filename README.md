@@ -57,8 +57,7 @@ Cassia Torczon. When in doubt, ask in the *#website* channel on the PL
 Club Slack.
 
 ### How do I contribute?
-Information about contributing is a work in progress. When that
-information becomes written up, it will be found in the
+Information about contributing and maintaining this website can be found in the
 [Wiki](https://github.com/plclub/plclub-web/wiki).
 
 You can always ask the friendly maintainers in the *#website* channel
