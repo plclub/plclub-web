@@ -3,5 +3,6 @@ name : "Hongbo (Bob) Zhang"
 degree : "Masters"
 year : "2013"
 website : "https://www.linkedin.com/in/hongbo-zhang-a8574157"
+where : ""
 tags : ["alum"]
 ---
