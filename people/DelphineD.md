@@ -2,7 +2,7 @@
 name : "Delphine Demange"
 degree : "Postdoc"
 year : "2013"
-where : "Rennes 1"
-website : "http://people.rennes.inria.fr/Delphine.Demange/index.php"
+where : "University of Rennes"
+website : "https://people.rennes.inria.fr/Delphine.Demange/index.php"
 tags : ["alum"]
 ---
