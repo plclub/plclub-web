@@ -1,7 +1,8 @@
 ---
 name : "Lawrence Dunn"
+degree : "Ph.D."
+year : "2025"
 website : "https://comono.id"
-tags : ["student"]
-email : "dunnla@seas.upenn.edu"
-headshot : "LawrenceD.jpg"
+tags : ["alum"]
+where : "Talarium Labs"
 ---
