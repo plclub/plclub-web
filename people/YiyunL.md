@@ -1,7 +1,8 @@
 ---
 name : "Yiyun Liu"
+degree : "Ph.D."
+year : "2026"
+where : "Basis"
 website : "https://electriclam.com/"
-tags : ["student"]
-email : "liuyiyun@seas.upenn.edu"
-headshot : "Yiyun.jpg"
+tags : ["alum"]
 ---

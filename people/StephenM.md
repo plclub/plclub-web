@@ -1,7 +1,8 @@
 ---
 name : "Stephen Mell"
-website : "https://mell.io"
-tags : ["student"]
-email : "sm1@seas.upenn.edu"
-headshot : "StephenM.jpg"
+degree : "Ph.D."
+year : "2026"
+where : "Carnegie Mellon University"
+website : "https://mell.ac"
+tags : ["alum"]
 ---
