@@ -1,6 +1,6 @@
 ---
 name : "Marcus Min"
-website : "https://scholar.google.com/citations?user=zxI7R_wAAAAJ&hl"
+website : "https://marcusm117.github.io/"
 tags : ["student"]
 email : "marcmin@seas.upenn.edu"
 headshot : "MarcusM.jpg"
