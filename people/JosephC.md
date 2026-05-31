@@ -1,7 +1,8 @@
 ---
 name : "Joseph Cutler"
-website : "https://www.cis.upenn.edu/~jwc/"
-tags : ["student"]
-email : "jwc@seas.upenn.edu"
-headshot : "JosephC.png"
+degree : "Ph.D."
+year : "2026"
+where : "Jane Street"
+website : "https://cutler.pl/"
+tags : ["alum"]
 ---
